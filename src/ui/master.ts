@@ -1,3 +1,4 @@
+import { terapkanRuangSekolah } from '../model/ruangSekolah';
 import type { Aturan, Proyek } from '../model/tipe';
 import { NAMA_HARI } from '../model/tipe';
 import { kodeGuruBerikut, usulKodeMapel } from '../model/kode';
@@ -11,6 +12,8 @@ interface Kolom {
   tipe: 'teks' | 'angka' | 'pilih' | 'cek';
   lebar: string;
   pilihan?: (p: Proyek, baris: Record<string, unknown>) => [string, string][];
+  /** nilai centang bila kolom belum terisi */
+  bawaan?: boolean;
 }
 
 const KOLOM: Record<Tabel, Kolom[]> = {
@@ -34,6 +37,7 @@ const KOLOM: Record<Tabel, Kolom[]> = {
     { f: 'kode', judul: 'Kode', tipe: 'teks', lebar: 'w-20' },
     { f: 'nama', judul: 'Nama ruang', tipe: 'teks', lebar: 'min-w-40 flex-1' },
     { f: 'jenis', judul: 'Jenis', tipe: 'pilih', lebar: 'w-28', pilihan: () => [['teori', 'teori'], ['praktik', 'praktik'], ['lab', 'lab'], ['lapangan', 'lapangan']] },
+    { f: 'dijadwalkan', judul: 'Ikut dijadwalkan', tipe: 'cek', lebar: 'w-24', bawaan: true },
     { f: 'bersama', judul: 'Boleh dipakai bersama', tipe: 'cek', lebar: 'w-28' },
   ],
 };
@@ -43,7 +47,7 @@ const KETERANGAN: Record<Tabel, string> = {
   guru: 'Kode otomatis A–Z, lalu AA–ZZ; bisa diubah.',
   mapel: 'Kode maksimal 3 karakter. Elemen (mis. KK1, KK2) memilih mapel induknya.',
   rombel: 'JP data sumber hanya penanda untuk membandingkan dengan kapasitas dan beban.',
-  ruang: 'Centang “dipakai bersama” untuk ruang yang boleh dipakai beberapa rombel sekaligus (mis. lapangan).',
+  ruang: 'Hilangkan centang “ikut dijadwalkan” untuk ruang yang bukan ruang belajar (mis. ruang guru). Centang “dipakai bersama” untuk ruang yang boleh dipakai beberapa rombel sekaligus (mis. lapangan).',
 };
 
 function daftar(p: Proyek, t: Tabel): (Record<string, unknown> & { id: string })[] {
@@ -53,7 +57,7 @@ function daftar(p: Proyek, t: Tabel): (Record<string, unknown> & { id: string })
 function sel(p: Proyek, t: Tabel, baris: Record<string, unknown> & { id: string }, c: Kolom): string {
   const nilai = baris[c.f];
   const attr = `data-aksi="mf" data-t="${t}" data-id="${esc(baris.id)}" data-f="${c.f}"`;
-  if (c.tipe === 'cek') return `<input type="checkbox" ${nilai ? 'checked' : ''} ${attr}>`;
+  if (c.tipe === 'cek') return `<input type="checkbox" ${(nilai ?? c.bawaan) ? 'checked' : ''} ${attr}>`;
   if (c.tipe === 'pilih') {
     const pil = (c.pilihan?.(p, baris) ?? []).map(([id, label]) => ({ id, label }));
     return `<select class="isian w-full" ${attr}>${opsi(pil, String(nilai ?? ''), (x) => x.id, (x) => x.label, c.f === 'induk' ? '— bukan elemen —' : undefined)}</select>`;
@@ -104,6 +108,7 @@ export function renderMaster(k: Konteks): string {
   return `<div class="mb-3 text-lg font-semibold">Master Data</div>
     <div class="grid gap-3 lg:grid-cols-2">${(['guru', 'mapel', 'rombel', 'ruang'] as Tabel[]).map((t) => kartuTabel(k, t)).join('')}${kartuAturan(k)}
     <div class="kartu border-slate-300 p-3 lg:col-span-2"><h3 class="font-semibold">Data</h3><div class="mb-2 text-xs text-slate-500">Draf tersimpan otomatis di peramban ini. Ekspor JSON untuk cadangan.</div>
+      <button class="tombol" data-aksi="isiRuang" title="Mengganti daftar ruang dengan ruang menurut site plan 2026">Isi ruang dari site plan</button>
       <button class="tombol !border-red-300 !text-red-700" data-aksi="reset">Kembalikan ke data contoh</button></div></div>`;
 }
 
@@ -148,6 +153,12 @@ export function klikMaster(k: Konteks, el: HTMLElement): boolean {
         p.master.ruang.push({ id: idBaru('u'), kode: `R${n}`, nama: `Ruang ${n}`, jenis: 'teori' });
       }
     });
+    return true;
+  }
+  if (d.aksi === 'isiRuang') {
+    if (!confirm('Ganti daftar ruang dengan ruang menurut site plan 2026 (42 ruang)? Rujukan ke ruang lama dipertahankan bila kodenya sama; ruang slot yang hilang dicarikan pengganti.')) return true;
+    k.ubah((p) => terapkanRuangSekolah(p));
+    k.lapor('Daftar ruang diganti menurut site plan.');
     return true;
   }
   if (d.aksi === 'mhapus') {

@@ -74,6 +74,8 @@ export interface Ruang {
   jenis: 'teori' | 'praktik' | 'lab' | 'lapangan';
   /** true = boleh dipakai beberapa rombel sekaligus (mis. lapangan); tidak dihitung bentrok ruang */
   bersama?: boolean;
+  /** false = bukan ruang belajar (mis. ruang guru/instruktur); tidak dipilih otomatis. Kosong = true. */
+  dijadwalkan?: boolean;
 }
 
 /** Beban mengajar: satu guru mengajar satu mapel di satu rombel sebanyak `jp` JP per pekan. */

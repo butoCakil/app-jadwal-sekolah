@@ -23,7 +23,7 @@ export function tentukanRuang(p: Proyek, slotsLain: Slot[], beban: Beban, hari: 
   const bebas = (id: string) => ada.has(id) && !dilarang.has(id) && (!terpakai.has(id) || bersama.has(id));
 
   if (pilihan && bebas(pilihan)) return { ruangId: pilihan };
-  const daftar = beban.ruangPrioritas.length ? beban.ruangPrioritas : p.master.ruang.map((r) => r.id);
+  const daftar = beban.ruangPrioritas.length ? beban.ruangPrioritas : p.master.ruang.filter((r) => r.dijadwalkan !== false).map((r) => r.id);
   for (const id of daftar) if (bebas(id)) return { ruangId: id };
   return { ruangId: '', alasan: beban.ruangPrioritas.length ? 'Semua ruang prioritas sedang terpakai' : 'Tidak ada ruang kosong yang diperbolehkan' };
 }
