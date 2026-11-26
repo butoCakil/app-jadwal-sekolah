@@ -9,7 +9,7 @@ const s = (id: string, bebanId: string, hari: number, jam: number): Slot => ({ i
 describe('blok', () => {
   it('menggabungkan jam berurutan beban sama dan hari sama', () => {
     const b = susunBlok([s('1', 'b1', 0, 2), s('2', 'b1', 0, 1), s('3', 'b1', 0, 4), s('4', 'b1', 1, 2), s('5', 'b2', 0, 3)]);
-    expect(b.map((x) => [x.bebanId, x.hari, x.jamAwal, x.jamAkhir])).toEqual([['b1', 0, 1, 2], ['b1', 0, 4, 4], ['b1', 1, 2, 2], ['b2', 0, 3, 3]]);
+    expect(b.map((x) => [x.bebanId, x.hari, x.jamAwal, x.jamAkhir])).toEqual([['b1', 0, 1, 2], ['b1', 0, 4, 4], ['b2', 0, 3, 3], ['b1', 1, 2, 2]]);
   });
   it('memotong blok di istirahat', () => {
     const [b] = susunBlok([s('1', 'b1', 0, 2), s('2', 'b1', 0, 3), s('3', 'b1', 0, 4)]);
