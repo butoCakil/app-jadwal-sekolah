@@ -29,6 +29,7 @@ export function validasiProyek(x: unknown): string[] {
   });
   const adaGuru = new Set(proyek.master.guru.map((x) => x.id));
   const adaMapel = new Set(proyek.master.mapel.map((x) => x.id));
+  for (const m of proyek.master.mapel) if (m.jenisRuang && m.jenisRuang.some((j) => !['teori', 'praktik', 'lab', 'lapangan'].includes(j))) galat.push(`Mapel ${m.kode}: jenis ruang tidak dikenal.`);
   const adaRombel = new Set(proyek.master.rombel.map((x) => x.id));
   const idBeban = new Set<string>();
   proyek.beban.forEach((b) => {

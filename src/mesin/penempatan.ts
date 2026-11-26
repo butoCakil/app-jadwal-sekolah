@@ -1,6 +1,9 @@
 import type { Beban, Proyek, Slot } from '../model/tipe';
 import { adalahPelanggaran, periksa, ruangDilarang } from './validator';
 
+/** Urutan jenis ruang bila mapel tidak punya pengaturan sendiri (lapangan hanya bila disebut). */
+export const JENIS_RUANG_BAWAAN: ('teori' | 'praktik' | 'lab' | 'lapangan')[] = ['teori', 'praktik', 'lab'];
+
 export interface HasilRuang {
   ruangId: string;
   alasan?: string;
@@ -23,7 +26,11 @@ export function tentukanRuang(p: Proyek, slotsLain: Slot[], beban: Beban, hari: 
   const bebas = (id: string) => ada.has(id) && !dilarang.has(id) && (!terpakai.has(id) || bersama.has(id));
 
   if (pilihan && bebas(pilihan)) return { ruangId: pilihan };
-  const daftar = beban.ruangPrioritas.length ? beban.ruangPrioritas : p.master.ruang.filter((r) => r.dijadwalkan !== false).map((r) => r.id);
+  const aktif = p.master.ruang.filter((r) => r.dijadwalkan !== false);
+  const urut = p.master.mapel.find((m) => m.id === beban.mapelId)?.jenisRuang;
+  const daftar = beban.ruangPrioritas.length
+    ? beban.ruangPrioritas
+    : (urut?.length ? urut : JENIS_RUANG_BAWAAN).flatMap((j) => aktif.filter((r) => r.jenis === j).map((r) => r.id));
   for (const id of daftar) if (bebas(id)) return { ruangId: id };
   return { ruangId: '', alasan: beban.ruangPrioritas.length ? 'Semua ruang prioritas sedang terpakai' : 'Tidak ada ruang kosong yang diperbolehkan' };
 }

@@ -57,6 +57,8 @@ export interface Mapel {
   kode: string;
   /** id mapel induk untuk elemen/sub-mapel */
   induk?: string;
+  /** Jenis ruang yang boleh dipakai, berurutan (yang pertama dicoba dulu). Kosong = teori, praktik, lab. */
+  jenisRuang?: Ruang['jenis'][];
 }
 export interface Rombel {
   id: string;

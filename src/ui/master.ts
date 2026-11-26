@@ -24,6 +24,7 @@ const KOLOM: Record<Tabel, Kolom[]> = {
   mapel: [
     { f: 'kode', judul: 'Kode (maks. 3)', tipe: 'teks', lebar: 'w-20' },
     { f: 'nama', judul: 'Nama mapel / elemen', tipe: 'teks', lebar: 'min-w-48 flex-1' },
+    { f: 'jenisRuang', judul: 'Jenis ruang (berurutan)', tipe: 'teks', lebar: 'w-40' },
     { f: 'induk', judul: 'Induk (untuk elemen)', tipe: 'pilih', lebar: 'w-44', pilihan: (p, b) => p.master.mapel.filter((m) => !m.induk && m.id !== b.id).map((m) => [m.id, `${m.kode} · ${m.nama}`]) },
   ],
   rombel: [
@@ -45,7 +46,7 @@ const KOLOM: Record<Tabel, Kolom[]> = {
 const JUDUL: Record<Tabel, string> = { guru: 'Guru', mapel: 'Mapel & elemen', rombel: 'Rombel', ruang: 'Ruang' };
 const KETERANGAN: Record<Tabel, string> = {
   guru: 'Kode otomatis A–Z, lalu AA–ZZ; bisa diubah.',
-  mapel: 'Kode maksimal 3 karakter. Elemen (mis. KK1, KK2) memilih mapel induknya.',
+  mapel: 'Kode maksimal 3 karakter. Elemen (mis. KK1, KK2) memilih mapel induknya. Jenis ruang berurutan, mis. “teori, praktik”: dicoba dari yang pertama; kosong = teori, praktik, lab. Tambahkan “lapangan” untuk PJOK.',
   rombel: 'JP data sumber hanya penanda untuk membandingkan dengan kapasitas dan beban.',
   ruang: 'Hilangkan centang “ikut dijadwalkan” untuk ruang yang bukan ruang belajar (mis. ruang guru). Centang “dipakai bersama” untuk ruang yang boleh dipakai beberapa rombel sekaligus (mis. lapangan).',
 };
@@ -62,6 +63,7 @@ function sel(p: Proyek, t: Tabel, baris: Record<string, unknown> & { id: string 
     const pil = (c.pilihan?.(p, baris) ?? []).map(([id, label]) => ({ id, label }));
     return `<select class="isian w-full" ${attr}>${opsi(pil, String(nilai ?? ''), (x) => x.id, (x) => x.label, c.f === 'induk' ? '— bukan elemen —' : undefined)}</select>`;
   }
+  if (c.f === 'jenisRuang') return `<input class="isian w-full" placeholder="bawaan" value="${esc(Array.isArray(nilai) ? nilai.join(', ') : '')}" ${attr}>`;
   return `<input class="isian w-full" ${c.tipe === 'angka' ? 'type="number" min="0"' : ''} value="${esc(nilai === undefined ? '' : String(nilai))}" ${attr}>`;
 }
 
@@ -220,8 +222,15 @@ export function ubahMaster(k: Konteks, el: HTMLInputElement & HTMLSelectElement)
     }
     if (d.f === 'nama' && !el.value.trim()) return tolak('Nama tidak boleh kosong.');
     if (d.f === 'jurusan') nilai = el.value.trim().toUpperCase();
+    if (d.f === 'jenisRuang') {
+      const kata = el.value.toLowerCase().split(/[\s,;]+/).filter(Boolean);
+      const sah = ['teori', 'praktik', 'lab', 'lapangan'];
+      const salah = kata.filter((x) => !sah.includes(x));
+      if (salah.length) return tolak(`Jenis ruang tidak dikenal: ${salah.join(', ')}. Pilihan: ${sah.join(', ')}.`);
+      nilai = kata.length ? [...new Set(kata)] : undefined;
+    }
     k.ubah(() => {
-      if (nilai === undefined || nilai === '' || nilai === false) delete baris[d.f ?? ''];
+      if (nilai === undefined || nilai === '' || nilai === false || (Array.isArray(nilai) && nilai.length === 0)) delete baris[d.f ?? ''];
       else baris[d.f ?? ''] = d.f === 'nama' ? String(nilai).trim() : nilai;
     });
     return true;

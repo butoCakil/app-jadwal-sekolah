@@ -43,3 +43,19 @@ describe('ruang sekolah (site plan 2026)', () => {
     expect(periksa(p, []).length).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('jenis ruang per mapel', () => {
+  it('bawaan: teori dulu, lapangan tidak dipilih; pengaturan mapel diikuti', () => {
+    const p = proyekContoh();
+    terapkanRuangSekolah(p);
+    const b = p.beban[0]!;
+    b.ruangPrioritas = [];
+    const m = p.master.mapel.find((x) => x.id === b.mapelId)!;
+    const jenis = (id: string) => p.master.ruang.find((r) => r.id === id)?.jenis;
+    expect(jenis(tentukanRuang(p, [], b, 0, 1).ruangId)).toBe('teori');
+    m.jenisRuang = ['praktik'];
+    expect(jenis(tentukanRuang(p, [], b, 0, 1).ruangId)).toBe('praktik');
+    m.jenisRuang = ['lapangan'];
+    expect(jenis(tentukanRuang(p, [], b, 0, 1).ruangId)).toBe('lapangan');
+  });
+});
