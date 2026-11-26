@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^26.6.11",
     "fake-indexeddb": "^6.2.8",
     "tailwindcss": "^4.3.5",
     "typescript": "^7.0.2",
