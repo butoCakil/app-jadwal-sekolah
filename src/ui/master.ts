@@ -46,7 +46,7 @@ const KOLOM: Record<Tabel, Kolom[]> = {
 const JUDUL: Record<Tabel, string> = { guru: 'Guru', mapel: 'Mapel & elemen', rombel: 'Rombel', ruang: 'Ruang' };
 const KETERANGAN: Record<Tabel, string> = {
   guru: 'Kode otomatis A–Z, lalu AA–ZZ; bisa diubah.',
-  mapel: 'Kode maksimal 3 karakter. Elemen (mis. KK1, KK2) memilih mapel induknya. Jenis ruang berurutan, mis. “teori, praktik”: dicoba dari yang pertama; kosong = teori, praktik, lab. Tambahkan “lapangan” untuk PJOK.',
+  mapel: 'Kode idealnya 3 karakter (kode resmi sekolah seperti PSRT dan PISAV boleh lebih). Elemen (mis. DLE, DRE, TKB di bawah DTE) memilih mapel induknya. Jenis ruang berurutan, mis. “teori, praktik”: dicoba dari yang pertama; kosong = teori, praktik, lab. Tambahkan “lapangan” untuk PJOK.',
   rombel: 'JP data sumber hanya penanda untuk membandingkan dengan kapasitas dan beban.',
   ruang: 'Hilangkan centang “ikut dijadwalkan” untuk ruang yang bukan ruang belajar (mis. ruang guru). Centang “dipakai bersama” untuk ruang yang boleh dipakai beberapa rombel sekaligus (mis. lapangan).',
 };

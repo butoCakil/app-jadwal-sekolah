@@ -13,7 +13,7 @@ npm test         # tes
 npm run build    # hasil di dist/
 ```
 
-Data awal aplikasi = **data sekolah** (`data/sekolah/proyek.json`): 61 guru, 30 rombel, 316 beban (PEMBAGIAN TUGAS, sheet Genap_Harizka), 42 ruang site plan 2026, aturan ruang per jurusan. Tidak memuat NIP. Data contoh fiktif untuk demo/tes ada di `data/contoh/contoh.json` (tombol **Ganti dengan data contoh fiktif** di Master Data).
+Data awal aplikasi = **data sekolah** (`data/sekolah/proyek.json`): 62 guru, 30 rombel, 42 ruang site plan 2026, aturan ruang per jurusan, dan **jadwal reguler Gasal 2026/2027** dari aSc (25 rombel x 48 JP = 1200 JP, tanpa bentrok) beserta beban turunannya (guru, mapel/elemen, JP, pola pertemuan, ruang). Lima rombel XI yang tidak ada di PDF aSc memakai beban dari Excel dan belum terjadwal. Tidak memuat NIP. Sumber: `data/sekolah/sumber/reguler-gasal-2026.json` (diekstrak dari PDF Jadwal Kelas dan Jadwal Guru oleh `tools/ekstrak-asc-pdf.py`); data dibangun ulang dengan `TULIS_DATA=1 npx vitest run test/bangun-data.test.ts`. Data contoh fiktif untuk demo/tes ada di `data/contoh/contoh.json` (tombol **Ganti dengan data contoh fiktif** di Master Data).
 
 ## Yang sudah ada (tahap 4)
 

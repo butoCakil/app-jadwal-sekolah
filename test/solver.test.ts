@@ -76,15 +76,26 @@ describe('susun (data contoh)', () => {
   });
 });
 
-describe('susun (data sekolah)', () => {
-  it('tanpa bentrok; sisa hanya karena kapasitas jam 48 JP per rombel', () => {
+describe('susun (data sekolah, jadwal reguler aSc Gasal 2026)', () => {
+  // XI AT 1, XI AT 2, XI DKV 3, XI TE 2, XI TE 3 butuh 49 JP padahal kapasitas pekan 48 JP: 5 JP pasti tidak muat
+  const PASTI_SISA = 5;
+  it('dari nol: tanpa bentrok, semua slot beruang, hampir semua JP tertempatkan', () => {
     const p = kosong(proyekSekolah());
-    const h = susun(p, { skemaPerHari: p.polaReguler, batasMs: 1500 });
+    const h = susun(p, { skemaPerHari: p.polaReguler, batasMs: 3000, benih: 1 });
     expect(pelanggaran(p, h.slots)).toEqual([]);
     expect(h.slots.every((s) => s.ruangId)).toBe(true);
-    // X butuh 51 dan XI 49 JP, kapasitas 48: 10 rombel X x 3 + 10 rombel XI x 1 = 40 JP
-    expect(h.total - h.terjadwal).toBeLessThanOrEqual(40);
-    expect(h.sisa.length).toBeGreaterThan(0);
-    expect(h.peringatan.some((x) => x.includes('X TE 1'))).toBe(true);
-  });
+    expect(h.total - h.terjadwal).toBeGreaterThanOrEqual(PASTI_SISA);
+    expect(h.total - h.terjadwal).toBeLessThanOrEqual(25);
+    expect(h.peringatan.some((x) => x.includes('XI AT 1'))).toBe(true);
+  }, 20000);
+  it('lengkapi: 1200 JP jadwal reguler tetap di tempatnya, lima rombel XI yang belum terjadwal diisi di sekitarnya', () => {
+    const p = proyekSekolah();
+    const reguler = p.versi[0]?.slots ?? [];
+    expect(reguler).toHaveLength(1200);
+    const h = susun(p, { skemaPerHari: p.polaReguler, tetap: reguler, batasMs: 3000, benih: 1 });
+    for (const s of reguler) expect(h.slots.some((x) => x.id === s.id && x.hari === s.hari && x.jam === s.jam && x.ruangId === s.ruangId)).toBe(true);
+    expect(pelanggaran(p, h.slots)).toEqual([]);
+    expect(h.total - h.terjadwal).toBeGreaterThanOrEqual(PASTI_SISA);
+    expect(h.total - h.terjadwal).toBeLessThanOrEqual(12);
+  }, 20000);
 });

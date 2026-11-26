@@ -59,6 +59,9 @@ const JENIS_RUANG_MAPEL: Record<string, ('praktik' | 'lab' | 'teori')[]> = {
   DTE: ['praktik', 'lab'], TAV: ['praktik', 'lab'], P4E: ['praktik', 'lab'], DKV: ['praktik', 'lab'], DDK: ['praktik', 'lab'],
   BC: ['praktik', 'lab'], AT: ['praktik', 'lab'], DAT: ['praktik', 'lab'], PTP: ['praktik', 'lab'],
   IT: ['lab', 'teori'], KKA: ['lab', 'teori'],
+  // elemen KK TE (dari jadwal reguler aSc Gasal 2026): DLE kadang di ruang teori, elemen lain di bengkel/lab TE
+  DLE: ['praktik', 'teori', 'lab'], DRE: ['praktik', 'lab'], TKB: ['praktik', 'lab'], PRE: ['praktik', 'lab'], PMM: ['praktik', 'lab'],
+  PSRT: ['praktik', 'lab'], PISAV: ['praktik', 'lab'], PISS: ['praktik', 'lab'],
 };
 
 /** Mengisi urutan jenis ruang mapel yang dikenal (lihat JENIS_RUANG_MAPEL); mapel lain tidak diubah. */

@@ -9,11 +9,11 @@ describe('data sekolah', () => {
   const p = proyekSekolah();
   it('valid dan lengkap', () => {
     expect(validasiProyek(p)).toEqual([]);
-    expect(p.master.guru).toHaveLength(61);
+    expect(p.master.guru).toHaveLength(62);
     expect(p.master.rombel).toHaveLength(30);
     expect(p.master.ruang).toHaveLength(42);
-    expect(p.beban).toHaveLength(316);
-    expect(new Set(p.master.guru.map((g) => g.kode)).size).toBe(61);
+    expect(p.beban).toHaveLength(406);
+    expect(new Set(p.master.guru.map((g) => g.kode)).size).toBe(62);
   });
   it('tidak memuat NIP', () => {
     expect(JSON.stringify(p)).not.toMatch(/\d{10,}/);
