@@ -1,4 +1,5 @@
 import { terapkanImpor, tafsirTugas } from '../io/imporTugas';
+import { isiJenisRuangMapel, kodeGuruSekolah } from '../model/sekolah';
 import type { HasilImpor } from '../io/imporTugas';
 import { bacaLembar, daftarLembar } from '../io/xlsx';
 import { esc, opsi } from './util';
@@ -17,7 +18,7 @@ let berkas: Berkas | null = null;
 
 function tafsir(b: Berkas): void {
   try {
-    b.hasil = tafsirTugas(bacaLembar(b.data, b.sheet));
+    b.hasil = tafsirTugas(bacaLembar(b.data, b.sheet), { kodeGuru: kodeGuruSekolah });
     b.galat = '';
   } catch (e) {
     b.hasil = null;
@@ -84,7 +85,10 @@ export function klikImpor(k: Konteks, el: HTMLElement): boolean {
       const h = berkas?.hasil;
       if (!h) return true;
       const n = h.ringkas;
-      k.ubah((p) => terapkanImpor(p, h));
+      k.ubah((p) => {
+        terapkanImpor(p, h);
+        isiJenisRuangMapel(p);
+      });
       k.ui.mode = 'rombel';
       k.ui.entitasId = h.rombel[0]?.id ?? '';
       k.ui.bebanRombel = 'semua';

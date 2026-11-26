@@ -111,7 +111,8 @@ export function renderMaster(k: Konteks): string {
     <div class="grid gap-3 lg:grid-cols-2">${(['guru', 'mapel', 'rombel', 'ruang'] as Tabel[]).map((t) => kartuTabel(k, t)).join('')}${kartuAturan(k)}
     <div class="kartu border-slate-300 p-3 lg:col-span-2"><h3 class="font-semibold">Data</h3><div class="mb-2 text-xs text-slate-500">Draf tersimpan otomatis di peramban ini. Ekspor JSON untuk cadangan.</div>
       <button class="tombol" data-aksi="isiRuang" title="Mengganti daftar ruang dengan ruang menurut site plan 2026">Isi ruang dari site plan</button>
-      <button class="tombol !border-red-300 !text-red-700" data-aksi="reset">Kembalikan ke data contoh</button></div></div>`;
+      <button class="tombol !border-red-300 !text-red-700" data-aksi="reset">Kembalikan ke data sekolah</button>
+      <button class="tombol !border-red-300 !text-red-700" data-aksi="resetContoh">Ganti dengan data contoh fiktif</button></div></div>`;
 }
 
 const idBaru = (awal: string) => `${awal}${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;

@@ -2,6 +2,7 @@ import type { Proyek, Slot } from '../model/tipe';
 import { cekSkema } from '../model/skema';
 import { cekKegiatan, cekPola } from '../model/kalender';
 import { proyekContoh } from '../model/contoh';
+import { proyekSekolah } from '../model/sekolahData';
 import { Riwayat } from '../mesin/riwayat';
 import { dariJson, hapusDraf, keJson, muatDraf, simpanDraf } from '../io/simpan';
 import type { Konteks, StatusUI, Tab, Turunan } from './konteks';
@@ -25,7 +26,7 @@ const TAB: { id: Tab; label: string }[] = [
 ];
 
 export async function mulaiApp(akar: HTMLElement): Promise<void> {
-  let p: Proyek = (await muatDraf().catch(() => null)) ?? proyekContoh();
+  let p: Proyek = (await muatDraf().catch(() => null)) ?? proyekSekolah();
   const ui: StatusUI = {
     tab: 'grid',
     tanggal: isoLokal(new Date()),
@@ -158,9 +159,10 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       case 'ekspor': return unduh(`jadwal-${isoLokal(new Date())}.json`, keJson(p));
       case 'keInspektur': return ctx.ke('inspektur');
       case 'reset':
-        if (!confirm('Kembalikan ke data contoh? Draf yang ada di peramban ini akan diganti.')) return;
+      case 'resetContoh':
+        if (!confirm(el.dataset.aksi === 'reset' ? 'Kembalikan ke data sekolah? Draf yang ada di peramban ini akan diganti.' : 'Ganti dengan data contoh fiktif? Draf yang ada di peramban ini akan diganti.')) return;
         riwayat.catat(p);
-        p = proyekContoh();
+        p = el.dataset.aksi === 'reset' ? proyekSekolah() : proyekContoh();
         ui.entitasId = p.master.rombel[0]?.id ?? '';
         ui.mode = 'rombel';
         galat = '';

@@ -34,3 +34,17 @@ export function usulKodeMapel(nama: string, dipakai: string[]): string {
   }
   return dasar;
 }
+
+/** Usul kode guru 3 huruf dari nama (tanpa gelar): tiga huruf pertama kata pertama; bila terpakai, dua huruf + awal kata berikutnya; lalu angka. */
+export function usulKodeGuru(nama: string, dipakai: string[]): string {
+  const ada = new Set(dipakai.map((k) => k.toUpperCase()));
+  const kata = (nama.split(',')[0] ?? '').replace(/[^\p{L}\s]/gu, ' ').split(/\s+/).filter((k) => k.length > 1);
+  const a = (kata[0] ?? 'GRU').toUpperCase();
+  const calon = [a.slice(0, 3), ...kata.slice(1).map((k) => (a.slice(0, 2) + k[0]).toUpperCase()), ...kata.slice(1).map((k) => (a[0] + k.slice(0, 2)).toUpperCase())];
+  for (const c of calon) if (c.length === 3 && !ada.has(c)) return c;
+  for (let i = 1; i < 100; i++) {
+    const c = a.slice(0, 2) + i;
+    if (!ada.has(c)) return c;
+  }
+  return a.slice(0, 3);
+}

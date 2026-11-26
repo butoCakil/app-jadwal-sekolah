@@ -38,7 +38,12 @@ export function cariJudul(l: Lembar): number {
  * Baris judul: tingkat (KELAS X/XI/XII), baris berikutnya jurusan, berikutnya nomor rombel; data mulai tiga baris di bawahnya.
  * Satu guru bisa punya beberapa baris mapel (sel nama kosong = guru di atasnya).
  */
-export function tafsirTugas(l: Lembar): HasilImpor {
+export interface OpsiImpor {
+  /** Mengusulkan kode guru dari nama; kembalikan undefined untuk memakai kode urut bawaan (A, B, ...). */
+  kodeGuru?: (nama: string, dipakai: string[]) => string | undefined;
+}
+
+export function tafsirTugas(l: Lembar, opsi: OpsiImpor = {}): HasilImpor {
   const r0 = cariJudul(l);
   if (r0 < 0) throw new Error('Baris judul "MATA PELAJARAN" tidak ditemukan. Pastikan sheet yang dipilih benar.');
   const judul = l.baris[r0] ?? [];
@@ -91,7 +96,8 @@ export function tafsirTugas(l: Lembar): HasilImpor {
     const namaMapel = teks(b[cMapel]);
     const kodeXl = teks(b[cKode]);
     if (nama) {
-      guruIni = { id: `g${guru.length + 1}`, nama, kode: kodeGuruBerikut(guru.map((g) => g.kode)) };
+      const dipakaiKode = guru.map((g) => g.kode);
+      guruIni = { id: `g${guru.length + 1}`, nama, kode: opsi.kodeGuru?.(nama, dipakaiKode) ?? kodeGuruBerikut(dipakaiKode) };
       if (guru.some((g) => g.nama.toLowerCase() === nama.toLowerCase())) peringatan.push(`Nama guru ganda: ${nama}`);
       guru.push(guruIni);
     }
