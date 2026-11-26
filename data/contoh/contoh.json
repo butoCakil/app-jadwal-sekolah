@@ -1,0 +1,443 @@
+{
+  "versiSkemaData": 1,
+  "nama": "Contoh (data fiktif)",
+  "skema": [
+    {
+      "id": "skema11",
+      "nama": "Skema 11 Jam/Hari",
+      "jamMulai": "07:00",
+      "warna": "#2347b8",
+      "baris": [
+        {
+          "id": "s11_0",
+          "tipe": "nonKbm",
+          "kegiatan": "Pembiasaan/UB",
+          "durasi": 40
+        },
+        {
+          "id": "s11_1",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s11_2",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s11_3",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s11_b1",
+          "tipe": "istirahat",
+          "kegiatan": "Istirahat 1",
+          "durasi": 15
+        },
+        {
+          "id": "s11_4",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s11_5",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s11_6",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s11_b2",
+          "tipe": "istirahat",
+          "kegiatan": "Istirahat 2",
+          "durasi": 40
+        },
+        {
+          "id": "s11_7",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s11_8",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s11_9",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s11_10",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        }
+      ]
+    },
+    {
+      "id": "skema10",
+      "nama": "Skema 10 Jam/Hari",
+      "jamMulai": "07:00",
+      "warna": "#0f7f68",
+      "baris": [
+        {
+          "id": "s10_1",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 45
+        },
+        {
+          "id": "s10_2",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 45
+        },
+        {
+          "id": "s10_3",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 45
+        },
+        {
+          "id": "s10_b1",
+          "tipe": "istirahat",
+          "kegiatan": "Istirahat 1",
+          "durasi": 15
+        },
+        {
+          "id": "s10_4",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 45
+        },
+        {
+          "id": "s10_5",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 45
+        },
+        {
+          "id": "s10_6",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 45
+        },
+        {
+          "id": "s10_b2",
+          "tipe": "istirahat",
+          "kegiatan": "Istirahat 2",
+          "durasi": 50
+        },
+        {
+          "id": "s10_7",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s10_8",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s10_9",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s10_10",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        }
+      ]
+    },
+    {
+      "id": "skema9",
+      "nama": "Skema 9 Jam/Hari",
+      "jamMulai": "07:00",
+      "warna": "#9b2665",
+      "baris": [
+        {
+          "id": "s9_0",
+          "tipe": "nonKbm",
+          "kegiatan": "Pembiasaan",
+          "durasi": 40
+        },
+        {
+          "id": "s9_1",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s9_2",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s9_3",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s9_b1",
+          "tipe": "istirahat",
+          "kegiatan": "Istirahat 1",
+          "durasi": 20
+        },
+        {
+          "id": "s9_4",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s9_5",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s9_6",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s9_b2",
+          "tipe": "istirahat",
+          "kegiatan": "Istirahat 2",
+          "durasi": 50
+        },
+        {
+          "id": "s9_7",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        },
+        {
+          "id": "s9_8",
+          "tipe": "kbm",
+          "kegiatan": "Pelajaran",
+          "durasi": 40
+        }
+      ]
+    }
+  ],
+  "polaReguler": [
+    "skema11",
+    "skema10",
+    "skema10",
+    "skema11",
+    "skema9"
+  ],
+  "penggantiManual": null,
+  "kalender": [
+    {
+      "id": "k1",
+      "nama": "Pekan ASAS (contoh)",
+      "jenis": "ASAS",
+      "mulai": "2026-11-30",
+      "selesai": "2026-12-04",
+      "pola": [
+        "skema10",
+        "skema10",
+        "skema11",
+        "skema11",
+        "skema9"
+      ],
+      "rombelTidakAktif": []
+    },
+    {
+      "id": "k2",
+      "nama": "Libur contoh",
+      "jenis": "libur",
+      "mulai": "2026-12-25",
+      "selesai": "2026-12-25",
+      "rombelTidakAktif": []
+    }
+  ],
+  "master": {
+    "guru": [
+      {
+        "id": "g1",
+        "nama": "Guru Contoh 1",
+        "kode": "A"
+      },
+      {
+        "id": "g2",
+        "nama": "Guru Contoh 2",
+        "kode": "B"
+      },
+      {
+        "id": "g3",
+        "nama": "Guru Contoh 3",
+        "kode": "C"
+      }
+    ],
+    "mapel": [
+      {
+        "id": "m1",
+        "nama": "Matematika",
+        "kode": "MTK"
+      },
+      {
+        "id": "m2",
+        "nama": "Bahasa Indonesia",
+        "kode": "BI"
+      },
+      {
+        "id": "m3",
+        "nama": "Mapel Kejuruan (induk)",
+        "kode": "KJR"
+      },
+      {
+        "id": "m3a",
+        "nama": "Elemen Kejuruan 1",
+        "kode": "KK1",
+        "induk": "m3"
+      }
+    ],
+    "rombel": [
+      {
+        "id": "r1",
+        "tingkat": "X",
+        "jurusan": "TE",
+        "nomor": 1,
+        "kode": "X TE 1",
+        "jpButuh": 51
+      },
+      {
+        "id": "r2",
+        "tingkat": "XI",
+        "jurusan": "TE",
+        "nomor": 1,
+        "kode": "XI TE 1",
+        "jpButuh": 49
+      }
+    ],
+    "ruang": [
+      {
+        "id": "u1",
+        "kode": "B3",
+        "nama": "Ruang Teori B3",
+        "jenis": "teori"
+      },
+      {
+        "id": "u2",
+        "kode": "D1",
+        "nama": "Lab D1",
+        "jenis": "lab"
+      }
+    ]
+  },
+  "versi": [
+    {
+      "id": "v-reguler",
+      "nama": "Reguler",
+      "jenis": "reguler",
+      "slots": [
+        {
+          "id": "a1",
+          "rombelId": "r1",
+          "hari": 0,
+          "jam": 1,
+          "guruId": "g1",
+          "mapelId": "m1",
+          "ruangId": "u1"
+        },
+        {
+          "id": "a2",
+          "rombelId": "r1",
+          "hari": 0,
+          "jam": 2,
+          "guruId": "g1",
+          "mapelId": "m1",
+          "ruangId": "u1"
+        },
+        {
+          "id": "a3",
+          "rombelId": "r1",
+          "hari": 0,
+          "jam": 10,
+          "guruId": "g2",
+          "mapelId": "m2",
+          "ruangId": "u1"
+        },
+        {
+          "id": "a4",
+          "rombelId": "r1",
+          "hari": 1,
+          "jam": 1,
+          "guruId": "g2",
+          "mapelId": "m2",
+          "ruangId": "u1"
+        },
+        {
+          "id": "a5",
+          "rombelId": "r1",
+          "hari": 1,
+          "jam": 10,
+          "guruId": "g3",
+          "mapelId": "m3a",
+          "ruangId": "u2"
+        },
+        {
+          "id": "a6",
+          "rombelId": "r1",
+          "hari": 2,
+          "jam": 5,
+          "guruId": "g3",
+          "mapelId": "m3a",
+          "ruangId": "u2"
+        },
+        {
+          "id": "a7",
+          "rombelId": "r1",
+          "hari": 4,
+          "jam": 9,
+          "guruId": "g1",
+          "mapelId": "m1",
+          "ruangId": "u1"
+        },
+        {
+          "id": "b1",
+          "rombelId": "r2",
+          "hari": 0,
+          "jam": 1,
+          "guruId": "g2",
+          "mapelId": "m2",
+          "ruangId": "u1"
+        },
+        {
+          "id": "b2",
+          "rombelId": "r2",
+          "hari": 3,
+          "jam": 4,
+          "guruId": "g3",
+          "mapelId": "m3a",
+          "ruangId": "u2"
+        }
+      ]
+    }
+  ]
+}

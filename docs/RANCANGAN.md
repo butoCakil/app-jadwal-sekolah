@@ -259,7 +259,12 @@ app-jadwal-sekolah/
 10. Terapkan memakai token GitHub fine-grained yang hanya ada di perangkat admin.
 11. Masuk mode admin: token GitHub + PIN.
 
-### 11.2 ⏳ Masih perlu konfirmasi
+### 11.2 Keputusan tambahan
 
-1. **Tempat AI berjalan.** Usulan: versi pertama berjalan **di browser admin**, memakai algoritma rantai SIMBioTE yang di-port ke TypeScript, dengan kunci terenkripsi PIN, sehingga tidak butuh server. Pilihan lanjutan: endpoint di `superapp-te` (server-te), supaya kunci, antrean, dan catatan pemakaian bersama SIMBioTE.
-2. **Selisih kapasitas.** Setelah pembiasaan menjadi jam ke-0, pola `[11,10,10,11,9]` hanya punya **10+10+10+10+8 = 48 JP KBM** per minggu. Sementara itu Excel mencatat X = 51 JP dan XI = 49 JP. Perlu dipastikan bagaimana sekolah menghitungnya (apakah ada mapel di jam ke-0, apakah BK/perwalian dihitung, atau JP dipadatkan). Sampai ada kepastian, aplikasi menandai selisih ini sesuai keputusan #2.
+1. **Tempat AI berjalan:** disepakati (26 Nov 2026) versi pertama di browser admin; endpoint di `superapp-te` menjadi pilihan lanjutan.
+2. **Selisih kapasitas JP:** pola `[11,10,10,11,9]` dan `[10,10,11,11,9]` sama-sama 10+10+10+10+8 = **48 JP KBM**, sedangkan Excel mencatat X = 51 JP dan XI = 49 JP. Aplikasi menandai selisih ini (sesuai keputusan #2) dan diputuskan manual; cara sekolah menghitungnya belum dikonfirmasi.
+
+### 11.3 Status tahap
+
+- Tahap 1 selesai: model data, skema dinamis + penomoran ganda, pola mingguan, kalender, grid per skema, IndexedDB, ekspor/impor JSON, 22 tes.
+- Skema bawaan diambil dari poster resmi pada berkas jadwal 9–13 Nov 2026.
