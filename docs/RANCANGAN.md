@@ -1,6 +1,6 @@
 # Rancang Bangun — App Jadwal Sekolah (SMK Negeri Bansari)
 
-Status: **disepakati 26 Nov 2026**, kecuali butir bertanda ⏳ di bagian 11.
+Status: **disepakati 26 Nov 2026.** Tahap 1 selesai (lihat 11.3).
 Papan rancangan: Whiteboard "Rancang Bangun App Jadwal Sekolah" (claude.ai).
 
 Prinsip utama: **mesin menjaga aturan, AI mengusulkan, admin menerapkan, publik melihat yang sudah diterapkan.**
@@ -164,7 +164,7 @@ Disimpan sebagai data, sehingga validator, solver, dan AI membaca aturan yang sa
   - memberi saran pergantian/pergeseran tanpa bentrok
   - menjelaskan alasan usulan
 - **Privasi:** yang dikirim ke AI hanya kode dan ID (guru, mapel, ruang, rombel) beserta aturan, tanpa nama lengkap.
-- ⏳ **Tempat AI berjalan:** lihat 11.2.
+- **Tempat AI berjalan:** browser admin dulu (lihat 11.2).
 
 ---
 
