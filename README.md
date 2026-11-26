@@ -2,7 +2,7 @@
 
 Aplikasi penyusun jadwal pelajaran seluruh rombel: skema jam dinamis (9/10/11 per hari), kalender akademik, deteksi bentrok, solver, dan asisten AI. Halaman publik menampilkan jadwal yang sudah diterapkan admin.
 
-Status: **tahap 1 dan 2 selesai; tahap 3 sebagian (impor Excel).** Rancangan lengkap: [docs/RANCANGAN.md](docs/RANCANGAN.md).
+Status: **tahap 1, 2, dan 4 (solver tahap pertama) selesai; tahap 3 sebagian (impor Excel).** Rancangan lengkap: [docs/RANCANGAN.md](docs/RANCANGAN.md).
 
 ## Menjalankan
 
@@ -13,11 +13,15 @@ npm test         # tes
 npm run build    # hasil di dist/
 ```
 
-Data contoh (fiktif) ada di `data/contoh/contoh.json` dan bisa dimuat lewat tombol **Impor JSON**.
+Data awal aplikasi = **data sekolah** (`data/sekolah/proyek.json`): 61 guru, 30 rombel, 316 beban (PEMBAGIAN TUGAS, sheet Genap_Harizka), 42 ruang site plan 2026, aturan ruang per jurusan. Tidak memuat NIP. Data contoh fiktif untuk demo/tes ada di `data/contoh/contoh.json` (tombol **Ganti dengan data contoh fiktif** di Master Data).
+
+## Yang sudah ada (tahap 4)
+
+- **Susun Otomatis** (tab baru, berjalan di Web Worker): menempatkan JP semua beban tanpa bentrok guru/rombel/ruang, memperhatikan guru tidak tersedia, ruang terlarang, jenis ruang per mapel, pola pertemuan, dan kelompok paralel. Mode "dari nol" atau "lengkapi" (mempertahankan slot yang ada). Yang tidak muat tidak dipaksakan: dilaporkan beserta alasannya. Hasil diterapkan dengan satu klik dan bisa diurungkan.
 
 ## Yang sudah ada (tahap 3, bagian 1)
 
-- **Impor Excel** format PEMBAGIAN TUGAS (sheet seperti `Genap_Harizka`): guru dengan kode A–Z/AA–ZZ, mapel berkode ≤3 huruf, rombel, dan beban, lengkap dengan pemeriksaan silang JP. Berkas dibaca di peramban saja; NIP dan tanggal lahir tidak dibaca.
+- **Impor Excel** format PEMBAGIAN TUGAS (sheet seperti `Genap_Harizka`): guru (kode 3 huruf dari jadwal-te bila dikenal, selain itu usulan dari nama), mapel berkode ≤3 huruf, rombel, dan beban, lengkap dengan pemeriksaan silang JP. Berkas dibaca di peramban saja; NIP dan tanggal lahir tidak dibaca.
 - **Grid** "Satu per satu" dan "Semua sekaligus" (matriks seluruh rombel/guru/ruang); seret-lepas di semua mode.
 
 ## Yang sudah ada (tahap 2)

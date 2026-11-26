@@ -13,6 +13,7 @@ import { klikInspektur, renderInspektur } from './inspektur';
 import { klikBeban, renderBeban, ubahBeban } from './beban';
 import { klikMaster, renderMaster, ubahMaster } from './master';
 import { klikImpor, renderImpor, ubahImpor } from './imporExcel';
+import { klikSusun, renderSusun, ubahSusun } from './susun';
 import { klikSkema, renderSkemaTab, ubahSkema } from './skemaTab';
 import { esc, isoLokal, unduh } from './util';
 
@@ -23,6 +24,7 @@ const TAB: { id: Tab; label: string }[] = [
   { id: 'master', label: 'Master Data' },
   { id: 'skema', label: 'Skema & Kalender' },
   { id: 'impor', label: 'Impor Excel' },
+  { id: 'susun', label: 'Susun Otomatis' },
 ];
 
 export async function mulaiApp(akar: HTMLElement): Promise<void> {
@@ -116,6 +118,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       : ui.tab === 'beban' ? renderBeban(ctx)
       : ui.tab === 'master' ? renderMaster(ctx)
       : ui.tab === 'impor' ? renderImpor(ctx)
+      : ui.tab === 'susun' ? renderSusun(ctx)
       : renderSkemaTab(p);
     akar.innerHTML = `<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div class="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-2.5">
@@ -169,7 +172,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
         void hapusDraf();
         return gambar();
     }
-    void (klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSkema(ctx, el));
+    void (klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikSkema(ctx, el));
   });
 
   akar.addEventListener('change', (e) => {
@@ -191,7 +194,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       });
       return;
     }
-    void (ubahGrid(ctx, el) || ubahBeban(ctx, el) || ubahMaster(ctx, el) || ubahImpor(ctx, el) || ubahSkema(ctx, el));
+    void (ubahGrid(ctx, el) || ubahBeban(ctx, el) || ubahMaster(ctx, el) || ubahImpor(ctx, el) || ubahSusun(ctx, el) || ubahSkema(ctx, el));
   });
 
   document.addEventListener('keydown', (e) => {
