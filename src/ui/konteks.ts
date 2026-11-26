@@ -3,6 +3,7 @@ import type { Kategori, Masalah } from '../mesin/validator';
 import type { SkemaHari } from '../model/kalender';
 
 export type Tab = 'grid' | 'inspektur' | 'beban' | 'master' | 'skema';
+export type Tata = 'hari' | 'semua';
 export type ModeLihat = 'rombel' | 'guru' | 'ruang';
 
 export type Modal = { jenis: 'sel'; hari: number; jam: number } | { jenis: 'slot'; slotId: string };
@@ -11,6 +12,8 @@ export interface StatusUI {
   tab: Tab;
   tanggal: string;
   mode: ModeLihat;
+  /** 'hari' = satu entitas, kolom per hari; 'semua' = semua baris sekaligus dalam satu matriks. */
+  tata: Tata;
   entitasId: string;
   modal: Modal | null;
   bebanRombel: string;

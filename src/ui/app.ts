@@ -6,7 +6,7 @@ import { Riwayat } from '../mesin/riwayat';
 import { dariJson, hapusDraf, keJson, muatDraf, simpanDraf } from '../io/simpan';
 import type { Konteks, StatusUI, Tab, Turunan } from './konteks';
 import { hitungTurunan } from './turunan';
-import { daftarEntitas, klikGrid, lepas, renderGrid, renderModal, siapkanSeret, ubahGrid } from './grid';
+import { PETA_KOSONG, daftarEntitas, hasilSel, klikGrid, lepas, renderGrid, renderModal, siapkanSeret, ubahGrid } from './grid';
 import type { PetaSel, Seret } from './grid';
 import { klikInspektur, renderInspektur } from './inspektur';
 import { klikBeban, renderBeban, ubahBeban } from './beban';
@@ -28,6 +28,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     tab: 'grid',
     tanggal: isoLokal(new Date()),
     mode: 'rombel',
+    tata: 'hari',
     entitasId: p.master.rombel[0]?.id ?? '',
     modal: null,
     bebanRombel: 'semua',
@@ -207,7 +208,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
 
   // ---------------------------------------------------------------- seret & lepas
   let seret: Seret | null = null;
-  let petaSel: PetaSel = new Map();
+  let petaSel: PetaSel = PETA_KOSONG;
   const petunjuk = (): HTMLElement => {
     let el = document.getElementById('petunjuk');
     if (!el) {
@@ -220,10 +221,9 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     akar.querySelectorAll('.sel-ok,.sel-bad').forEach((x) => x.classList.remove('sel-ok', 'sel-bad'));
     petunjuk().className = 'hidden';
     seret = null;
-    petaSel = new Map();
+    petaSel = PETA_KOSONG;
   };
-  const kunciSel = (td: HTMLElement) => `${td.dataset.hari}:${td.dataset.jam}`;
-
+  
   akar.addEventListener('dragstart', (e) => {
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-seret]');
     if (!el) return;
@@ -232,14 +232,14 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
     petaSel = siapkanSeret(ctx, seret);
     akar.querySelectorAll<HTMLElement>('[data-sel]').forEach((td) => {
-      const h = petaSel.get(kunciSel(td));
+      const h = hasilSel(petaSel, td);
       if (h) td.classList.add(h.ok ? 'sel-ok' : 'sel-bad');
     });
   });
   akar.addEventListener('dragover', (e) => {
     if (!seret) return;
     const td = (e.target as HTMLElement).closest<HTMLElement>('[data-sel]');
-    const h = td ? petaSel.get(kunciSel(td)) : undefined;
+    const h = td ? hasilSel(petaSel, td) : undefined;
     const kotak = petunjuk();
     if (td && h) {
       if (h.ok) {
