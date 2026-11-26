@@ -60,7 +60,33 @@ export function idSlotBaru(): string {
  * Rencana menaruh beban baru (`dari.bebanId`) atau memindah slot (`dari.slotId`) ke hari+jam tujuan.
  * Bila memindah slot ke sel yang hanya berisi satu slot lain dan perpindahan biasa gagal, dicoba tukar posisi.
  */
-export function rencanaPindah(p: Proyek, slots: Slot[], dari: { bebanId?: string; slotId?: string }, hari: number, jam: number): RencanaPindah {
+/** Memindah satu blok (beberapa JP berurutan) agar jam pertamanya jatuh di `jamAwal` pada `hari`; semua JP ikut dan harus muat. */
+export function rencanaPindahBlok(p: Proyek, slots: Slot[], blok: Slot[], hari: number, jamAwal: number): RencanaPindah {
+  const beban = p.beban.find((b) => b.id === blok[0]?.bebanId);
+  if (!beban || blok.length === 0) return { ok: false, alasan: ['Beban tidak ditemukan.'], ubahan: [], tukar: false };
+  const urut = [...blok].sort((a, b) => a.jam - b.jam);
+  if (urut.every((s, i) => s.hari === hari && s.jam === jamAwal + i)) return { ok: false, alasan: ['Sudah berada di sel ini.'], ubahan: [], tukar: false };
+  const ids = new Set(urut.map((s) => s.id));
+  let kini = slots.filter((s) => !ids.has(s.id));
+  const baru: Slot[] = [];
+  const alasan: string[] = [];
+  urut.forEach((s, i) => {
+    const r = tentukanRuang(p, kini, beban, hari, jamAwal + i, s.ruangId);
+    if (r.alasan) alasan.push(`Jam ${jamAwal + i}: ${r.alasan}`);
+    const b: Slot = { ...s, hari, jam: jamAwal + i, ruangId: r.ruangId };
+    baru.push(b);
+    kini = [...kini, b];
+  });
+  alasan.push(...cekPenempatan(p, slots, baru));
+  const unik = [...new Set(alasan)];
+  return unik.length ? { ok: false, alasan: unik, ubahan: [], tukar: false } : { ok: true, alasan: [], ubahan: baru, tukar: false };
+}
+
+export function rencanaPindah(p: Proyek, slots: Slot[], dari: { bebanId?: string; slotId?: string; slotIds?: string[] }, hari: number, jam: number): RencanaPindah {
+  if (dari.slotIds && dari.slotIds.length > 1) {
+    const blok = dari.slotIds.map((id) => slots.find((s) => s.id === id)).filter((s): s is Slot => !!s);
+    if (blok.length > 1) return rencanaPindahBlok(p, slots, blok, hari, jam);
+  }
   const bebanById = new Map(p.beban.map((b) => [b.id, b]));
   const asal = dari.slotId ? slots.find((s) => s.id === dari.slotId) : undefined;
   const beban = bebanById.get(asal ? asal.bebanId : (dari.bebanId ?? ''));

@@ -4,6 +4,8 @@ import { hitungSkema, kapasitasKbm } from '../model/skema';
 import type { BarisHitung } from '../model/skema';
 import type { Skema } from '../model/tipe';
 import { selisihKapasitas } from '../model/kalender';
+import { susunBlok, potongBlok } from '../mesin/blok';
+import type { Blok } from '../mesin/blok';
 import { cekPenempatan, rencanaPindah, terapkanRencana } from '../mesin/penempatan';
 import { jpRombel } from '../model/jp';
 import { esc, opsi, tambahHari, tanggalPendek, warnaMapel } from './util';
@@ -50,29 +52,51 @@ function slotMilik(k: Konteks, pk: Peta): Slot[] {
   });
 }
 
-function chipSlot(k: Konteks, pk: Peta, s: Slot, mode: 'besar' | 'mini'): string {
-  const b = pk.beban.get(s.bebanId);
-  if (!b) return '';
+interface Rujukan {
+  mapel: string;
+  guru: string;
+  rombel: string;
+  ruang: string[];
+  kedua: string;
+  lencana: string;
+  warna: { bg: string; garis: string };
+  cls: string;
+  judul: string;
+  tanda: boolean;
+}
+
+/** Teks dan status satu kartu (gabungan beberapa slot berurutan atau satu slot). */
+function rujuk(k: Konteks, pk: Peta, slots: Slot[]): Rujukan | null {
+  const s0 = slots[0];
+  const b = s0 ? pk.beban.get(s0.bebanId) : undefined;
+  if (!s0 || !b) return null;
   const mapel = pk.mapel.get(b.mapelId) ?? '?';
   const guru = [b.guruId, ...b.timGuruIds].map((g) => pk.guru.get(g) ?? '?').join('+');
-  const ruang = pk.ruang.get(s.ruangId) ?? '—';
   const rombel = pk.rombel.get(b.rombelId) ?? '?';
-  const w = warnaMapel(mapel);
-  const ms = k.turunan.peta.get(s.id) ?? [];
+  const ruang = [...new Set(slots.map((s) => pk.ruang.get(s.ruangId) ?? '—'))];
+  const ms = slots.flatMap((s) => k.turunan.peta.get(s.id) ?? []);
   const wajib = ms.filter((m) => m.kategori === 'bentrok' || m.kategori === 'aturan');
-  const cls = wajib.length ? 'bermasalah' : ms.length ? 'peringatan' : '';
-  // baris kedua dan lencana kanan bergantung pada apa yang sedang dilihat
   const [kedua, lencana] =
-    k.ui.mode === 'rombel' ? [guru, ruang] : k.ui.mode === 'guru' ? [rombel, ruang] : [rombel, guru];
-  const judul = ms.length ? ms.map((m) => m.pesan).join('\n') : `${rombel} · ${mapel} · ${guru} · ${ruang}`;
-  const attr = `style="--bg:${w.bg};--garis:${w.garis}" title="${esc(judul)}" data-aksi="slotDetail" data-slot="${esc(s.id)}" draggable="true" data-seret="slot" data-slot-id="${esc(s.id)}"`;
-  const tanda = wajib.length ? '<span class="text-red-600">⚠</span>' : '';
-  if (mode === 'mini') {
-    return `<div class="chip chip-mini ${cls}" ${attr}><b>${esc(mapel)}</b><span>${esc(kedua)}</span><span class="text-slate-500">${esc(lencana)}</span>${tanda}</div>`;
-  }
-  return `<div class="chip chip-besar ${cls}" ${attr}>
-    <div class="flex w-full items-center justify-between gap-1"><b class="text-[13px]">${esc(mapel)}</b>${tanda}<span class="lencana-ruang">${esc(lencana)}</span></div>
-    <div class="text-[11px] text-slate-600">${esc(kedua)}</div></div>`;
+    k.ui.mode === 'rombel' ? [guru, ruang.join('·')] : k.ui.mode === 'guru' ? [rombel, ruang.join('·')] : [rombel, guru];
+  const judul = ms.length ? [...new Set(ms.map((m) => m.pesan))].join('\n') : `${rombel} · ${mapel} · ${guru} · ${ruang.join('/')}`;
+  return {
+    mapel, guru, rombel, ruang, kedua, lencana,
+    warna: warnaMapel(mapel),
+    cls: wajib.length ? 'bermasalah' : ms.length ? 'peringatan' : '',
+    judul,
+    tanda: wajib.length > 0,
+  };
+}
+
+const atrSeret = (slots: Slot[]): string =>
+  `draggable="true" data-seret="slot" data-slot-id="${esc(slots[0]?.id ?? '')}" data-slot-ids="${esc(slots.map((s) => s.id).join(','))}"`;
+
+/** Kartu kecil untuk satu slot (dipakai di tampungan). */
+function chipSederhana(k: Konteks, pk: Peta, s: Slot): string {
+  const r = rujuk(k, pk, [s]);
+  if (!r) return '';
+  return `<div class="chip ${r.cls}" style="--bg:${r.warna.bg};--garis:${r.warna.garis}" title="${esc(r.judul)}" data-aksi="slotDetail" data-slot="${esc(s.id)}" ${atrSeret([s])}>
+    <b>${esc(r.mapel)}</b><span class="text-slate-600">${esc(r.kedua)}</span><span class="lencana-ruang ml-auto">${esc(r.lencana)}</span></div>`;
 }
 
 export function sisaJp(slots: Slot[], b: Beban): number {
@@ -94,13 +118,28 @@ interface InfoHari {
   skema: Skema | undefined;
   baris: BarisHitung[];
   kap: number;
+  /** nomor pelajaran -> waktu */
+  waktu: Map<number, { mulai: string; selesai: string; kegiatan: string }>;
+  /** istirahat yang jatuh setelah nomor pelajaran tertentu (0 = sebelum pelajaran pertama) */
+  istirahat: Map<number, { kegiatan: string; mulai: string; selesai: string }>;
 }
 
 function infoHari(k: Konteks): InfoHari[] {
   const skemaById = new Map(k.p.skema.map((s) => [s.id, s]));
   return k.turunan.hari.map((h) => {
     const skema = h.info.skemaId ? skemaById.get(h.info.skemaId) : undefined;
-    return { skema, baris: skema ? hitungSkema(skema) : [], kap: skema ? kapasitasKbm(skema) : 0 };
+    const baris = skema ? hitungSkema(skema) : [];
+    const waktu: InfoHari['waktu'] = new Map();
+    const istirahat: InfoHari['istirahat'] = new Map();
+    let terakhir = 0;
+    for (const b of baris) {
+      if (b.nomorKbm === null) istirahat.set(terakhir, { kegiatan: b.baris.kegiatan, mulai: b.mulai, selesai: b.selesai });
+      else {
+        waktu.set(b.nomorKbm, { mulai: b.mulai, selesai: b.selesai, kegiatan: b.baris.kegiatan });
+        terakhir = b.nomorKbm;
+      }
+    }
+    return { skema, baris, kap: skema ? kapasitasKbm(skema) : 0, waktu, istirahat };
   });
 }
 
@@ -115,68 +154,127 @@ function kepalaHari(k: Konteks, i: number, ih: InfoHari): string {
   return `<div class="font-semibold">${nama}</div><div class="text-xs opacity-90">${esc(ih.skema.nama)} · ${LABEL_SUMBER[h.info.sumber ?? 'reguler']}</div>`;
 }
 
-/** Tampilan satu entitas: kolom = hari, baris = pelajaran ke-N (sejajar antar hari). */
+const H_JAM = 60;
+const H_ISTIRAHAT = 26;
+const H_PAGI = 34;
+
+/**
+ * Tampilan satu entitas: kolom = hari. Baris pelajaran sejajar antar hari; istirahat punya baris sendiri
+ * (hanya hari yang beristirahat di titik itu yang menampilkannya). Kartu = satu beban pada satu hari dengan JP berurutan;
+ * bila terpotong istirahat, kartu tampil terpisah di kedua sisi istirahat.
+ */
 function tabelPekan(k: Konteks, pk: Peta, milik: Slot[]): string {
   const ih = infoHari(k);
-  const peta = new Map<string, Slot[]>();
-  for (const s of milik) {
-    const key = `${s.hari}:${s.jam}`;
-    const l = peta.get(key);
-    if (l) l.push(s);
-    else peta.set(key, [s]);
-  }
   const maks = Math.max(0, ...ih.map((x) => x.kap));
-  const adaNol = ih.some((x) => x.baris.some((b) => b.nomorKbm === 0));
+  const adaNol = ih.some((x) => x.waktu.has(0));
   const awal = adaNol ? 0 : 1;
   const rombelMode = k.ui.mode === 'rombel';
 
+  // geometri baris bersama
+  const top = new Map<number, number>();
+  const tinggi = new Map<number, number>();
+  const topIst = new Map<number, number>();
+  const labelBaris: string[] = [];
+  let y = 0;
+  for (let n = awal; n <= maks; n++) {
+    const h = n === 0 ? H_PAGI : H_JAM;
+    top.set(n, y);
+    tinggi.set(n, h);
+    labelBaris.push(`<div class="label-jam" style="top:${y}px;height:${h}px">${n === 0 ? 'Pagi' : `Jam ${n}`}</div>`);
+    y += h;
+    if (ih.some((x) => x.istirahat.has(n) && n < x.kap)) {
+      topIst.set(n, y);
+      labelBaris.push(`<div class="label-istirahat" style="top:${y}px;height:${H_ISTIRAHAT}px">Istirahat</div>`);
+      y += H_ISTIRAHAT;
+    }
+  }
+  const total = y;
+  const batas = (n: number) => (top.get(n) ?? 0) + (tinggi.get(n) ?? 0);
+
   const kepala = ih
+    .map((x, i) => `<div class="px-2 py-2 text-white" style="background:${esc(x.skema?.warna ?? '#64748b')}">${kepalaHari(k, i, x)}</div>`)
+    .join('');
+
+  const kolom = ih
     .map((x, i) => {
-      const warna = x.skema?.warna ?? '#64748b';
-      return `<th class="px-2 py-2 text-left align-top font-normal text-white" style="background:${esc(warna)}">${kepalaHari(k, i, x)}</th>`;
+      if (!x.skema) return `<div class="relative bg-slate-100 p-3 text-sm text-slate-500" style="height:${total}px">Tidak ada KBM</div>`;
+      const lapis: string[] = [];
+      // sel pelajaran (sasaran lepas) dan baris istirahat
+      for (let n = awal; n <= maks; n++) {
+        const t = top.get(n) ?? 0;
+        const h = tinggi.get(n) ?? 0;
+        const w = x.waktu.get(n);
+        if (n > x.kap) lapis.push(`<div class="absolute inset-x-0 bg-slate-50" style="top:${t}px;height:${h}px"></div>`);
+        else if (n === 0) lapis.push(`<div class="absolute inset-x-0 px-2 pt-1 text-xs italic text-slate-500" style="top:${t}px;height:${h}px;background:${esc(x.skema.warna)}12">${w ? `${w.mulai}–${w.selesai} · ${esc(w.kegiatan)}` : ''}</div>`);
+        else {
+          const kosongKlik = rombelMode;
+          lapis.push(`<div class="sel ${kosongKlik ? 'sel-kosong' : ''}" style="top:${t}px;height:${h}px" data-sel="1" data-hari="${i}" data-jam="${n}" ${kosongKlik ? 'data-aksi="selKosong"' : ''}><span class="waktu-sel">${w ? `${w.mulai}–${w.selesai}` : ''}</span>${kosongKlik ? '<span class="plus">＋</span>' : ''}</div>`);
+        }
+        const ist = x.istirahat.get(n);
+        const ty = topIst.get(n);
+        if (ist && ty !== undefined && n < x.kap) lapis.push(`<div class="strip-istirahat" style="top:${ty}px;height:${H_ISTIRAHAT}px">${esc(ist.kegiatan)} · ${ist.mulai}–${ist.selesai}</div>`);
+      }
+      // kartu
+      const bagian: { a: number; b: number; blok: Blok; ke: number; dari: number }[] = [];
+      for (const blok of susunBlok(milik.filter((s) => s.hari === i && s.jam >= 1 && s.jam <= x.kap))) {
+        const pot = potongBlok(blok, new Set([...x.istirahat.keys()]));
+        pot.forEach((q, ke) => bagian.push({ a: q.a, b: q.b, blok, ke, dari: pot.length }));
+      }
+      bagian.sort((p1, p2) => p1.a - p2.a || p2.b - p1.b);
+      // jalur: bagian yang tumpang tindih berdampingan
+      const jalur = new Map<(typeof bagian)[number], [number, number]>();
+      let gugus: (typeof bagian)[number][] = [];
+      let akhirJalur: number[] = [];
+      let maksB = -1;
+      const tutup = () => {
+        for (const g of gugus) jalur.set(g, [jalur.get(g)?.[0] ?? 0, akhirJalur.length]);
+        gugus = [];
+        akhirJalur = [];
+        maksB = -1;
+      };
+      for (const b of bagian) {
+        if (gugus.length && b.a > maksB) tutup();
+        let l = akhirJalur.findIndex((e) => e < b.a);
+        if (l < 0) {
+          l = akhirJalur.length;
+          akhirJalur.push(b.b);
+        } else akhirJalur[l] = b.b;
+        maksB = Math.max(maksB, b.b);
+        gugus.push(b);
+        jalur.set(b, [l, 0]);
+      }
+      tutup();
+      for (const b of bagian) {
+        const slotsB = b.blok.slots.filter((s) => s.jam >= b.a && s.jam <= b.b);
+        const r = rujuk(k, pk, slotsB);
+        if (!r) continue;
+        const [l, n] = jalur.get(b) ?? [0, 1];
+        const t = top.get(b.a) ?? 0;
+        const tinggiKartu = batas(b.b) - t;
+        const wa = x.waktu.get(b.a);
+        const wb = x.waktu.get(b.b);
+        const jp = slotsB.length;
+        const info = `${jp} JP${b.dari > 1 ? ` · bagian ${b.ke + 1}/${b.dari}` : ''}`;
+        lapis.push(`<div class="chip chip-besar kartu-slot ${r.cls}" style="--bg:${r.warna.bg};--garis:${r.warna.garis};top:${t + 2}px;height:${tinggiKartu - 4}px;left:calc(${(l * 100) / n}% + 2px);width:calc(${100 / n}% - 4px)" title="${esc(r.judul)}${b.dari > 1 ? '\nTerpotong istirahat; seret untuk memindah seluruh blok.' : ''}" data-aksi="slotDetail" data-slot="${esc(slotsB[0]?.id ?? '')}" ${atrSeret(b.blok.slots)}>
+          <div class="flex w-full items-center justify-between gap-1"><b class="text-[13px]">${esc(r.mapel)}</b>${r.tanda ? '<span class="text-red-600">⚠</span>' : ''}<span class="lencana-ruang">${esc(r.lencana)}</span></div>
+          <div class="truncate text-[11px] text-slate-600">${esc(r.kedua)}</div>
+          <div class="text-[10px] text-slate-500">${info}${wa && wb ? ` · ${wa.mulai}–${wb.selesai}` : ''}</div></div>`);
+      }
+      return `<div class="relative border-l border-slate-200" style="height:${total}px">${lapis.join('')}</div>`;
     })
     .join('');
 
-  const barisHtml: string[] = [];
-  for (let n = awal; n <= maks; n++) {
-    const sel = ih
-      .map((x, i) => {
-        if (!x.skema) {
-          if (n !== awal) return '';
-          return `<td rowspan="${maks - awal + 1}" class="bg-slate-100 p-3 align-top text-sm text-slate-500">Tidak ada KBM</td>`;
-        }
-        const idx = x.baris.findIndex((b) => b.nomorKbm === n);
-        const info = x.baris[idx];
-        if (!info) return `<td class="bg-slate-50"></td>`;
-        const berikut = x.baris[idx + 1];
-        const strip =
-          berikut && berikut.nomorKbm === null
-            ? `<div class="strip-istirahat">${esc(berikut.baris.kegiatan)} · ${berikut.mulai}–${berikut.selesai}</div>`
-            : '';
-        const waktu = `<div class="waktu-sel">${info.mulai}–${info.selesai}</div>`;
-        if (n === 0) return `<td class="align-top" style="background:${esc(x.skema.warna)}10">${waktu}<div class="px-2 pb-2 text-xs italic text-slate-500">${esc(info.baris.kegiatan)}</div>${strip}</td>`;
-        const isi = peta.get(`${i}:${n}`) ?? [];
-        const chips = isi.map((s) => chipSlot(k, pk, s, 'besar')).join('');
-        const kosongKlik = rombelMode && !isi.length;
-        const tambah = rombelMode && isi.length
-          ? `<button class="tambah-paralel" data-aksi="selKosong" data-hari="${i}" data-jam="${n}" title="Tambah pelajaran paralel">＋</button>`
-          : '';
-        return `<td class="align-top p-0">${waktu}<div class="sel group ${kosongKlik ? 'sel-kosong' : ''}" data-sel="1" data-hari="${i}" data-jam="${n}" ${kosongKlik ? 'data-aksi="selKosong"' : ''}>${chips}${tambah}${kosongKlik ? '<span class="plus">＋</span>' : ''}</div>${strip}</td>`;
-      })
-      .join('');
-    barisHtml.push(`<tr class="border-t border-slate-200"><th class="w-16 bg-slate-50 px-2 text-center align-middle text-xs font-bold text-slate-700">${n === 0 ? 'Pagi' : `Jam ${n}`}</th>${sel}</tr>`);
-  }
-  return `<div class="kartu overflow-x-auto"><table class="w-full min-w-[760px] table-fixed border-collapse">
-    <thead><tr><th class="w-16 bg-slate-800 px-2 py-2 text-xs font-semibold text-white">Jam ke-</th>${kepala}</tr></thead>
-    <tbody>${barisHtml.join('')}</tbody></table></div>`;
+  return `<div class="kartu overflow-x-auto"><div class="min-w-[820px]">
+    <div class="grid grid-cols-[64px_repeat(5,minmax(0,1fr))]"><div class="bg-slate-800 px-2 py-2 text-xs font-semibold text-white">Jam ke-</div>${kepala}</div>
+    <div class="grid grid-cols-[64px_repeat(5,minmax(0,1fr))]"><div class="relative bg-slate-50" style="height:${total}px">${labelBaris.join('')}</div>${kolom}</div></div></div>`;
 }
 
-/** Tampilan semua sekaligus: baris = semua rombel/guru/ruang, kolom = hari × pelajaran. */
+/** Tampilan semua sekaligus: baris = semua rombel/guru/ruang, kolom = hari × pelajaran (istirahat punya kolom sendiri). */
 function tabelSemua(k: Konteks, pk: Peta, entitas: { id: string; label: string }[]): string {
   const ih = infoHari(k);
   const peta = new Map<string, Slot[]>();
   const taruh = (id: string, s: Slot) => {
-    const key = `${id}|${s.hari}:${s.jam}`;
+    const key = `${id}|${s.hari}`;
     const l = peta.get(key);
     if (l) l.push(s);
     else peta.set(key, [s]);
@@ -188,34 +286,87 @@ function tabelSemua(k: Konteks, pk: Peta, entitas: { id: string; label: string }
     else if (k.ui.mode === 'guru') [b.guruId, ...b.timGuruIds].forEach((g) => taruh(g, s));
     else taruh(s.ruangId, s);
   }
+  // kolom tiap hari: pelajaran dan istirahat
+  type Kol = { jenis: 'jam'; n: number } | { jenis: 'ist'; setelah: number };
+  const kolHari: Kol[][] = ih.map((x) => {
+    const daftar: Kol[] = [];
+    if (x.istirahat.has(0)) daftar.push({ jenis: 'ist', setelah: 0 });
+    for (let n = 1; n <= x.kap; n++) {
+      daftar.push({ jenis: 'jam', n });
+      if (n < x.kap && x.istirahat.has(n)) daftar.push({ jenis: 'ist', setelah: n });
+    }
+    return daftar;
+  });
+
   const kepala1 = ih
     .map((x, i) => {
-      const warna = x.skema?.warna ?? '#64748b';
       const h = k.turunan.hari[i];
       const teks = x.skema ? `${NAMA_HARI[i]} ${h ? tanggalPendek(h.tgl) : ''}` : `${NAMA_HARI[i]} · libur`;
-      return `<th colspan="${Math.max(1, x.kap)}" class="sticky top-0 z-20 border-l-2 border-white px-2 py-1 text-left text-xs font-semibold text-white" style="background:${esc(warna)}">${teks}</th>`;
+      return `<th colspan="${Math.max(1, kolHari[i]?.length ?? 1)}" class="sticky top-0 z-20 border-l-2 border-white px-2 py-1 text-left text-xs font-semibold text-white" style="background:${esc(x.skema?.warna ?? '#64748b')}">${teks}</th>`;
     })
     .join('');
   const kepala2 = ih
     .map((x, i) =>
       x.kap === 0
         ? `<th class="sticky top-[26px] z-20 border-l-2 border-white bg-slate-200"></th>`
-        : Array.from({ length: x.kap }, (_, j) => `<th class="sticky top-[26px] z-20 bg-slate-100 text-[10px] font-semibold text-slate-600 ${j === 0 ? 'border-l-2 border-white' : ''}">${j + 1}</th>`).join('') + (i < 0 ? '' : ''),
+        : (kolHari[i] ?? [])
+            .map((c, j) =>
+              c.jenis === 'jam'
+                ? `<th class="sticky top-[26px] z-20 bg-slate-100 text-[10px] font-semibold text-slate-600 ${j === 0 ? 'border-l-2 border-white' : ''}">${c.n}</th>`
+                : `<th class="sticky top-[26px] z-20 w-[14px] min-w-[14px] bg-amber-200 text-[8px] font-medium text-amber-800" title="Istirahat">☕</th>`,
+            )
+            .join(''),
     )
     .join('');
+
   const barisHtml = entitas
     .map((e) => {
       const fokus = e.id === k.ui.entitasId;
       const sel = ih
-        .map((x, i) =>
-          x.kap === 0
-            ? `<td class="border-l-2 border-white bg-slate-100"></td>`
-            : Array.from({ length: x.kap }, (_, j) => {
-                const n = j + 1;
-                const isi = peta.get(`${e.id}|${i}:${n}`) ?? [];
-                return `<td class="sel sel-mx ${j === 0 ? 'border-l-2 border-slate-300' : 'border-l border-slate-100'}" data-sel="1" data-hari="${i}" data-jam="${n}" data-baris="${esc(e.id)}">${isi.map((s) => chipSlot(k, pk, s, 'mini')).join('')}</td>`;
-              }).join(''),
-        )
+        .map((x, i) => {
+          if (x.kap === 0) return `<td class="border-l-2 border-white bg-slate-100"></td>`;
+          const bloks = susunBlok(peta.get(`${e.id}|${i}`) ?? []);
+          const mulaiBlok = new Map<number, Blok>(); // jam -> blok (untuk slot tunggal per jam)
+          for (const b of bloks) for (const s of b.slots) mulaiBlok.set(s.jam, b);
+          const perJam = (n: number) => (peta.get(`${e.id}|${i}`) ?? []).filter((s) => s.jam === n);
+          const kol = kolHari[i] ?? [];
+          const out: string[] = [];
+          for (let j = 0; j < kol.length; j++) {
+            const c = kol[j];
+            if (!c) continue;
+            const pertama = j === 0 ? 'border-l-2 border-slate-300' : 'border-l border-slate-100';
+            if (c.jenis === 'ist') {
+              out.push(`<td class="w-[14px] min-w-[14px] max-w-[14px] bg-amber-100"></td>`);
+              continue;
+            }
+            const isi = perJam(c.n);
+            const s0 = isi.length === 1 ? isi[0] : undefined;
+            // gabungkan jam berurutan (tanpa istirahat di antaranya) untuk beban yang sama
+            let lebar = 1;
+            if (s0) {
+              for (let m = j + 1; m < kol.length; m++) {
+                const cm = kol[m];
+                if (!cm || cm.jenis !== 'jam') break;
+                const sm = perJam(cm.n);
+                if (sm.length === 1 && sm[0]?.bebanId === s0.bebanId) lebar += 1;
+                else break;
+              }
+            }
+            const blok = s0 ? mulaiBlok.get(s0.jam) : undefined;
+            const slotsKartu = s0 && lebar > 1 ? isi.concat(...Array.from({ length: lebar - 1 }, (_, d) => perJam(c.n + d + 1))) : isi;
+            const bagian = (s0 && blok ? blok.slots : isi);
+            const chips = (s0 ? [slotsKartu] : isi.map((s) => [s]))
+              .map((grup) => {
+                const r = rujuk(k, pk, grup);
+                if (!r) return '';
+                return `<div class="chip chip-mini ${r.cls}" style="--bg:${r.warna.bg};--garis:${r.warna.garis}" title="${esc(r.judul)}" data-aksi="slotDetail" data-slot="${esc(grup[0]?.id ?? '')}" ${atrSeret(s0 && blok ? bagian : grup)}><b>${esc(r.mapel)}</b><span>${esc(r.kedua)}</span><span class="text-slate-500">${esc(r.lencana)}</span>${r.tanda ? '<span class="text-red-600">⚠</span>' : ''}</div>`;
+              })
+              .join('');
+            out.push(`<td ${lebar > 1 ? `colspan="${lebar}"` : ''} class="sel-mx ${pertama}" ${lebar > 1 ? 'style="max-width:none;width:auto"' : ''} data-sel="1" data-hari="${i}" data-jam="${c.n}" data-baris="${esc(e.id)}">${chips}</td>`);
+            j += lebar - 1;
+          }
+          return out.join('');
+        })
         .join('');
       return `<tr class="border-t border-slate-200 ${fokus ? 'bg-sky-50' : ''}"><th class="label-baris ${fokus ? '!bg-sky-100' : ''}" data-aksi="fokus" data-id="${esc(e.id)}" title="Klik untuk memilih sebagai fokus">${esc(e.label)}</th>${sel}</tr>`;
     })
@@ -281,7 +432,7 @@ export function renderGrid(k: Konteks): string {
         ${belum.length ? belum.map((b) => kartuBeban(pk, b, sisaJp(t.slots, b))).join('') : '<div class="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800">Semua beban sudah terjadwal penuh.</div>'}</div>
       ${tamp.length ? `<div class="kartu border-amber-300 bg-amber-50 p-3"><div class="mb-1 text-sm font-semibold">Tampungan (${tamp.length})</div>
         <div class="mb-2 text-xs text-slate-600">Tidak muat pada skema pekan ini. Seret ke sel yang tersedia, atau ganti pola pekan.</div>
-        ${tamp.map((s) => `<div class="mb-1 text-[11px] text-slate-500">${NAMA_HARI[s.hari]}, pelajaran ke-${s.jam}</div>${chipSlot(k, pk, s, 'besar')}`).join('')}</div>` : ''}
+        ${tamp.map((s) => `<div class="mb-1 text-[11px] text-slate-500">${NAMA_HARI[s.hari]}, pelajaran ke-${s.jam}</div>${chipSederhana(k, pk, s)}`).join('')}</div>` : ''}
     </aside>`;
   }
 
@@ -307,6 +458,8 @@ export const PETA_KOSONG: PetaSel = { sel: new Map(), pemilik: () => true };
 export interface Seret {
   bebanId?: string;
   slotId?: string;
+  /** seluruh slot satu blok (beberapa JP berurutan) yang diseret bersama */
+  slotIds?: string[];
 }
 
 /** Menghitung keabsahan tiap sel pekan ini untuk benda yang sedang diseret. */
@@ -316,7 +469,13 @@ export function siapkanSeret(k: Konteks, seret: Seret): PetaSel {
   k.turunan.skemaPerHari.forEach((id, hari) => {
     const sk = id ? skemaById.get(id) : undefined;
     if (!sk) return;
-    for (let jam = 1; jam <= kapasitasKbm(sk); jam++) {
+    const kap = kapasitasKbm(sk);
+    const n = seret.slotIds?.length ?? 1;
+    for (let jam = 1; jam <= kap; jam++) {
+      if (jam + n - 1 > kap) {
+        sel.set(`${hari}:${jam}`, { ok: false, alasan: [`Tidak muat: ${n} JP berurutan dari pelajaran ke-${jam} melewati jam terakhir hari itu.`] });
+        continue;
+      }
       const r = rencanaPindah(k.p, k.turunan.slots, seret, hari, jam);
       sel.set(`${hari}:${jam}`, { ok: r.ok, alasan: r.alasan });
     }

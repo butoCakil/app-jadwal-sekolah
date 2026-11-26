@@ -223,14 +223,21 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
   const bersihkan = () => {
     akar.querySelectorAll('.sel-ok,.sel-bad').forEach((x) => x.classList.remove('sel-ok', 'sel-bad'));
     petunjuk().className = 'hidden';
+    akar.classList.remove('sedang-seret');
     seret = null;
     petaSel = PETA_KOSONG;
   };
   
+  /** Sel jadwal di bawah penunjuk (kartu bisa menutupi sel, jadi dicari lewat koordinat). */
+  const selDi = (e: DragEvent): HTMLElement | null => {
+    for (const x of document.elementsFromPoint(e.clientX, e.clientY)) if (x instanceof HTMLElement && x.dataset.sel) return x;
+    return null;
+  };
   akar.addEventListener('dragstart', (e) => {
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-seret]');
     if (!el) return;
-    seret = el.dataset.seret === 'beban' ? { bebanId: el.dataset.bebanId } : { slotId: el.dataset.slotId };
+    seret = el.dataset.seret === 'beban' ? { bebanId: el.dataset.bebanId } : { slotId: el.dataset.slotId, slotIds: el.dataset.slotIds?.split(',') };
+    window.setTimeout(() => akar.classList.add('sedang-seret'), 0);
     e.dataTransfer?.setData('text/plain', 'jadwal');
     if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
     petaSel = siapkanSeret(ctx, seret);
@@ -241,7 +248,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
   });
   akar.addEventListener('dragover', (e) => {
     if (!seret) return;
-    const td = (e.target as HTMLElement).closest<HTMLElement>('[data-sel]');
+    const td = selDi(e);
     const h = td ? hasilSel(petaSel, td) : undefined;
     const kotak = petunjuk();
     if (td && h) {
@@ -255,7 +262,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
   });
   akar.addEventListener('drop', (e) => {
     if (!seret) return;
-    const td = (e.target as HTMLElement).closest<HTMLElement>('[data-sel]');
+    const td = selDi(e);
     if (!td) return;
     e.preventDefault();
     const s = seret;
