@@ -75,7 +75,7 @@ Sumber data ─► Data (7 lapis) ─► Mesin (validator · solver · adaptor s
 
 - **Guru:** `id, nama, kodeTampil (A–Z, lalu AA–ZZ, otomatis, bisa diedit), mapelUtama[], catatan`
 - **Mapel:** `id, nama, kode (≤3 huruf, otomatis, bisa diedit; mis. MTK, BI, ENG, PA), kategori (umum/kejuruan), induk?`
-  - `induk` dipakai untuk **elemen/sub-mapel**: TAV → MPP, KK1, KK2 (TE), atau pecahan lain. Bisa dipecah, digabung, atau dikurangi kapan saja.
+  - `induk` dipakai untuk **elemen/sub-mapel**: pada TE, DTE (kelas X) → DLE, DRE, TKB dan TAV (kelas XI-XII) → PRE, PMM, PSRT, PISAV, PISS; P4E adalah mata pelajaran pilihan (MPP). Bisa dipecah, digabung, atau dikurangi kapan saja.
 - **Rombel:** `id, tingkat (X/XI/XII), jurusan (AT/DKV/TE), nomor, kode (mis. XI TE 2)`
 - **Ruang:** `id, kode (B3, D1, S1, I1, K1, …), nama, jenis (teori/praktik/lab/lapangan), blok, kapasitas?`
 - **Kelompok paralel:** sekumpulan beban yang **boleh** berjalan bersamaan untuk rombel yang sama. Contohnya PA Islam / Katolik / Kristen: satu rombel dipecah ke beberapa guru dan ruang. Ini tidak dihitung bentrok rombel, tetapi bentrok guru dan ruang tetap diperiksa.
@@ -251,7 +251,7 @@ app-jadwal-sekolah/
 2. Kapasitas kurang dan tidak ada solusi → ditandai, diputuskan manual.
 3. Cakupan: seluruh rombel, semua jurusan.
 4. Rekap 1 halaman: A4, cadangan F4. Guru A–Z lalu AA–ZZ; ruang dengan kodenya; mapel ≤3 huruf (PABP = PA). Semua bisa diedit di master.
-5. Elemen mapel bisa dipecah/digabung (TE sementara: MPP, KK1, KK2). JP per elemen diisi di aplikasi; sumber tetap Excel.
+5. Elemen mapel bisa dipecah/digabung (TE: DTE → DLE, DRE, TKB; TAV → PRE, PMM, PSRT, PISAV, PISS; P4E = MPP; lihat 11.5). JP per elemen mengikuti jadwal reguler aSc.
 6. AI mengikuti pola SIMBioTE (Gemini + Groq, multi-kunci, antrean, rantai fallback).
 7. Ruang bisa berpindah, dengan daftar ruang terlarang per rombel/jurusan.
 8. Publik hanya melihat versi yang diterapkan; admin bekerja di draf.
@@ -262,7 +262,7 @@ app-jadwal-sekolah/
 ### 11.2 Keputusan tambahan
 
 1. **Tempat AI berjalan:** disepakati (26 Nov 2026) versi pertama di browser admin; endpoint di `superapp-te` menjadi pilihan lanjutan.
-2. **Selisih kapasitas JP:** pola `[11,10,10,11,9]` dan `[10,10,11,11,9]` sama-sama 10+10+10+10+8 = **48 JP KBM**, sedangkan Excel mencatat X = 51 JP dan XI = 49 JP. Aplikasi menandai selisih ini (sesuai keputusan #2) dan diputuskan manual; cara sekolah menghitungnya belum dikonfirmasi.
+2. **Selisih kapasitas JP:** pola `[11,10,10,11,9]` dan `[10,10,11,11,9]` sama-sama 10+10+10+10+8 = **48 JP KBM**, sedangkan Excel mencatat X = 51 JP dan XI = 49 JP. Aplikasi menandai selisih ini (sesuai keputusan #2). Terjawab 26 Nov: jadwal reguler aSc menempatkan 48 JP per rombel; selisihnya ada di data Excel (lihat 11.5).
 
 ### 11.3 Status tahap
 
