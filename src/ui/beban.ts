@@ -1,5 +1,6 @@
 import type { Beban } from '../model/tipe';
 import { warnaMapel, esc, opsi, pecahKode } from './util';
+import { jpRombel } from '../model/jp';
 import type { Konteks } from './konteks';
 
 /** Mengubah daftar kode ("A, B") menjadi id; mengembalikan kode yang tidak dikenal. */
@@ -51,7 +52,7 @@ export function renderBeban(k: Konteks): string {
   const kartu = rombel
     .map((r) => {
       const daftar = p.beban.filter((b) => b.rombelId === r.id);
-      const total = daftar.filter((b) => !b.nonTatapMuka).reduce((a, b) => a + b.jp, 0);
+      const total = jpRombel(daftar);
       const jadi = daftar.filter((b) => !b.nonTatapMuka).reduce((a, b) => a + Math.min(b.jp, k.turunan.slots.filter((s) => s.bebanId === b.id).length), 0);
       const ket = r.jpButuh !== undefined ? ` · data sumber: ${r.jpButuh} JP${r.jpButuh !== total ? ` <span class="text-red-600">(selisih ${total - r.jpButuh >= 0 ? '+' : ''}${total - r.jpButuh})</span>` : ''}` : '';
       return `<div class="kartu p-3"><div class="mb-2 flex flex-wrap items-baseline gap-2"><h3 class="text-base font-semibold">${esc(r.kode)}</h3>

@@ -5,6 +5,7 @@ import type { BarisHitung } from '../model/skema';
 import type { Skema } from '../model/tipe';
 import { selisihKapasitas } from '../model/kalender';
 import { cekPenempatan, rencanaPindah, terapkanRencana } from '../mesin/penempatan';
+import { jpRombel } from '../model/jp';
 import { esc, opsi, tambahHari, tanggalPendek, warnaMapel } from './util';
 import type { Konteks, ModeLihat } from './konteks';
 
@@ -256,8 +257,8 @@ export function renderGrid(k: Konteks): string {
     : [];
   if (rombelMode) {
     const rombel = p.master.rombel.find((r) => r.id === k.ui.entitasId);
-    const butuh = bebanFokus.filter((b) => !b.nonTatapMuka).reduce((a, b) => a + b.jp, 0);
-    const jadi = milik.length;
+    const butuh = jpRombel(bebanFokus);
+    const jadi = new Set(milik.map((s) => { const par = pk.beban.get(s.bebanId)?.paralel; return par ? `${par}|${s.hari}|${s.jam}` : s.id; })).size;
     lencana.push(`<span class="lencana ${jadi >= butuh ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">Terjadwal ${jadi} dari ${butuh} JP</span>`);
     if (rombel) for (const s of selisihKapasitas([rombel], { perHari: kapPekan, total })) {
       lencana.push(`<span class="lencana bg-red-100 text-red-800" title="Kebutuhan menurut data sumber dibanding kapasitas pekan ini; diputuskan manual">Sumber: butuh ${s.butuh} JP, kapasitas ${s.kapasitas} → ${s.selisih > 0 ? `kurang ${s.selisih}` : `lebih ${-s.selisih}`}</span>`);

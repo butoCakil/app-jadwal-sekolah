@@ -2,7 +2,7 @@
 
 Aplikasi penyusun jadwal pelajaran seluruh rombel: skema jam dinamis (9/10/11 per hari), kalender akademik, deteksi bentrok, solver, dan asisten AI. Halaman publik menampilkan jadwal yang sudah diterapkan admin.
 
-Status: **tahap 1 dan 2 selesai.** Rancangan lengkap: [docs/RANCANGAN.md](docs/RANCANGAN.md).
+Status: **tahap 1 dan 2 selesai; tahap 3 sebagian (impor Excel).** Rancangan lengkap: [docs/RANCANGAN.md](docs/RANCANGAN.md).
 
 ## Menjalankan
 
@@ -14,6 +14,11 @@ npm run build    # hasil di dist/
 ```
 
 Data contoh (fiktif) ada di `data/contoh/contoh.json` dan bisa dimuat lewat tombol **Impor JSON**.
+
+## Yang sudah ada (tahap 3, bagian 1)
+
+- **Impor Excel** format PEMBAGIAN TUGAS (sheet seperti `Genap_Harizka`): guru dengan kode A–Z/AA–ZZ, mapel berkode ≤3 huruf, rombel, dan beban, lengkap dengan pemeriksaan silang JP. Berkas dibaca di peramban saja; NIP dan tanggal lahir tidak dibaca.
+- **Grid** "Satu per satu" dan "Semua sekaligus" (matriks seluruh rombel/guru/ruang); seret-lepas di semua mode.
 
 ## Yang sudah ada (tahap 2)
 

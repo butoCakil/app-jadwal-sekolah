@@ -1,6 +1,6 @@
 # Rancang Bangun — App Jadwal Sekolah (SMK Negeri Bansari)
 
-Status: **disepakati 26 Nov 2026.** Tahap 1 dan 2 selesai (lihat 11.3).
+Status: **disepakati 26 Nov 2026.** Tahap 1 dan 2 selesai, tahap 3 sebagian (impor Excel selesai; cetak belum) (lihat 11.3).
 Papan rancangan: Whiteboard "Rancang Bangun App Jadwal Sekolah" (claude.ai).
 
 Prinsip utama: **mesin menjaga aturan, AI mengusulkan, admin menerapkan, publik melihat yang sudah diterapkan.**
@@ -278,4 +278,8 @@ app-jadwal-sekolah/
 4. **Hitungan "bentrok" di lencana atas:** bentrok guru/rombel/ruang ditambah pelanggaran aturan (ruang terlarang, guru tidak tersedia, JP melebihi beban). Kurang JP, slot tanpa ruang, dan slot yang tidak muat di skema pekan dilaporkan terpisah sebagai peringatan.
 5. **Nomor pelajaran pada pesan:** pesan memakai nomor pelajaran (jam KBM), bukan label poster, karena label berbeda antar skema (Pembiasaan memakai nomor 1).
 6. **Pola pertemuan** (mis. 2,2) tersimpan tetapi belum diperiksa; dipakai solver di tahap 4.
+- Grid disusun ulang (26 Nov): tampilan "Satu per satu" (kolom per hari, baris pelajaran sejajar, istirahat sebagai pita di dalam sel, kartu dua baris dengan lencana ruang) dan "Semua sekaligus" (matriks semua rombel/guru/ruang × hari × pelajaran). Seret-lepas aktif di semua mode; di matriks, baris yang bukan milik pelajaran yang diseret ditolak.
+- Tahap 3 bagian 1 selesai: **Impor Excel** (tab "Impor Excel"). Pembaca xlsx sendiri (fflate + regex XML, tanpa pustaka spreadsheet), penafsir format PEMBAGIAN TUGAS (baris judul dicari lewat "MATA PELAJARAN"; sel nama kosong = guru di atasnya; hanya baris pertama sel nama dibaca sehingga NIP dan tanggal lahir tidak ikut). Hasil uji pada `PEMBAGIAN TUGAS GASAL 2026-2027.xlsx`, sheet Genap_Harizka: 61 guru, 24 mapel, 30 rombel, 316 beban, JP tatap muka X dan XI cocok dengan baris jumlah (51 dan 49). Kode mapel Excel dipetakan (PABP→PA, INDO→BI, selain itu tiga huruf pertama) dan bisa diubah di Master Data.
+- Aturan impor: PKL = non-tatap-muka; PABP dengan guru berbeda pada rombel yang sama = kelompok paralel "PA" (JP dihitung sekali per kelompok); mapel lain dengan beberapa guru di satu rombel hanya dilaporkan, tidak ditebak. Menerapkan impor mengganti guru, mapel, rombel, beban; jadwal dikosongkan; ruang, skema, kalender dipertahankan; aturan per guru atau per rombel lama dibuang.
+- Belum (tahap 3 bagian 2): cetak buku aSc, poster skema, rekap 1 halaman A4/F4, ekspor xlsx; peta kode guru/mapel yang bisa diedit sebelum menerapkan.
 

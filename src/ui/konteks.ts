@@ -2,7 +2,7 @@ import type { Proyek, Slot } from '../model/tipe';
 import type { Kategori, Masalah } from '../mesin/validator';
 import type { SkemaHari } from '../model/kalender';
 
-export type Tab = 'grid' | 'inspektur' | 'beban' | 'master' | 'skema';
+export type Tab = 'grid' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor';
 export type Tata = 'hari' | 'semua';
 export type ModeLihat = 'rombel' | 'guru' | 'ruang';
 
