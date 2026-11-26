@@ -57,7 +57,7 @@ describe('pola mingguan', () => {
   it('selisih terhadap kebutuhan sumber ditandai (51 dan 49 vs 48)', () => {
     const p = proyekContoh();
     const sel = selisihKapasitas(p.master.rombel, kapasitasPola(p.polaReguler, p.skema));
-    expect(sel.map((s) => [s.rombelId, s.selisih])).toEqual([['r1', 3], ['r2', 1]]);
+    expect(sel.map((s) => [s.rombelId, s.selisih])).toEqual([['r1', 3], ['r3', 1]]);
   });
 });
 
@@ -98,27 +98,28 @@ describe('kalender', () => {
     });
     expect(polaUntukTanggal('2026-12-02', q)).toMatchObject({ sumber: 'kegiatan', kegiatanId: 'k3' });
     expect(polaUntukTanggal('2026-12-01', q).kegiatanId).toBe('k1');
-    expect(rombelAktif('2026-12-02', q.kalender, q.master.rombel).map((r) => r.id)).toEqual(['r1']);
-    expect(rombelAktif('2026-12-01', q.kalender, q.master.rombel).map((r) => r.id)).toEqual(['r1', 'r2']);
+    expect(rombelAktif('2026-12-02', q.kalender, q.master.rombel).map((r) => r.id)).toEqual(['r1', 'r3']);
+    expect(rombelAktif('2026-12-01', q.kalender, q.master.rombel).map((r) => r.id)).toEqual(['r1', 'r2', 'r3']);
   });
 });
 
 describe('petakan slot ke skema (tampungan)', () => {
   const p = proyekContoh();
   const slots = p.versi[0]!.slots;
-  const r1 = slots.filter((s) => s.rombelId === 'r1');
-  it('pola [11,10,10,11,9]: hanya Jum\'at jam 9 masuk tampungan', () => {
+  const rombelDari = new Map(p.beban.map((b) => [b.id, b.rombelId]));
+  const r1 = slots.filter((s) => rombelDari.get(s.bebanId) === 'r1');
+  it("pola [11,10,10,11,9]: hanya Jum'at pelajaran ke-9 masuk tampungan", () => {
     const h = petakanSlot(r1, ['skema11', 'skema10', 'skema10', 'skema11', 'skema9'], p.skema);
-    expect(h.tampungan.map((s) => s.id)).toEqual(['a7']);
+    expect(h.tampungan.map((s) => s.id)).toEqual(['b3-4-9']);
     expect(h.ditempatkan).toHaveLength(r1.length - 1);
   });
-  it('pola [10,10,11,11,9]: hasil sama karena jam 10 masih muat di skema 10 dan 11', () => {
+  it('pola [10,10,11,11,9]: hasil sama', () => {
     const h = petakanSlot(r1, ['skema10', 'skema10', 'skema11', 'skema11', 'skema9'], p.skema);
-    expect(h.tampungan.map((s) => s.id)).toEqual(['a7']);
+    expect(h.tampungan.map((s) => s.id)).toEqual(['b3-4-9']);
   });
   it('hari tanpa skema (libur) memindahkan semua slot hari itu ke tampungan', () => {
     const h = petakanSlot(r1, [null, 'skema10', 'skema10', 'skema11', 'skema9'], p.skema);
-    expect(h.tampungan.map((s) => s.id).sort()).toEqual(['a1', 'a2', 'a3', 'a7']);
+    expect(h.tampungan.map((s) => s.id).sort()).toEqual(['b1-0-1', 'b1-0-2', 'b3-4-9', 'b4-0-5', 'b4-0-6']);
   });
   it('tidak ada slot yang hilang', () => {
     const h = petakanSlot(slots, ['skema9', 'skema9', 'skema9', 'skema9', 'skema9'], p.skema);

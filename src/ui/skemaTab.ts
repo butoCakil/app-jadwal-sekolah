@@ -1,8 +1,9 @@
-import type { JenisKegiatan, PolaMinggu, Proyek } from '../model/tipe';
+import type { BarisSkema, JenisBaris, JenisKegiatan, PolaMinggu, Proyek } from '../model/tipe';
 import { NAMA_HARI } from '../model/tipe';
-import { hitungSkema, jumlahJamTampil, kapasitasKbm } from '../model/skema';
+import { hitungSkema, jumlahJamTampil, kapasitasKbm, keMenit } from '../model/skema';
 import { kapasitasPola, selisihKapasitas } from '../model/kalender';
-import { esc } from './util';
+import { esc, isoLokal } from './util';
+import type { Konteks } from './konteks';
 
 const JENIS: JenisKegiatan[] = ['TKA', 'PKL', 'ASAS', 'UKK', 'libur', 'lain'];
 
@@ -96,4 +97,112 @@ export function renderSkemaTab(p: Proyek): string {
       <button class="tombol-utama mt-2" data-aksi="tambahKegiatan">+ Kegiatan</button></section>
     <section><h2 class="mb-2 text-lg font-semibold">Template skema jam</h2>
       <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">${kartuSkema}</div></section>`;
+}
+
+const salinPola = (x: PolaMinggu): PolaMinggu => [...x] as PolaMinggu;
+const polaDari = (p: Proyek, kunci: string): PolaMinggu | undefined =>
+  kunci === 'reguler' ? p.polaReguler : kunci === 'manual' ? p.penggantiManual?.pola : p.kalender.find((x) => x.id === kunci.slice(2))?.pola;
+
+export function klikSkema(k: Konteks, el: HTMLElement): boolean {
+  const d = el.dataset;
+  const skema = () => k.p.skema.find((s) => s.id === d.skema);
+  switch (d.aksi) {
+    case 'hapusBaris':
+      k.ubah(() => void skema()?.baris.splice(Number(d.i), 1));
+      return true;
+    case 'tambahBaris':
+      k.ubah(() => {
+        const s = skema();
+        if (!s) return;
+        const tipe = d.tipe as JenisBaris;
+        const baru: BarisSkema = { id: `${s.id}_${Date.now()}`, tipe, kegiatan: tipe === 'istirahat' ? 'Istirahat' : 'Pelajaran', durasi: tipe === 'istirahat' ? 15 : 40 };
+        s.baris.push(baru);
+      });
+      return true;
+    case 'aktifkanManual':
+      k.ubah((x) => void (x.penggantiManual = { pola: salinPola(x.polaReguler) }));
+      return true;
+    case 'hapusManual':
+      k.ubah((x) => void (x.penggantiManual = null));
+      return true;
+    case 'tambahKegiatan':
+      k.ubah((x) => {
+        const hariIni = isoLokal(new Date());
+        x.kalender.push({ id: `k${Date.now()}`, nama: 'Kegiatan baru', jenis: 'lain', mulai: hariIni, selesai: hariIni, rombelTidakAktif: [] });
+      });
+      return true;
+    case 'hapusKegiatan':
+      k.ubah((x) => void (x.kalender = x.kalender.filter((y) => y.id !== d.id)));
+      return true;
+    case 'pasangPolaKegiatan':
+      k.ubah((x) => {
+        const g = x.kalender.find((y) => y.id === d.id);
+        if (g) g.pola = salinPola(x.polaReguler);
+      });
+      return true;
+    case 'lepasPolaKegiatan':
+      k.ubah((x) => {
+        const g = x.kalender.find((y) => y.id === d.id);
+        if (g) delete g.pola;
+      });
+      return true;
+  }
+  return false;
+}
+
+export function ubahSkema(k: Konteks, el: HTMLInputElement & HTMLSelectElement): boolean {
+  const d = el.dataset;
+  const skema = () => k.p.skema.find((s) => s.id === d.skema);
+  const baris = () => skema()?.baris[Number(d.i)];
+  const keg = () => k.p.kalender.find((g) => g.id === d.id);
+  switch (d.aksi) {
+    case 'pola':
+      k.ubah((x) => {
+        const pola = polaDari(x, d.kunci ?? '');
+        if (pola) pola[Number(d.hari)] = el.value;
+      });
+      return true;
+    case 'jamMulai':
+      try {
+        keMenit(el.value.trim());
+      } catch (err) {
+        k.lapor(`Jam mulai ditolak: ${(err as Error).message}`);
+        k.gambar();
+        return true;
+      }
+      k.ubah(() => void (skema() && (skema()!.jamMulai = el.value.trim())));
+      return true;
+    case 'tipeBaris':
+      k.ubah(() => void (baris() && (baris()!.tipe = el.value as JenisBaris)));
+      return true;
+    case 'kegiatanBaris':
+      k.ubah(() => void (baris() && (baris()!.kegiatan = el.value)));
+      return true;
+    case 'durasiBaris':
+      k.ubah(() => void (baris() && (baris()!.durasi = Number(el.value))));
+      return true;
+    case 'manualMulai':
+    case 'manualSelesai': {
+      const kunci = d.aksi === 'manualMulai' ? 'mulai' : 'selesai';
+      k.ubah((x) => {
+        if (!x.penggantiManual) return;
+        if (el.value) x.penggantiManual[kunci] = el.value;
+        else delete x.penggantiManual[kunci];
+      });
+      return true;
+    }
+    case 'kNama':
+      k.ubah(() => void (keg() && (keg()!.nama = el.value)));
+      return true;
+    case 'kJenis':
+      k.ubah(() => void (keg() && (keg()!.jenis = el.value as JenisKegiatan)));
+      return true;
+    case 'kMulai':
+      k.ubah(() => void (keg() && (keg()!.mulai = el.value)));
+      return true;
+    case 'kSelesai':
+      k.ubah(() => void (keg() && (keg()!.selesai = el.value)));
+      return true;
+  }
+  return false;
 }

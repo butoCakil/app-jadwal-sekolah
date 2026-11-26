@@ -1,6 +1,6 @@
 # Rancang Bangun — App Jadwal Sekolah (SMK Negeri Bansari)
 
-Status: **disepakati 26 Nov 2026.** Tahap 1 selesai (lihat 11.3).
+Status: **disepakati 26 Nov 2026.** Tahap 1 dan 2 selesai (lihat 11.3).
 Papan rancangan: Whiteboard "Rancang Bangun App Jadwal Sekolah" (claude.ai).
 
 Prinsip utama: **mesin menjaga aturan, AI mengusulkan, admin menerapkan, publik melihat yang sudah diterapkan.**
@@ -268,3 +268,14 @@ app-jadwal-sekolah/
 
 - Tahap 1 selesai: model data, skema dinamis + penomoran ganda, pola mingguan, kalender, grid per skema, IndexedDB, ekspor/impor JSON, 22 tes.
 - Skema bawaan diambil dari poster resmi pada berkas jadwal 9–13 Nov 2026.
+- Tahap 2 selesai: beban mengajar, kelompok paralel, team teaching, validator (bentrok guru/rombel/ruang, ruang terlarang, guru tidak tersedia, JP, kapasitas), penempatan ruang berurutan prioritas, Conflict Inspector, master data, aturan, undo/redo, drag & drop tervalidasi (termasuk tukar posisi), 54 tes. Format data naik ke versi 2 (slot kini mengacu ke beban); draf lama versi 1 (hanya data contoh) tidak dimuat.
+
+### 11.4 Keputusan teknis tahap 2 (usulan, mohon dikoreksi bila tidak sesuai)
+
+1. **Ruang prioritas:** bila daftar prioritas sebuah beban ada, hanya ruang di daftar itu yang dipakai (berurutan). Bila semuanya terpakai, penempatan ditolak dengan alasan "ruang prioritas terpakai" (inilah kasus ruang kurang). Bila daftar kosong, semua ruang yang tidak terlarang boleh dipakai.
+2. **Ruang "dipakai bersama":** ruang bertanda ini (mis. lapangan) tidak dihitung bentrok walau dipakai beberapa rombel sekaligus. Bawaan: tidak ada ruang yang bertanda.
+3. **Kelompok paralel:** beban di rombel yang sama dengan nama kelompok paralel yang sama boleh berjalan bersamaan. Bentrok guru dan ruang tetap diperiksa.
+4. **Hitungan "bentrok" di lencana atas:** bentrok guru/rombel/ruang ditambah pelanggaran aturan (ruang terlarang, guru tidak tersedia, JP melebihi beban). Kurang JP, slot tanpa ruang, dan slot yang tidak muat di skema pekan dilaporkan terpisah sebagai peringatan.
+5. **Nomor pelajaran pada pesan:** pesan memakai nomor pelajaran (jam KBM), bukan label poster, karena label berbeda antar skema (Pembiasaan memakai nomor 1).
+6. **Pola pertemuan** (mis. 2,2) tersimpan tetapi belum diperiksa; dipakai solver di tahap 4.
+

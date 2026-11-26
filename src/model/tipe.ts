@@ -72,16 +72,41 @@ export interface Ruang {
   kode: string;
   nama: string;
   jenis: 'teori' | 'praktik' | 'lab' | 'lapangan';
+  /** true = boleh dipakai beberapa rombel sekaligus (mis. lapangan); tidak dihitung bentrok ruang */
+  bersama?: boolean;
 }
+
+/** Beban mengajar: satu guru mengajar satu mapel di satu rombel sebanyak `jp` JP per pekan. */
+export interface Beban {
+  id: string;
+  guruId: string;
+  mapelId: string;
+  rombelId: string;
+  jp: number;
+  /** Cara JP dipecah per pertemuan, mis. [2,2]. Kosong = bebas. Belum dipakai validator (solver tahap 4). */
+  pola?: number[];
+  /** Guru tambahan yang ikut mengajar pada slot yang sama (team teaching) */
+  timGuruIds: string[];
+  /** Beban di rombel yang sama dengan nama kelompok paralel yang sama boleh berjalan bersamaan (mis. PA) */
+  paralel?: string;
+  /** Urutan ruang yang dipakai: ruang pertama dulu, kalau terpakai ruang berikutnya. Kosong = semua ruang yang tidak terlarang. */
+  ruangPrioritas: string[];
+  ruangTerlarang: string[];
+  /** Beban yang tidak menempati slot (mis. pembimbing PKL); dihitung di beban guru saja */
+  nonTatapMuka?: boolean;
+}
+
+export type Aturan =
+  | { id: string; jenis: 'guruTidakTersedia'; guruId: string; hari: number; /** nomor KBM; kosong = sehari penuh */ jam: number[]; catatan?: string }
+  | { id: string; jenis: 'ruangTerlarang'; /** salah satu terisi */ rombelId?: string; jurusan?: string; ruangIds: string[]; catatan?: string };
 
 /** Satu sel jadwal. `jam` = nomor KBM internal (1 = pelajaran pertama; jam 0 = non-KBM tidak dijadwalkan). */
 export interface Slot {
   id: string;
-  rombelId: string;
+  bebanId: string;
   hari: number;
   jam: number;
-  guruId: string;
-  mapelId: string;
+  /** kosong = belum ada ruang */
   ruangId: string;
 }
 
@@ -100,7 +125,9 @@ export interface Proyek {
   penggantiManual: PenggantiManual | null;
   kalender: Kegiatan[];
   master: { guru: Guru[]; mapel: Mapel[]; rombel: Rombel[]; ruang: Ruang[] };
+  beban: Beban[];
+  aturan: Aturan[];
   versi: VersiJadwal[];
 }
 
-export const VERSI_DATA_SAAT_INI = 1;
+export const VERSI_DATA_SAAT_INI = 2;

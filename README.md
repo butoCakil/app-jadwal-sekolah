@@ -2,7 +2,7 @@
 
 Aplikasi penyusun jadwal pelajaran seluruh rombel: skema jam dinamis (9/10/11 per hari), kalender akademik, deteksi bentrok, solver, dan asisten AI. Halaman publik menampilkan jadwal yang sudah diterapkan admin.
 
-Status: **tahap 1 (fondasi) selesai.** Rancangan lengkap: [docs/RANCANGAN.md](docs/RANCANGAN.md).
+Status: **tahap 1 dan 2 selesai.** Rancangan lengkap: [docs/RANCANGAN.md](docs/RANCANGAN.md).
 
 ## Menjalankan
 
@@ -15,7 +15,15 @@ npm run build    # hasil di dist/
 
 Data contoh (fiktif) ada di `data/contoh/contoh.json` dan bisa dimuat lewat tombol **Impor JSON**.
 
-## Yang sudah ada (tahap 1)
+## Yang sudah ada (tahap 2)
+
+- **Beban mengajar** per rombel: guru, mapel/elemen, JP, pola pertemuan, team teaching, kelompok paralel (mis. PA), ruang prioritas dan ruang terlarang, beban non-tatap-muka.
+- **Pemeriksa bentrok** real-time: guru, rombel (kelompok paralel tidak dihitung bentrok), ruang, ruang terlarang, guru tidak tersedia, JP berlebih/kurang, slot di luar kapasitas skema.
+- **Grid** tampilan per rombel, guru, atau ruang. Seret kartu ke sel: hijau = aman, merah = bentrok disertai alasan. Sel kosong juga bisa diklik. Dua pelajaran satu rombel bisa saling bertukar.
+- **Penempatan ruang otomatis** mengikuti urutan prioritas beban; ruang terlarang tidak pernah dipilih.
+- **Conflict Inspector**, **Master Data** (kode guru A–Z/AA–ZZ dan mapel ≤3 karakter otomatis), **aturan**, **Urungkan/Ulangi** (Ctrl+Z / Ctrl+Y).
+
+## Tahap 1
 
 - Tiga skema bawaan (11/10/9) disalin dari poster resmi, bisa diedit: jam mulai, durasi, jenis baris (non-KBM / pelajaran / istirahat).
 - Penomoran ganda: Pembiasaan = jam ke-0 secara internal, tampil sebagai jam 1; skema tanpa pembiasaan mulai dari 1.

@@ -12,3 +12,20 @@ body {
 .isian {
   @apply rounded-md border border-slate-300 bg-white px-2 py-1 text-sm;
 }
+
+/* Kartu slot di sel jadwal */
+.chip {
+  @apply relative mb-0.5 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] leading-tight;
+  background: var(--bg);
+  border-left: 3px solid var(--garis);
+}
+.chip[draggable='true'] { @apply cursor-grab active:cursor-grabbing; }
+.chip.bermasalah { @apply ring-2 ring-red-500; }
+.chip.peringatan { @apply ring-1 ring-amber-400; }
+.sel-ok { @apply bg-emerald-100 outline outline-2 -outline-offset-2 outline-emerald-500; }
+.sel-bad { @apply bg-red-100 outline outline-2 -outline-offset-2 outline-red-400; }
+.sel-kosong { @apply cursor-pointer text-slate-300 hover:bg-slate-50 hover:text-slate-500; }
+.lencana { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium; }
+.kartu { @apply rounded-xl border border-slate-200 bg-white shadow-sm; }
+.modal-latar { @apply fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4; }
+.modal-isi { @apply max-h-[85vh] w-full max-w-lg overflow-auto rounded-2xl bg-white p-5 shadow-xl; }

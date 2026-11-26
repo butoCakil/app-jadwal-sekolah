@@ -30,3 +30,28 @@ export function unduh(nama: string, isi: string, tipe = 'application/json'): voi
   a.click();
   URL.revokeObjectURL(url);
 }
+
+const HUE = [212, 152, 32, 282, 2, 176, 52, 322, 98, 242, 18, 196];
+/** Warna pastel konsisten untuk tiap mapel (berdasar kode); 12 rona yang berjauhan. */
+export function warnaMapel(kode: string): { bg: string; garis: string } {
+  let h = 2166136261;
+  for (const c of kode) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  const hue = HUE[(h >>> 0) % HUE.length] as number;
+  return { bg: `hsl(${hue} 78% 93%)`, garis: `hsl(${hue} 55% 40%)` };
+}
+
+export function opsi<T>(daftar: T[], terpilih: string, id: (t: T) => string, label: (t: T) => string, kosong?: string): string {
+  const awal = kosong !== undefined ? `<option value="">${esc(kosong)}</option>` : '';
+  return awal + daftar.map((t) => `<option value="${esc(id(t))}" ${id(t) === terpilih ? 'selected' : ''}>${esc(label(t))}</option>`).join('');
+}
+
+/** "B3, D1 ; d2" -> ["B3","D1","D2"] */
+export function pecahKode(teks: string): string[] {
+  return teks.split(/[,;\s]+/).map((x) => x.trim().toUpperCase()).filter(Boolean);
+}
+
+export const NAMA_BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+export function tanggalPendek(iso: string): string {
+  const [, m, d] = iso.split('-').map(Number) as [number, number, number];
+  return `${d} ${NAMA_BULAN[m - 1]}`;
+}

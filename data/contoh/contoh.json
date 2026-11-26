@@ -1,5 +1,5 @@
 {
-  "versiSkemaData": 1,
+  "versiSkemaData": 2,
   "nama": "Contoh (data fiktif)",
   "skema": [
     {
@@ -292,6 +292,26 @@
         "id": "g3",
         "nama": "Guru Contoh 3",
         "kode": "C"
+      },
+      {
+        "id": "g4",
+        "nama": "Guru Contoh 4",
+        "kode": "D"
+      },
+      {
+        "id": "g5",
+        "nama": "Guru Contoh 5",
+        "kode": "E"
+      },
+      {
+        "id": "g6",
+        "nama": "Guru Contoh 6",
+        "kode": "F"
+      },
+      {
+        "id": "g7",
+        "nama": "Guru Contoh 7",
+        "kode": "G"
       }
     ],
     "mapel": [
@@ -307,14 +327,23 @@
       },
       {
         "id": "m3",
-        "nama": "Mapel Kejuruan (induk)",
-        "kode": "KJR"
+        "nama": "Bahasa Inggris",
+        "kode": "ENG"
       },
       {
-        "id": "m3a",
+        "id": "m4",
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "kode": "PA"
+      },
+      {
+        "id": "m5",
         "nama": "Elemen Kejuruan 1",
-        "kode": "KK1",
-        "induk": "m3"
+        "kode": "KK1"
+      },
+      {
+        "id": "m6",
+        "nama": "Elemen Kejuruan 2",
+        "kode": "KK2"
       }
     ],
     "rombel": [
@@ -328,6 +357,13 @@
       },
       {
         "id": "r2",
+        "tingkat": "X",
+        "jurusan": "TE",
+        "nomor": 2,
+        "kode": "X TE 2"
+      },
+      {
+        "id": "r3",
         "tingkat": "XI",
         "jurusan": "TE",
         "nomor": 1,
@@ -344,12 +380,231 @@
       },
       {
         "id": "u2",
+        "kode": "B4",
+        "nama": "Ruang Teori B4",
+        "jenis": "teori"
+      },
+      {
+        "id": "u3",
+        "kode": "B5",
+        "nama": "Ruang Teori B5",
+        "jenis": "teori"
+      },
+      {
+        "id": "u4",
         "kode": "D1",
         "nama": "Lab D1",
+        "jenis": "lab"
+      },
+      {
+        "id": "u5",
+        "kode": "D2",
+        "nama": "Lab D2",
+        "jenis": "lab"
+      },
+      {
+        "id": "u6",
+        "kode": "AT1",
+        "nama": "Lab AT 1",
         "jenis": "lab"
       }
     ]
   },
+  "beban": [
+    {
+      "id": "b1",
+      "rombelId": "r1",
+      "mapelId": "m1",
+      "guruId": "g1",
+      "jp": 4,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u1",
+        "u2"
+      ],
+      "ruangTerlarang": [],
+      "pola": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": "b2",
+      "rombelId": "r1",
+      "mapelId": "m2",
+      "guruId": "g2",
+      "jp": 3,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u1"
+      ],
+      "ruangTerlarang": []
+    },
+    {
+      "id": "b3",
+      "rombelId": "r1",
+      "mapelId": "m3",
+      "guruId": "g3",
+      "jp": 3,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u1"
+      ],
+      "ruangTerlarang": []
+    },
+    {
+      "id": "b4",
+      "rombelId": "r1",
+      "mapelId": "m5",
+      "guruId": "g4",
+      "jp": 4,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u4",
+        "u5"
+      ],
+      "ruangTerlarang": [],
+      "pola": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": "b5",
+      "rombelId": "r1",
+      "mapelId": "m6",
+      "guruId": "g5",
+      "jp": 4,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u5",
+        "u4"
+      ],
+      "ruangTerlarang": [],
+      "pola": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": "b6",
+      "rombelId": "r1",
+      "mapelId": "m4",
+      "guruId": "g6",
+      "jp": 3,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u2"
+      ],
+      "ruangTerlarang": [],
+      "paralel": "PA"
+    },
+    {
+      "id": "b7",
+      "rombelId": "r1",
+      "mapelId": "m4",
+      "guruId": "g7",
+      "jp": 3,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u3"
+      ],
+      "ruangTerlarang": [],
+      "paralel": "PA"
+    },
+    {
+      "id": "b8",
+      "rombelId": "r2",
+      "mapelId": "m1",
+      "guruId": "g1",
+      "jp": 4,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u1",
+        "u2"
+      ],
+      "ruangTerlarang": []
+    },
+    {
+      "id": "b9",
+      "rombelId": "r2",
+      "mapelId": "m2",
+      "guruId": "g2",
+      "jp": 3,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u1"
+      ],
+      "ruangTerlarang": []
+    },
+    {
+      "id": "b10",
+      "rombelId": "r2",
+      "mapelId": "m5",
+      "guruId": "g4",
+      "jp": 4,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u4",
+        "u5"
+      ],
+      "ruangTerlarang": [],
+      "pola": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": "b11",
+      "rombelId": "r3",
+      "mapelId": "m1",
+      "guruId": "g1",
+      "jp": 4,
+      "timGuruIds": [],
+      "ruangPrioritas": [
+        "u2",
+        "u1"
+      ],
+      "ruangTerlarang": []
+    },
+    {
+      "id": "b12",
+      "rombelId": "r3",
+      "mapelId": "m5",
+      "guruId": "g4",
+      "jp": 4,
+      "timGuruIds": [
+        "g5"
+      ],
+      "ruangPrioritas": [
+        "u4"
+      ],
+      "ruangTerlarang": [],
+      "pola": [
+        2,
+        2
+      ]
+    }
+  ],
+  "aturan": [
+    {
+      "id": "a1",
+      "jenis": "ruangTerlarang",
+      "jurusan": "TE",
+      "ruangIds": [
+        "u6"
+      ],
+      "catatan": "Jurusan TE tidak boleh memakai Lab AT"
+    },
+    {
+      "id": "a2",
+      "jenis": "guruTidakTersedia",
+      "guruId": "g3",
+      "hari": 2,
+      "jam": [],
+      "catatan": "Guru C tidak tersedia hari Rabu"
+    }
+  ],
   "versi": [
     {
       "id": "v-reguler",
@@ -357,85 +612,298 @@
       "jenis": "reguler",
       "slots": [
         {
-          "id": "a1",
-          "rombelId": "r1",
+          "id": "b1-0-1",
+          "bebanId": "b1",
           "hari": 0,
           "jam": 1,
-          "guruId": "g1",
-          "mapelId": "m1",
           "ruangId": "u1"
         },
         {
-          "id": "a2",
-          "rombelId": "r1",
+          "id": "b1-0-2",
+          "bebanId": "b1",
           "hari": 0,
           "jam": 2,
-          "guruId": "g1",
-          "mapelId": "m1",
           "ruangId": "u1"
         },
         {
-          "id": "a3",
-          "rombelId": "r1",
-          "hari": 0,
-          "jam": 10,
-          "guruId": "g2",
-          "mapelId": "m2",
-          "ruangId": "u1"
-        },
-        {
-          "id": "a4",
-          "rombelId": "r1",
-          "hari": 1,
-          "jam": 1,
-          "guruId": "g2",
-          "mapelId": "m2",
-          "ruangId": "u1"
-        },
-        {
-          "id": "a5",
-          "rombelId": "r1",
-          "hari": 1,
-          "jam": 10,
-          "guruId": "g3",
-          "mapelId": "m3a",
-          "ruangId": "u2"
-        },
-        {
-          "id": "a6",
-          "rombelId": "r1",
+          "id": "b1-2-1",
+          "bebanId": "b1",
           "hari": 2,
-          "jam": 5,
-          "guruId": "g3",
-          "mapelId": "m3a",
-          "ruangId": "u2"
-        },
-        {
-          "id": "a7",
-          "rombelId": "r1",
-          "hari": 4,
-          "jam": 9,
-          "guruId": "g1",
-          "mapelId": "m1",
-          "ruangId": "u1"
-        },
-        {
-          "id": "b1",
-          "rombelId": "r2",
-          "hari": 0,
           "jam": 1,
-          "guruId": "g2",
-          "mapelId": "m2",
           "ruangId": "u1"
         },
         {
-          "id": "b2",
-          "rombelId": "r2",
+          "id": "b1-2-2",
+          "bebanId": "b1",
+          "hari": 2,
+          "jam": 2,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b2-1-1",
+          "bebanId": "b2",
+          "hari": 1,
+          "jam": 1,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b2-1-2",
+          "bebanId": "b2",
+          "hari": 1,
+          "jam": 2,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b2-3-4",
+          "bebanId": "b2",
           "hari": 3,
           "jam": 4,
-          "guruId": "g3",
-          "mapelId": "m3a",
+          "ruangId": "u1"
+        },
+        {
+          "id": "b3-4-1",
+          "bebanId": "b3",
+          "hari": 4,
+          "jam": 1,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b4-0-5",
+          "bebanId": "b4",
+          "hari": 0,
+          "jam": 5,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b4-0-6",
+          "bebanId": "b4",
+          "hari": 0,
+          "jam": 6,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b4-3-1",
+          "bebanId": "b4",
+          "hari": 3,
+          "jam": 1,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b4-3-2",
+          "bebanId": "b4",
+          "hari": 3,
+          "jam": 2,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b5-1-5",
+          "bebanId": "b5",
+          "hari": 1,
+          "jam": 5,
+          "ruangId": "u5"
+        },
+        {
+          "id": "b5-1-6",
+          "bebanId": "b5",
+          "hari": 1,
+          "jam": 6,
+          "ruangId": "u5"
+        },
+        {
+          "id": "b5-2-5",
+          "bebanId": "b5",
+          "hari": 2,
+          "jam": 5,
+          "ruangId": "u5"
+        },
+        {
+          "id": "b5-2-6",
+          "bebanId": "b5",
+          "hari": 2,
+          "jam": 6,
+          "ruangId": "u5"
+        },
+        {
+          "id": "b6-4-3",
+          "bebanId": "b6",
+          "hari": 4,
+          "jam": 3,
           "ruangId": "u2"
+        },
+        {
+          "id": "b6-4-4",
+          "bebanId": "b6",
+          "hari": 4,
+          "jam": 4,
+          "ruangId": "u2"
+        },
+        {
+          "id": "b6-4-5",
+          "bebanId": "b6",
+          "hari": 4,
+          "jam": 5,
+          "ruangId": "u2"
+        },
+        {
+          "id": "b7-4-3",
+          "bebanId": "b7",
+          "hari": 4,
+          "jam": 3,
+          "ruangId": "u3"
+        },
+        {
+          "id": "b7-4-4",
+          "bebanId": "b7",
+          "hari": 4,
+          "jam": 4,
+          "ruangId": "u3"
+        },
+        {
+          "id": "b7-4-5",
+          "bebanId": "b7",
+          "hari": 4,
+          "jam": 5,
+          "ruangId": "u3"
+        },
+        {
+          "id": "b8-0-3",
+          "bebanId": "b8",
+          "hari": 0,
+          "jam": 3,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b8-0-4",
+          "bebanId": "b8",
+          "hari": 0,
+          "jam": 4,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b8-4-2",
+          "bebanId": "b8",
+          "hari": 4,
+          "jam": 2,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b8-4-3",
+          "bebanId": "b8",
+          "hari": 4,
+          "jam": 3,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b9-1-3",
+          "bebanId": "b9",
+          "hari": 1,
+          "jam": 3,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b9-3-5",
+          "bebanId": "b9",
+          "hari": 3,
+          "jam": 5,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b9-3-6",
+          "bebanId": "b9",
+          "hari": 3,
+          "jam": 6,
+          "ruangId": "u1"
+        },
+        {
+          "id": "b10-0-1",
+          "bebanId": "b10",
+          "hari": 0,
+          "jam": 1,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b10-0-2",
+          "bebanId": "b10",
+          "hari": 0,
+          "jam": 2,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b10-2-3",
+          "bebanId": "b10",
+          "hari": 2,
+          "jam": 3,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b10-2-4",
+          "bebanId": "b10",
+          "hari": 2,
+          "jam": 4,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b11-3-5",
+          "bebanId": "b11",
+          "hari": 3,
+          "jam": 5,
+          "ruangId": "u2"
+        },
+        {
+          "id": "b11-3-6",
+          "bebanId": "b11",
+          "hari": 3,
+          "jam": 6,
+          "ruangId": "u2"
+        },
+        {
+          "id": "b11-3-7",
+          "bebanId": "b11",
+          "hari": 3,
+          "jam": 7,
+          "ruangId": "u2"
+        },
+        {
+          "id": "b11-3-8",
+          "bebanId": "b11",
+          "hari": 3,
+          "jam": 8,
+          "ruangId": "u2"
+        },
+        {
+          "id": "b12-1-7",
+          "bebanId": "b12",
+          "hari": 1,
+          "jam": 7,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b12-1-8",
+          "bebanId": "b12",
+          "hari": 1,
+          "jam": 8,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b12-2-7",
+          "bebanId": "b12",
+          "hari": 2,
+          "jam": 7,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b12-2-8",
+          "bebanId": "b12",
+          "hari": 2,
+          "jam": 8,
+          "ruangId": "u4"
+        },
+        {
+          "id": "b3-4-9",
+          "bebanId": "b3",
+          "hari": 4,
+          "jam": 9,
+          "ruangId": "u1"
         }
       ]
     }
