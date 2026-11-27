@@ -15,8 +15,8 @@ export const DAFTAR_DATA: { id: IdDataSekolah; judul: string; keterangan: string
   },
   {
     id: 'gasal',
-    judul: 'Gasal 2026/2027 (fase ASAJ)',
-    keterangan: 'Jadwal jadi dari jadwal-te (jadwal-te-20261126-revisi-eng.json): rombel TE ditambah XI AT 1, XI AT 2, dan XI DKV 3. Tiap periode (TKA, ASAJ, TKA lanjutan, Genap Januari, ASAS) punya beban dan jadwal sendiri. Periode aktif: ASAS.',
+    judul: 'Gasal 2026/2027 (induk + kegiatan ASAJ, ASAS)',
+    keterangan: 'Jadwal jadi dari jadwal-te (jadwal-te-20261126-revisi-eng.json). Induk: jadwal reguler 12 Jul–18 Des 2026. Kegiatan: ASAJ Praktik XII (16–20 Nov) dan ASAS X & ASAJ XII (30 Nov–4 Des) dengan kelas khusus, ikut induk, atau tidak aktif.',
   },
   {
     id: 'gasalAsc',

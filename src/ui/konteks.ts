@@ -1,9 +1,12 @@
 import type { Beban, JenisKegiatan, Kegiatan, Proyek, Slot, VersiJadwal } from '../model/tipe';
 import type { Kategori, Masalah } from '../mesin/validator';
 import type { SkemaHari } from '../model/kalender';
+import type { Fokus, JadwalPekan } from '../model/simpul';
 
 export type SubMaster = 'guru' | 'mapel' | 'rombel' | 'ruang' | 'aturan' | 'data';
-export type Tab = 'grid' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor' | 'susun';
+export type Tab = 'grid' | 'info' | 'kelas' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor' | 'susun';
+/** Sub-tab halaman Periode & Jadwal. */
+export const TAB_HUB: Tab[] = ['info', 'kelas', 'beban', 'grid'];
 export type Tata = 'hari' | 'semua';
 export type ModeLihat = 'rombel' | 'guru' | 'ruang';
 
@@ -29,8 +32,8 @@ export interface DlgKegiatan {
   tdk: Set<string>;
   /** '' = pola default */
   polaId: string;
-  /** '' = jadwal reguler; id versi; '__salin' / '__kosong' = buat versi baru saat disimpan */
-  versi: string;
+  /** hari berlaku (0 = Senin); kosong = setiap hari kerja */
+  hari: Set<number>;
   catatan: string;
   aktifkan: boolean;
   galat: string;
@@ -40,6 +43,8 @@ export type Modal = { jenis: 'sel'; hari: number; jam: number } | { jenis: 'slot
 
 export interface StatusUI {
   tab: Tab;
+  /** sasaran yang dikerjakan di halaman Periode & Jadwal */
+  fokus: Fokus;
   tanggal: string;
   mode: ModeLihat;
   /** 'hari' = satu entitas, kolom per hari; 'semua' = semua baris sekaligus dalam satu matriks. */
@@ -76,6 +81,9 @@ export interface Turunan {
   versi: VersiJadwal | undefined;
   periode: Kegiatan | undefined;
   rombelTidakAktif: ReadonlySet<string>;
+  /** slot tampil per hari beserta asal versinya (untuk mengalihkan perubahan) */
+  pekan: JadwalPekan;
+  fokus: Fokus;
 }
 
 export interface Konteks {

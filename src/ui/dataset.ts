@@ -4,7 +4,6 @@ import type { Proyek } from '../model/tipe';
 import { versiReguler } from '../model/kalender';
 import { bukaDlgKegiatan } from './kalenderTab';
 import type { Konteks } from './konteks';
-import { ringkasKode } from './pemilih';
 import { esc } from './util';
 
 /** Daftar dataset tersimpan di peramban ini (dimuat dari IndexedDB; diperbarui setelah tiap perubahan). */
@@ -39,6 +38,7 @@ function semesterBaru(p: Proyek, nama: string): Proyek {
   x.nama = nama;
   x.kalender = [];
   delete x.periodeAktifId;
+  delete x.semester;
   x.penggantiManual = null;
   const reg = versiReguler(x);
   x.versi = [{ id: reg?.id ?? 'reguler', nama: reg?.nama ?? 'Reguler', jenis: 'reguler', slots: [] }];
@@ -46,22 +46,6 @@ function semesterBaru(p: Proyek, nama: string): Proyek {
   x.beban = x.beban.filter((b) => !b.versiId || b.versiId === reg?.id);
   for (const b of x.beban) delete b.versiId;
   return x;
-}
-
-function bagianPkl(k: Konteks): string {
-  const p = k.p;
-  const daftar = p.kalender.filter((g) => g.jenis === 'PKL' || g.rombelTidakAktif.length).sort((a, b) => a.mulai.localeCompare(b.mulai));
-  const baris = daftar
-    .map((g) => {
-      const kode = g.rombelTidakAktif.map((i) => p.master.rombel.find((r) => r.id === i)?.kode ?? '?');
-      return `<tr class="border-t border-slate-100"><td class="px-3 py-2"><b>${esc(g.nama)}</b><div class="text-xs text-slate-500">${esc(g.mulai)} s/d ${esc(g.selesai)}</div></td>
-        <td class="px-2 py-2 text-xs">${kode.length ? `<span class="text-amber-800" title="${esc(kode.join(', '))}">${esc(ringkasKode(kode, 'kelas', 8))}</span>` : '<span class="text-red-700">belum ada kelas dipilih</span>'}</td>
-        <td class="px-2 py-2 text-right"><button class="tombol !px-2 !py-0.5 !text-xs" data-aksi="kegBuka" data-id="${esc(g.id)}">Atur kelas…</button></td></tr>`;
-    })
-    .join('');
-  return `<section class="kartu p-3"><div class="flex flex-wrap items-center gap-2"><h3 class="text-base font-semibold">Kelas PKL (kelas yang tidak aktif)</h3><button class="tombol" data-aksi="kegBaru" data-jenis="PKL">+ Periode PKL</button></div>
-    <div class="mb-2 text-xs text-slate-500">Kelas yang dicentang pada sebuah periode disembunyikan dari jadwal, tidak diperiksa bentroknya, dan dilewati Susun Otomatis selama periode itu. Berlaku juga untuk periode lain (mis. ASAS hanya satu tingkat). Semua periode ada di Skema &amp; Kalender.</div>
-    ${daftar.length ? `<div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-sm"><tbody>${baris}</tbody></table></div>` : '<div class="rounded-lg bg-slate-50 p-3 text-sm text-slate-500">Belum ada periode PKL atau periode dengan kelas tidak aktif.</div>'}</section>`;
 }
 
 function bagianDataset(): string {
@@ -84,7 +68,6 @@ export function renderDataTab(k: Konteks): string {
       <div class="mt-2 flex flex-wrap items-end gap-3"><label class="text-xs font-semibold text-slate-600">Nama data / semester<input class="isian mt-1 block w-80 max-w-full font-normal" value="${esc(p.nama)}" data-aksi="namaProyek"></label>
         <div class="text-xs text-slate-500">${esc(ringkasan(p))}</div></div>
       <div class="mt-2 text-xs text-slate-500">Semua perubahan di aplikasi tersimpan otomatis di peramban ini sebagai draf. Untuk semester baru: <b>Buat semester baru</b> di bawah (salinan draf ini), atau <b>Impor Excel</b> (pembagian tugas), lalu atur kalender dan kelas PKL.</div></section>
-    ${bagianPkl(k)}
     ${bagianDataset()}
     <section class="kartu p-3"><h3 class="text-base font-semibold">Data bawaan</h3><div class="mb-2 text-xs text-slate-500">Contoh siap pakai yang ikut dalam aplikasi. Memuatnya mengganti draf yang sedang dikerjakan (simpan dulu sebagai dataset bila perlu). Bila diubah, perubahan masuk ke draf, bukan ke data bawaan.</div>
       <div class="grid gap-3 md:grid-cols-2">${DAFTAR_DATA.map((d) => `<div class="rounded-xl border border-slate-200 p-3"><div class="font-semibold">${esc(d.judul)}</div><div class="mb-2 text-xs text-slate-500">${esc(d.keterangan)}</div><button class="tombol" data-aksi="muat" data-set="${d.id}">Muat data ini</button></div>`).join('')}

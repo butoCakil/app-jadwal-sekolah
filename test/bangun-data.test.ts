@@ -4,7 +4,7 @@ import type { Proyek } from '../src/model/tipe';
 import { bacaLembar } from '../src/io/xlsx';
 import { tafsirTugas } from '../src/io/imporTugas';
 import { kodeGuruSekolah } from '../src/model/sekolah';
-import { bangunGasal, bangunGenap } from '../src/model/bangunData';
+import { bangunGasal, bangunGenap, strukturGasalJadwalTe } from '../src/model/bangunData';
 import { dariJadwalTe, type BerkasJadwalTe } from '../src/io/imporJadwalTe';
 
 /**
@@ -19,8 +19,9 @@ const baca = <T>(f: string): T => JSON.parse(readFileSync(new URL(f, import.meta
 const jalur = (f: string) => new URL(f, import.meta.url);
 
 describe('bangun data sekolah', () => {
-  it('gasal-2026.json = hasil dariJadwalTe', () => {
-    const { proyek } = dariJadwalTe(baca<BerkasJadwalTe>('../data/sekolah/sumber/jadwal-te-gasal-2026.json'), 'SMK Negeri Bansari - Gasal 2026/2027 (jadwal jadi dari jadwal-te, fase ASAJ)');
+  it('gasal-2026.json = hasil dariJadwalTe + strukturGasalJadwalTe', () => {
+    const { proyek } = dariJadwalTe(baca<BerkasJadwalTe>('../data/sekolah/sumber/jadwal-te-gasal-2026.json'), 'SMK Negeri Bansari - Gasal 2026/2027');
+    strukturGasalJadwalTe(proyek);
     if (process.env.TULIS_DATA) writeFileSync(jalur('../data/sekolah/gasal-2026.json'), JSON.stringify(proyek));
     expect(baca('../data/sekolah/gasal-2026.json')).toEqual(JSON.parse(JSON.stringify(proyek)));
   });

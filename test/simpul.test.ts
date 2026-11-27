@@ -1,0 +1,109 @@
+import { describe, expect, it } from 'vitest';
+import { proyekSekolah } from '../src/model/sekolahData';
+import { validasiProyek } from '../src/model/validasi';
+import { versiReguler } from '../src/model/kalender';
+import { adalahPelanggaran } from '../src/mesin/validator';
+import { alihkanPerubahan, bebanKegiatan, bebanUntukDiubah, hapusBebanKegiatan, ikutInduk, kembalikanBeban, terdampak } from '../src/model/simpul';
+import { hitungTurunan } from '../src/ui/turunan';
+import type { Kegiatan, Proyek } from '../src/model/tipe';
+
+const kodeKe = (p: Proyek, kode: string) => p.master.rombel.find((r) => r.kode === kode)!.id;
+
+/** Kegiatan model warisan baru pada pekan 7-11 Des 2026 (semua kelas mula-mula ikut induk). */
+function kegiatanBaru(p: Proyek, hariBerlaku?: number[]): Kegiatan {
+  p.versi.push({ id: 'v-uji', nama: 'Uji', jenis: 'varian', slots: [] });
+  const g: Kegiatan = { id: 'k-uji', nama: 'Uji', jenis: 'TKA', mulai: '2026-12-07', selesai: '2026-12-11', rombelTidakAktif: [...(p.semester?.rombelTidakAktif ?? [])], versiId: 'v-uji', rombelTerdampak: [], ...(hariBerlaku ? { hariBerlaku } : {}) };
+  p.kalender.push(g);
+  return g;
+}
+
+describe('data Gasal: induk dan kegiatan', () => {
+  const p = proyekSekolah('gasal');
+  it('punya semester induk dan dua kegiatan model warisan; valid', () => {
+    expect(p.semester).toMatchObject({ nama: 'Gasal 2026/2027', mulai: '2026-07-12', selesai: '2026-12-18' });
+    expect(p.kalender.map((g) => [g.id, g.jenis])).toEqual([['k-asaj', 'ASAJ'], ['k-asas', 'ASAS']]);
+    expect(p.kalender.every((g) => Array.isArray(g.rombelTerdampak))).toBe(true);
+    expect(validasiProyek(p)).toEqual([]);
+  });
+  it('ASAS (30 Nov): 5 kelas XI belajar, 240 JP, tanpa bentrok', () => {
+    const t = hitungTurunan(p, '2026-11-30');
+    expect(t.periode?.id).toBe('k-asas');
+    expect(t.slots.length).toBe(240);
+    expect(t.jumlahPelanggaran).toBe(0);
+    const g = p.kalender.find((x) => x.id === 'k-asas')!;
+    expect(['XI TE 2', 'XI TE 3', 'XI AT 1', 'XI AT 2', 'XI DKV 3'].every((k) => terdampak(g, kodeKe(p, k)))).toBe(true);
+  });
+  it('ASAJ (16 Nov) dan induk (7 Des): tanpa bentrok', () => {
+    // data sumber ASAJ: satu tugas (XI TE 2 PMM) terjadwal 1 JP lebih dari bebannya; selain itu tanpa pelanggaran
+    expect(hitungTurunan(p, '2026-11-16').masalah.filter(adalahPelanggaran).map((m) => m.jenis)).toEqual(['jp-lebih']);
+    const t = hitungTurunan(p, '2026-12-07');
+    expect(t.periode).toBeUndefined();
+    expect(t.slots.length).toBe(versiReguler(p)!.slots.length);
+    // data sumber reguler: X TE 1 IPAS Selasa jam 6-10 di N2 (ruang lab yang terlarang untuk TE); sudah ada sejak jadwal-te
+    expect(new Set(t.masalah.filter(adalahPelanggaran).map((m) => m.pesan.replace(/pelajaran ke-\d+/, '')))).toEqual(new Set(['X TE 1 IPAS pada Selasa,  memakai ruang N2 yang terlarang untuk beban ini.']));
+  });
+  it('fokus induk pada pekan ASAS menampilkan jadwal reguler', () => {
+    const t = hitungTurunan(p, '2026-11-30', 'induk');
+    expect(t.periode).toBeUndefined();
+    expect(t.slots.length).toBe(versiReguler(p)!.slots.length);
+  });
+});
+
+describe('kegiatan model warisan', () => {
+  it('kelas yang ikut induk tampil dari induk; mengubahnya menjadikannya khusus (induk tidak berubah)', () => {
+    const p = proyekSekolah('gasal');
+    const g = kegiatanBaru(p);
+    const reg = versiReguler(p)!;
+    const sebelum = JSON.stringify(reg.slots);
+    const t = hitungTurunan(p, '2026-12-07');
+    expect(t.periode?.id).toBe('k-uji');
+    expect(t.slots.length).toBe(reg.slots.length);
+    const r = kodeKe(p, 'X TE 1');
+    const s = t.slots.find((x) => p.beban.find((b) => b.id === x.bebanId)?.rombelId === r)!;
+    const h = alihkanPerubahan(p, t.pekan, t.slots.filter((x) => x.id !== s.id), 'auto');
+    expect(h).toMatchObject({ ok: true, baruTerdampak: [r] });
+    expect(JSON.stringify(reg.slots)).toBe(sebelum);
+    const t2 = hitungTurunan(p, '2026-12-07');
+    expect(t2.slots.length).toBe(reg.slots.length - 1);
+    expect(terdampak(g, r)).toBe(true);
+    // kembali ikut induk
+    ikutInduk(p, g, r);
+    expect(hitungTurunan(p, '2026-12-07').slots.length).toBe(reg.slots.length);
+  });
+
+  it('beban: diubah di kegiatan menjadi pengecualian; dihapus; dikembalikan', () => {
+    const p = proyekSekolah('gasal');
+    const g = kegiatanBaru(p);
+    const r = kodeKe(p, 'XI TE 2');
+    const asli = p.beban.find((b) => b.rombelId === r && !b.versiId)!;
+    const id = bebanUntukDiubah(p, g, asli.id);
+    expect(id).not.toBe(asli.id);
+    p.beban.find((b) => b.id === id)!.jp += 2;
+    expect(p.beban.find((b) => b.id === asli.id)!.jp).toBe(asli.jp);
+    expect(bebanKegiatan(p, g).some((b) => b.id === id)).toBe(true);
+    expect(bebanKegiatan(p, g).some((b) => b.id === asli.id)).toBe(false);
+    // slot kegiatan dialihkan ke salinan
+    const v = p.versi.find((x) => x.id === 'v-uji')!;
+    expect(v.slots.some((s) => s.bebanId === id)).toBe(true);
+    kembalikanBeban(p, g, id);
+    expect(bebanKegiatan(p, g).some((b) => b.id === asli.id)).toBe(true);
+    hapusBebanKegiatan(p, g, asli.id);
+    expect(bebanKegiatan(p, g).some((b) => b.id === asli.id || b.asal === asli.id)).toBe(false);
+    expect(p.beban.some((b) => b.id === asli.id)).toBe(true);
+    expect(validasiProyek(p)).toEqual([]);
+  });
+
+  it('hari tertentu: kegiatan hanya Senin; Selasa mengikuti induk dan perubahan di sana ditolak saat fokus kegiatan', () => {
+    const p = proyekSekolah('gasal');
+    kegiatanBaru(p, [0]);
+    const t = hitungTurunan(p, '2026-12-07', 'k-uji');
+    expect(t.pekan.kegiatanHari.map((g) => g?.id ?? '')).toEqual(['k-uji', '', '', '', '']);
+    const selasa = t.slots.find((s) => s.hari === 1)!;
+    const h = alihkanPerubahan(p, t.pekan, t.slots.filter((x) => x.id !== selasa.id), 'k-uji');
+    expect(h.ok).toBe(false);
+    const senin = t.slots.find((s) => s.hari === 0)!;
+    expect(alihkanPerubahan(p, t.pekan, t.slots.filter((x) => x.id !== senin.id), 'k-uji').ok).toBe(true);
+    const v = p.versi.find((x) => x.id === 'v-uji')!;
+    expect(v.slots.every((s) => s.hari === 0)).toBe(true);
+  });
+});

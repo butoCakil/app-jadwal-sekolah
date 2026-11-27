@@ -9,7 +9,8 @@ import type { Blok } from '../mesin/blok';
 import { cekPenempatan, rencanaPindah, terapkanRencana } from '../mesin/penempatan';
 import { jpRombel } from '../model/jp';
 import { esc, opsi, tambahHari, tanggalPendek, warnaMapel } from './util';
-import { barPeriode } from './periode';
+import { modelWarisan, terdampak } from '../model/simpul';
+import { jepitTanggal } from './hub';
 import type { Konteks, ModeLihat } from './konteks';
 
 const LABEL_SUMBER = { manual: 'manual', kegiatan: 'kalender', reguler: 'reguler' } as const;
@@ -325,6 +326,14 @@ function tabelSemua(k: Konteks, pk: Peta, entitas: { id: string; label: string }
     )
     .join('');
 
+  const g = k.turunan.periode;
+  const warisan = k.ui.mode === 'rombel' && !!g && modelWarisan(g) && k.ui.fokus !== 'induk';
+  const tanda = (id: string): string => {
+    if (k.ui.mode !== 'rombel') return '';
+    if (k.turunan.rombelTidakAktif.has(id)) return ' <span class="text-[9px] font-normal text-slate-400" title="Tidak aktif pada kegiatan ini">off</span>';
+    if (warisan && terdampak(g, id)) return ' <span class="text-[9px] font-bold text-amber-600" title="Jadwal khusus kegiatan ini">●</span>';
+    return '';
+  };
   const barisHtml = entitas
     .map((e) => {
       const fokus = false;
@@ -374,7 +383,7 @@ function tabelSemua(k: Konteks, pk: Peta, entitas: { id: string; label: string }
           return out.join('');
         })
         .join('');
-      return `<tr class="border-t border-slate-200 ${fokus ? 'bg-sky-50' : ''}"><th class="label-baris ${fokus ? '!bg-sky-100' : ''}" data-aksi="fokus" data-id="${esc(e.id)}" title="Klik untuk membuka tampilan per ${NAMA_ENTITAS[k.ui.mode].per} ini" data-buka="1">${esc(e.label)}</th>${sel}</tr>`;
+      return `<tr class="border-t border-slate-200 ${fokus ? 'bg-sky-50' : ''}"><th class="label-baris ${fokus ? '!bg-sky-100' : ''}" data-aksi="fokus" data-id="${esc(e.id)}" title="Klik untuk membuka tampilan per ${NAMA_ENTITAS[k.ui.mode].per} ini" data-buka="1">${esc(e.label)}${tanda(e.id)}</th>${sel}</tr>`;
     })
     .join('');
   return `<div class="kartu max-h-[72vh] overflow-auto"><table class="border-collapse">
@@ -393,7 +402,7 @@ export function renderGrid(k: Konteks): string {
   const semua = k.ui.tata === 'semua';
   const idxEntitas = entitas.findIndex((e) => e.id === k.ui.entitasId);
 
-  const kontrol = `${barPeriode(k)}<div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+  const kontrol = `<div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
     <div class="inline-flex rounded-lg border border-slate-300 bg-white p-0.5">${MODE.map((m) => `<button class="rounded-md px-3 py-1 text-sm font-medium ${m.id === k.ui.mode ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}" data-aksi="mode" data-mode="${m.id}">${m.label}</button>`).join('')}</div>
     <div class="inline-flex rounded-lg border border-slate-300 bg-white p-0.5" title="Pilih cara melihat jadwal">${(
       [['hari', `Per ${NAMA_ENTITAS[k.ui.mode].per}`], ['semua', 'Semua']] as const
@@ -421,6 +430,14 @@ export function renderGrid(k: Konteks): string {
     const butuh = jpRombel(bebanFokus);
     const jadi = new Set(milik.map((s) => { const par = pk.beban.get(s.bebanId)?.paralel; return par ? `${par}|${s.hari}|${s.jam}` : s.id; })).size;
     lencana.push(`<span class="lencana ${jadi >= butuh ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">Terjadwal ${jadi} dari ${butuh} JP</span>`);
+    const g = t.periode;
+    if (rombel && g && modelWarisan(g) && k.ui.fokus !== 'induk') {
+      lencana.push(t.rombelTidakAktif.has(rombel.id)
+        ? '<span class="lencana bg-slate-200 text-slate-600">Tidak aktif pada kegiatan ini</span>'
+        : terdampak(g, rombel.id)
+          ? '<span class="lencana bg-amber-100 text-amber-800" title="Jadwal dan beban khusus kegiatan ini; atur di sub-tab Kelas">● Jadwal khusus kegiatan ini</span>'
+          : '<span class="lencana bg-slate-100 text-slate-600" title="Jadwal diambil langsung dari induk. Mengubahnya di sini membuat salinan khusus kegiatan ini.">Ikut jadwal induk</span>');
+    }
     if (rombel) for (const s of selisihKapasitas([rombel], { perHari: kapPekan, total })) {
       lencana.push(`<span class="lencana bg-red-100 text-red-800" title="Kebutuhan menurut data sumber dibanding kapasitas pekan ini; diputuskan manual">Sumber: butuh ${s.butuh} JP, kapasitas ${s.kapasitas} → ${s.selisih > 0 ? `kurang ${s.selisih}` : `lebih ${-s.selisih}`}</span>`);
     }
@@ -622,7 +639,7 @@ export function klikGrid(k: Konteks, el: HTMLElement): boolean {
       return true;
     }
     case 'pekan':
-      k.ui.tanggal = d.tgl ?? k.ui.tanggal;
+      k.ui.tanggal = jepitTanggal(k, d.tgl ?? k.ui.tanggal);
       k.gambar();
       return true;
     case 'selKosong':
@@ -651,7 +668,7 @@ export function klikGrid(k: Konteks, el: HTMLElement): boolean {
 
 export function ubahGrid(k: Konteks, el: HTMLInputElement & HTMLSelectElement): boolean {
   if (el.id === 'tanggal') {
-    if (el.value) k.ui.tanggal = el.value;
+    if (el.value) k.ui.tanggal = jepitTanggal(k, el.value);
     k.gambar();
     return true;
   }

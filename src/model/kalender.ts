@@ -14,6 +14,12 @@ export function dalamRentang(tanggal: string, mulai: string, selesai: string): b
   return tanggal >= mulai && tanggal <= selesai; // string ISO bisa dibandingkan leksikal
 }
 
+/** Kegiatan berlaku pada tanggal: di dalam rentang dan (bila `hariBerlaku` diisi) jatuh pada salah satu hari itu. */
+export function berlakuPada(k: Pick<Kegiatan, 'mulai' | 'selesai' | 'hariBerlaku'>, tanggal: string): boolean {
+  if (!dalamRentang(tanggal, k.mulai, k.selesai)) return false;
+  return !k.hariBerlaku?.length || k.hariBerlaku.includes(hariPekan(tanggal));
+}
+
 export type SumberPola = 'manual' | 'kegiatan' | 'reguler';
 
 type DataPola = Pick<Proyek, 'polaReguler' | 'penggantiManual' | 'kalender'> & Partial<Pick<Proyek, 'polaRegulerId' | 'polaRegulerNama' | 'polaLain'>>;
@@ -129,7 +135,7 @@ export function polaUntukTanggal(tanggal: string, p: DataPola): PolaTanggal {
   let polaTerpilih: PolaMinggu | undefined;
   for (const k of p.kalender) {
     const pk = k.polaId ? polaDariId(p, k.polaId) : k.pola;
-    if (!pk || !dalamRentang(tanggal, k.mulai, k.selesai)) continue;
+    if (!pk || !berlakuPada(k, tanggal)) continue;
     if (!terpilih || k.mulai >= terpilih.mulai) {
       terpilih = k;
       polaTerpilih = pk;
@@ -151,7 +157,7 @@ export interface SkemaHari {
 export function skemaUntukTanggal(tanggal: string, p: DataPola): SkemaHari {
   const h = hariPekan(tanggal);
   if (h >= p.polaReguler.length) return { skemaId: null, alasan: 'akhirPekan' };
-  const libur = p.kalender.find((k) => k.jenis === 'libur' && dalamRentang(tanggal, k.mulai, k.selesai));
+  const libur = p.kalender.find((k) => k.jenis === 'libur' && berlakuPada(k, tanggal));
   if (libur) return { skemaId: null, alasan: 'libur', kegiatanLibur: libur.nama };
   const pt = polaUntukTanggal(tanggal, p);
   const id = pt.pola[h];
@@ -159,8 +165,8 @@ export function skemaUntukTanggal(tanggal: string, p: DataPola): SkemaHari {
 }
 
 /** Rombel yang aktif pada tanggal tertentu (tidak masuk `rombelTidakAktif` pada periode yang berlaku). */
-export function rombelAktif(tanggal: string, kalender: Kegiatan[], semua: Rombel[]): Rombel[] {
-  const tidakAktif = rombelTidakAktifIds(tanggal, kalender);
+export function rombelAktif(tanggal: string, kalender: Kegiatan[], semua: Rombel[], semester?: { rombelTidakAktif: string[] }): Rombel[] {
+  const tidakAktif = rombelTidakAktifIds(tanggal, kalender, semester);
   return semua.filter((r) => !tidakAktif.has(r.id));
 }
 
@@ -228,8 +234,9 @@ export function selisihKapasitas(rombel: Rombel[], kapasitas: KapasitasPekan): S
  * "TKA lanjutan" (21 Nov-18 Des), kelas PKL milik TKA lanjutan kembali aktif selama ASAS.
  * Kegiatan libur tidak ikut dihitung (tidak punya daftar rombel).
  */
-export function rombelTidakAktifIds(tanggal: string, kalender: Kegiatan[]): Set<string> {
-  return new Set(periodeUntukTanggal(tanggal, kalender)?.rombelTidakAktif ?? []);
+export function rombelTidakAktifIds(tanggal: string, kalender: Kegiatan[], semester?: { rombelTidakAktif: string[] }): Set<string> {
+  const g = periodeUntukTanggal(tanggal, kalender);
+  return new Set(g ? g.rombelTidakAktif : (semester?.rombelTidakAktif ?? []));
 }
 
 /**
@@ -239,7 +246,7 @@ export function rombelTidakAktifIds(tanggal: string, kalender: Kegiatan[]): Set<
 export function periodeUntukTanggal(tanggal: string, kalender: Kegiatan[]): Kegiatan | undefined {
   let terpilih: Kegiatan | undefined;
   for (const k of kalender) {
-    if (k.jenis === 'libur' || !dalamRentang(tanggal, k.mulai, k.selesai)) continue;
+    if (k.jenis === 'libur' || !berlakuPada(k, tanggal)) continue;
     if (!terpilih || k.mulai >= terpilih.mulai) terpilih = k;
   }
   return terpilih;
@@ -254,7 +261,7 @@ export function versiReguler(p: Pick<Proyek, 'versi'>): VersiJadwal | undefined 
 export function versiUntukTanggal(tanggal: string, p: Pick<Proyek, 'versi' | 'kalender'>): VersiJadwal | undefined {
   let terpilih: Kegiatan | undefined;
   for (const k of p.kalender) {
-    if (!k.versiId || !dalamRentang(tanggal, k.mulai, k.selesai)) continue;
+    if (!k.versiId || !berlakuPada(k, tanggal)) continue;
     if (!terpilih || k.mulai >= terpilih.mulai) terpilih = k;
   }
   return (terpilih && p.versi.find((v) => v.id === terpilih.versiId)) ?? versiReguler(p);

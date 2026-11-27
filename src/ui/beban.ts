@@ -4,6 +4,20 @@ import { ringkasKode, tombolPemilih } from './pemilih';
 import type { Guru, Proyek } from '../model/tipe';
 import { jpRombel } from '../model/jp';
 import type { Konteks } from './konteks';
+import { bebanUntukDiubah, hapusBebanKegiatan, jadikanTerdampak, kembalikanBeban, modelWarisan, terdampak } from '../model/simpul';
+import type { Kegiatan } from '../model/tipe';
+
+/** Kegiatan yang sedang dikerjakan (bukan induk) di dalam proyek `p`. */
+const kegiatanKonteks = (k: Konteks, p: Proyek): Kegiatan | undefined => (k.ui.fokus === 'induk' ? undefined : p.kalender.find((x) => x.id === k.turunan.periode?.id));
+
+/** Mengubah satu beban; dari dalam kegiatan model warisan, beban induk diganti salinan khusus kegiatan lebih dulu. */
+function ubahSatu(k: Konteks, id: string, fn: (b: Beban) => void): void {
+  k.ubah((p) => {
+    const nid = bebanUntukDiubah(p, kegiatanKonteks(k, p), id);
+    const b = p.beban.find((x) => x.id === nid);
+    if (b) fn(b);
+  });
+}
 
 const kodeGuruDari = (p: Proyek, ids: string[]) => ids.map((i) => p.master.guru.find((g) => g.id === i)?.kode ?? '?');
 const kodeRuangDari = (p: Proyek, ids: string[]) => ids.map((i) => p.master.ruang.find((r) => r.id === i)?.kode ?? '?');
@@ -18,6 +32,15 @@ export function opsiGuru(p: Proyek, mapelId: string, terpilih: string, kosong?: 
   if (ampu.length === 0) return awal + opsi(p.master.guru, terpilih, (g) => g.id, label);
   const lain = p.master.guru.filter((g) => !cocok(g));
   return `${awal}<optgroup label="Mengampu ${esc(mapel?.kode ?? '')}">${opsi(ampu, terpilih, (g) => g.id, label)}</optgroup><optgroup label="Guru lain">${opsi(lain, terpilih, (g) => g.id, label)}</optgroup>`;
+}
+
+/** Tanda asal beban dalam kegiatan model warisan: dari induk, diubah khusus kegiatan, atau tambahan kegiatan. */
+function tandaKhusus(k: Konteks, b: Beban): string {
+  const g = k.ui.fokus === 'induk' ? undefined : k.turunan.periode;
+  if (!g?.versiId || !modelWarisan(g)) return '';
+  if (b.versiId !== g.versiId) return '<span class="lencana bg-slate-100 text-slate-500" title="Sama dengan induk. Mengubahnya di sini membuat salinan khusus kegiatan ini; induk tidak berubah.">induk</span>';
+  if (b.asal) return `<span class="lencana bg-amber-100 text-amber-800">diubah</span><button class="tombol !px-2 !text-xs" data-aksi="bebanKembali" data-id="${esc(b.id)}" title="Kembalikan seperti beban induk">↺ induk</button>`;
+  return '<span class="lencana bg-emerald-100 text-emerald-800" title="Beban tambahan khusus kegiatan ini">tambahan</span>';
 }
 
 function barisBeban(k: Konteks, b: Beban): string {
@@ -44,7 +67,7 @@ function barisBeban(k: Konteks, b: Beban): string {
       <select class="isian min-w-36" data-aksi="bf" data-f="guruId" data-id="${esc(b.id)}">${opsiGuru(p, b.mapelId, b.guruId)}</select>
       <label class="text-xs text-slate-500">JP <input type="number" min="0" class="isian w-14" value="${b.jp}" data-aksi="bf" data-f="jp" data-id="${esc(b.id)}"></label>
       <div class="w-28"><div class="h-2 overflow-hidden rounded-full bg-slate-200"><div class="h-full ${warnaBar}" style="width:${persen}%"></div></div><div class="mt-0.5 text-[11px] text-slate-500">${status}${b.paralel ? ` · ${esc(b.paralel)}` : ''}</div></div>
-      <button class="tombol !px-2" data-aksi="bebanBuka" data-id="${esc(b.id)}" title="Pengaturan lanjutan">${buka ? '▲' : '⚙'}</button>
+      ${tandaKhusus(k, b)}<button class="tombol !px-2" data-aksi="bebanBuka" data-id="${esc(b.id)}" title="Pengaturan lanjutan">${buka ? '▲' : '⚙'}</button>
       <button class="tombol !px-2 !text-red-600" data-aksi="bebanHapus" data-id="${esc(b.id)}" title="Hapus beban">✕</button></div>${lanjut}</div>`;
 }
 
@@ -58,7 +81,9 @@ function tabRombel(k: Konteks, aktif: string): string {
     const total = jpRombel(k.turunan.beban.filter((b) => b.rombelId === r.id));
     const tdkAktif = k.turunan.rombelTidakAktif.has(r.id);
     const pilih = r.id === aktif;
-    return `<button data-aksi="bebanTab" data-id="${esc(r.id)}" class="shrink-0 rounded-md border px-2 py-0.5 text-xs font-medium ${pilih ? 'border-[#2347b8] bg-[#2347b8] text-white' : `border-slate-200 bg-slate-50 hover:bg-slate-100 ${tdkAktif ? 'text-slate-400' : 'text-slate-700'}`}" title="${esc(r.kode)} · ${total} JP${tdkAktif ? ' · tidak aktif pada tanggal acuan (mis. PKL)' : ''}">${esc(String(r.nomor))}</button>`;
+    const g = k.ui.fokus === 'induk' ? undefined : k.turunan.periode;
+    const khusus = !!g && modelWarisan(g) && terdampak(g, r.id) && !tdkAktif;
+    return `<button data-aksi="bebanTab" data-id="${esc(r.id)}" class="shrink-0 rounded-md border px-2 py-0.5 text-xs font-medium ${khusus ? 'underline decoration-amber-500 decoration-2 underline-offset-2' : ''} ${pilih ? 'border-[#2347b8] bg-[#2347b8] text-white' : `border-slate-200 bg-slate-50 hover:bg-slate-100 ${tdkAktif ? 'text-slate-400' : 'text-slate-700'}`}" title="${esc(r.kode)} · ${total} JP${tdkAktif ? ' · tidak aktif' : ''}${khusus ? ' · beban/jadwal khusus kegiatan ini' : ''}">${esc(String(r.nomor))}</button>`;
   };
   const baris = (['X', 'XI', 'XII'] as const)
     .map((tingkat) => {
@@ -110,8 +135,26 @@ export function renderBeban(k: Konteks): string {
     })
     .filter((x) => x.tatap + x.non > 0);
 
-  const khusus = p.beban.some((b) => b.versiId);
-  const infoVersi = khusus ? `<div class="mb-3 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-900">Beban untuk jadwal <b>${esc(k.turunan.versi?.nama ?? '—')}</b>${k.turunan.periode ? ` (periode ${esc(k.turunan.periode.nama)})` : ''}. Tiap versi jadwal punya beban sendiri; ganti periode di Grid Jadwal atau Skema &amp; Kalender untuk melihat beban versi lain.</div>` : '';
+  const g = k.ui.fokus === 'induk' ? undefined : k.turunan.periode;
+  let infoVersi = '';
+  if (g?.versiId && modelWarisan(g) && r) {
+    const tdk = k.turunan.rombelTidakAktif.has(r.id);
+    const khususR = p.beban.filter((b) => b.versiId === g.versiId && b.rombelId === r.id);
+    const dihapus = khususR.filter((b) => b.dihapus);
+    const ket = tdk
+      ? `<b>${esc(r.kode)}</b> tidak aktif pada kegiatan ini; bebannya tidak dipakai.`
+      : terdampak(g, r.id)
+        ? `<b>${esc(r.kode)}</b> punya beban khusus kegiatan ini: ${khususR.filter((b) => b.asal && !b.dihapus).length} diubah, ${khususR.filter((b) => !b.asal).length} tambahan, ${dihapus.length} tidak dipakai. Beban lain tetap mengikuti induk.`
+        : `<b>${esc(r.kode)}</b> ikut induk: beban di bawah sama dengan jadwal reguler. Mengubah, menambah, atau menghapus di sini membuat salinan khusus kegiatan ini; induk tidak berubah.`;
+    const pulih = dihapus.length
+      ? `<div class="mt-1.5 flex flex-wrap items-center gap-1.5">Tidak dipakai: ${dihapus.map((b) => `<button class="tombol !px-2 !py-0.5 !text-xs" data-aksi="bebanKembali" data-id="${esc(b.id)}" title="Pakai lagi seperti induk">↺ ${esc(p.master.mapel.find((m) => m.id === b.mapelId)?.kode ?? '?')} · ${esc(p.master.guru.find((x) => x.id === b.guruId)?.kode ?? '?')}</button>`).join('')}</div>`
+      : '';
+    infoVersi = `<div class="mb-3 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-900">Beban pada kegiatan <b>${esc(g.nama)}</b>. ${ket}${pulih}</div>`;
+  } else if (g?.versiId && p.beban.some((b) => b.versiId === g.versiId)) {
+    infoVersi = `<div class="mb-3 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-900">Beban untuk jadwal <b>${esc(k.turunan.versi?.nama ?? '—')}</b> (data lama: salinan lengkap). Ubah ke model “ikut induk” di sub-tab Info agar kelas yang sama dengan induk tidak perlu diurus dua kali.</div>`;
+  } else if (k.ui.fokus === 'induk' || !g) {
+    infoVersi = '<div class="mb-3 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">Beban induk (jadwal reguler semester). Kegiatan yang belum mengubah beban sebuah kelas ikut memakai perubahan di sini.</div>';
+  }
   return `<div class="mb-2 text-lg font-semibold">Beban mengajar</div>${infoVersi}${tabRombel(k, aktif)}
     <div class="grid gap-3 xl:grid-cols-[1fr_300px]"><div class="space-y-3">${kartu || '<div class="kartu p-6 text-center text-sm text-slate-500">Belum ada rombel. Tambahkan di Master Data.</div>'}</div>
     <aside class="kartu h-fit p-3"><div class="mb-2 text-sm font-semibold">Rekap JP per guru</div>
@@ -148,8 +191,17 @@ export function klikBeban(k: Konteks, el: HTMLElement): boolean {
     const n = k.turunan.slots.filter((s) => s.bebanId === b.id).length;
     if (n > 0 && !confirm(`Beban ini sudah terjadwal ${n} slot. Hapus beban beserta slotnya?`)) return true;
     k.ubah((p) => {
+      const g = kegiatanKonteks(k, p);
+      if (g && modelWarisan(g)) return hapusBebanKegiatan(p, g, b.id);
       p.beban = p.beban.filter((x) => x.id !== b.id);
       for (const v of p.versi) v.slots = v.slots.filter((s) => s.bebanId !== b.id);
+    });
+    return true;
+  }
+  if (d.aksi === 'bebanKembali') {
+    k.ubah((p) => {
+      const g = kegiatanKonteks(k, p);
+      if (g) kembalikanBeban(p, g, d.id ?? '');
     });
     return true;
   }
@@ -166,8 +218,14 @@ export function klikBeban(k: Konteks, el: HTMLElement): boolean {
       k.lapor('JP harus bilangan bulat 0 atau lebih.');
       return true;
     }
-    const versiId = k.p.beban.some((b) => b.versiId) ? k.turunan.versi?.id : undefined;
-    k.ubah((p) => p.beban.push({ id: `b${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, rombelId: d.rombel ?? '', mapelId, guruId, jp, timGuruIds: [], ruangPrioritas: [], ruangTerlarang: [], ...(versiId ? { versiId } : {}) }));
+    k.ubah((p) => {
+      const g = kegiatanKonteks(k, p);
+      const rombelId = d.rombel ?? '';
+      // di dalam kegiatan: beban tambahan khusus kegiatan itu (rombelnya menjadi terdampak); di induk: beban induk
+      const versiId = g?.versiId && (modelWarisan(g) || p.beban.some((b) => b.versiId)) ? g.versiId : undefined;
+      if (g && modelWarisan(g)) jadikanTerdampak(p, g, rombelId);
+      p.beban.push({ id: `b${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, rombelId, mapelId, guruId, jp, timGuruIds: [], ruangPrioritas: [], ruangTerlarang: [], ...(versiId ? { versiId } : {}) });
+    });
     return true;
   }
   return false;
@@ -193,26 +251,26 @@ export function ubahBeban(k: Konteks, el: HTMLInputElement & HTMLSelectElement):
   if (f === 'jp') {
     const n = Number(el.value);
     if (!Number.isInteger(n) || n < 0) return tolak('JP harus bilangan bulat 0 atau lebih.');
-    k.ubah(() => void (b.jp = n));
+    ubahSatu(k, b.id, (x) => void (x.jp = n));
   } else if (f === 'mapelId' || f === 'guruId') {
-    k.ubah(() => void (b[f] = el.value));
+    ubahSatu(k, b.id, (x) => void (x[f] = el.value));
   } else if (f === 'pola') {
     const angka = el.value.split(/[,\s]+/).filter(Boolean).map(Number);
     if (angka.some((n) => !Number.isInteger(n) || n < 1)) return tolak('Pola harus berupa bilangan bulat dipisah koma, mis. 2,2.');
-    k.ubah(() => {
-      if (angka.length) b.pola = angka;
-      else delete b.pola;
+    ubahSatu(k, b.id, (x) => {
+      if (angka.length) x.pola = angka;
+      else delete x.pola;
     });
   } else if (f === 'paralel') {
     const v = el.value.trim();
-    k.ubah(() => {
-      if (v) b.paralel = v;
-      else delete b.paralel;
+    ubahSatu(k, b.id, (x) => {
+      if (v) x.paralel = v;
+      else delete x.paralel;
     });
   } else if (f === 'ntm') {
-    k.ubah(() => {
-      if (el.checked) b.nonTatapMuka = true;
-      else delete b.nonTatapMuka;
+    ubahSatu(k, b.id, (x) => {
+      if (el.checked) x.nonTatapMuka = true;
+      else delete x.nonTatapMuka;
     });
   }
   return true;

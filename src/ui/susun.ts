@@ -1,7 +1,8 @@
 import type { HasilSusun, Kemajuan } from '../mesin/solver';
 import type { Slot } from '../model/tipe';
 import { esc } from './util';
-import { bebanUntukVersi, polaUntukTanggal, rombelTidakAktifIds, versiUntukTanggal } from '../model/kalender';
+import { polaUntukTanggal } from '../model/kalender';
+import { kalenderFokus, modelWarisan, terdampak } from '../model/simpul';
 import type { Konteks } from './konteks';
 
 type Mode = 'nol' | 'lengkapi';
@@ -24,10 +25,10 @@ const bar = (m: Kemajuan | null) => {
 
 export function renderSusun(k: Konteks): string {
   const p = k.p;
-  const versi = versiUntukTanggal(k.ui.tanggal, p);
-  const kini = versi?.slots.length ?? 0;
-  const tdkAktif = rombelTidakAktifIds(k.ui.tanggal, p.kalender);
-  const polaAktif = polaUntukTanggal(k.ui.tanggal, p).pola;
+  const versi = k.turunan.versi;
+  const kini = k.turunan.slots.length;
+  const tdkAktif = k.turunan.rombelTidakAktif;
+  const polaAktif = polaUntukTanggal(k.ui.tanggal, { ...p, kalender: kalenderFokus(p, k.ui.fokus) }).pola;
   const pola = polaAktif.map((id) => p.skema.find((s) => s.id === id)?.nama.replace(/ Jam\/Hari/, '') ?? '?').join(' · ');
   const opsi = `<div class="mt-3 grid gap-3 sm:grid-cols-2">
       <fieldset class="rounded-lg border border-slate-200 p-3 text-sm"><legend class="px-1 text-xs font-semibold text-slate-500">Cara</legend>
@@ -71,7 +72,7 @@ export function renderSusun(k: Konteks): string {
   }
   return `<h2 class="mb-3 text-lg font-bold">Susun Otomatis</h2>
     <div class="kartu p-4"><div class="text-sm text-slate-600">Menempatkan JP semua beban (${k.turunan.beban.filter((b) => !b.nonTatapMuka).length} beban tatap muka) ke versi “${esc(versi?.nama ?? '—')}” tanpa bentrok guru, rombel, atau ruang, dengan memperhatikan guru tidak tersedia, ruang terlarang, jenis ruang per mapel, pola pertemuan, dan kelompok paralel. Yang tidak muat <b>tidak dipaksakan</b>: dilaporkan beserta alasannya.</div>
-      <div class="mt-2 text-xs text-slate-500">Kapasitas jam mengikuti pola pada tanggal acuan (${esc(k.ui.tanggal)}): ${esc(pola)} (Senin–Jum'at). Versi dan periode diganti lewat bilah Periode di Grid Jadwal.${tdkAktif.size ? ` ${tdkAktif.size} rombel tidak aktif (PKL) dilewati.` : ''}</div>
+      <div class="mt-2 text-xs text-slate-500">Kapasitas jam mengikuti pola pada tanggal acuan (${esc(k.ui.tanggal)}): ${esc(pola)} (Senin–Jum'at). Sasaran (induk atau kegiatan) dipilih di halaman Periode &amp; Jadwal; pada kegiatan, kelas yang ikut induk tidak disusun ulang.${tdkAktif.size ? ` ${tdkAktif.size} rombel tidak aktif (PKL) dilewati.` : ''}</div>
       ${opsi}${bagian}</div>`;
 }
 
@@ -83,15 +84,16 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
       st.kemajuan = null;
       st.jalan = true;
       const kloning = structuredClone(k.p);
-      const versiIni = versiUntukTanggal(k.ui.tanggal, k.p);
-      const tdk = rombelTidakAktifIds(k.ui.tanggal, k.p.kalender);
+      const tdk = k.turunan.rombelTidakAktif;
+      const g = k.turunan.periode;
       const rombelBeban = new Map(k.p.beban.map((b) => [b.id, b.rombelId]));
-      const aktifSaja = (sl: Slot) => !tdk.has(rombelBeban.get(sl.bebanId) ?? '');
-      // rombel tidak aktif (PKL) tidak ikut disusun; slot miliknya (bila ada) dibiarkan apa adanya
-      kloning.beban = bebanUntukVersi(kloning.beban, versiIni?.id).filter((b) => !tdk.has(b.rombelId));
-      const tetap = st.mode === 'lengkapi' ? (versiIni?.slots ?? []).filter(aktifSaja) : [];
-      if (st.mode === 'nol') for (const v of kloning.versi) v.slots = [];
-      const polaSusun = polaUntukTanggal(k.ui.tanggal, k.p).pola;
+      // pada kegiatan model warisan, kelas yang ikut induk tidak disusun ulang: jadwalnya dipertahankan sebagai slot tetap
+      const ikutInduk = (sl: Slot) => !!g && modelWarisan(g) && !terdampak(g, rombelBeban.get(sl.bebanId) ?? '');
+      // rombel tidak aktif (PKL) tidak ikut disusun
+      kloning.beban = structuredClone(k.turunan.beban).filter((b) => !tdk.has(b.rombelId));
+      const tetap: Slot[] = st.mode === 'lengkapi' ? k.turunan.slots : k.turunan.slots.filter(ikutInduk);
+      for (const v of kloning.versi) v.slots = [];
+      const polaSusun = polaUntukTanggal(k.ui.tanggal, { ...k.p, kalender: kalenderFokus(k.p, k.ui.fokus) }).pola;
       try {
         pekerja = new Worker(new URL('../mesin/solver.worker.ts', import.meta.url), { type: 'module' });
       } catch (e) {
@@ -140,9 +142,7 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
     case 'susunTerapkan': {
       const h = st.hasil;
       if (!h) return true;
-      const tdk2 = rombelTidakAktifIds(k.ui.tanggal, k.p.kalender);
-      const rb = new Map(k.p.beban.map((b) => [b.id, b.rombelId]));
-      k.ubahSlots((lama) => [...h.slots, ...lama.filter((sl) => tdk2.has(rb.get(sl.bebanId) ?? ''))]);
+      k.ubahSlots(() => h.slots);
       st.hasil = null;
       k.ui.mode = 'rombel';
       k.ke('grid');

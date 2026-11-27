@@ -60,7 +60,7 @@ describe('impor jadwal-te → Gasal 2026/2027', () => {
     const asas = p.versi.find((v) => v.id === 'v-asas');
     const nBeban = p.beban.length;
     const salin = tambahVersi(p, asas, 'v-uji', 'Uji', true);
-    expect(p.beban.length).toBe(nBeban + bebanUntukVersi(p.beban, 'v-asas').length);
+    expect(p.beban.length).toBe(nBeban + p.beban.filter((b) => b.versiId === 'v-asas').length);
     expect(salin.slots.length).toBe(asas?.slots.length);
     const ids = new Set(bebanUntukVersi(p.beban, 'v-uji').map((b) => b.id));
     expect(salin.slots.every((s) => ids.has(s.bebanId))).toBe(true);
@@ -90,6 +90,6 @@ describe('periode bersarang', () => {
     expect(tdk.has(id('XI AT 1'))).toBe(false);
     expect(tdk.has(id('XI DKV 3'))).toBe(false);
     expect(tdk.has(id('X TE 1'))).toBe(true);
-    expect(rombelTidakAktifIds('2026-12-08', p.kalender).has(id('XI AT 1'))).toBe(true);
+    expect(rombelTidakAktifIds('2026-12-08', p.kalender, p.semester).has(id('XI AT 1'))).toBe(true);
   });
 });

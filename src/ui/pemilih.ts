@@ -1,3 +1,4 @@
+import { bebanUntukDiubah } from '../model/simpul';
 import { kategoriRuang } from '../model/ruang';
 import { kategoriMapel, urutKategori } from '../model/kategoriMapel';
 import type { Aturan, Proyek } from '../model/tipe';
@@ -247,7 +248,12 @@ export function klikPemilih(k: Konteks, el: HTMLElement): boolean {
       if (!pm) return true;
       const ids = [...pm.pilih];
       k.ui.pemilih = null;
-      k.ubah((p) => terapkanPemilih(p, pm.sasaran, pm.id, ids));
+      k.ubah((p) => {
+        // beban induk yang diubah dari dalam kegiatan menjadi pengecualian khusus kegiatan itu
+        const g = k.ui.fokus === 'induk' ? undefined : p.kalender.find((x) => x.id === k.turunan.periode?.id);
+        const id = pm.sasaran.startsWith('beban') ? bebanUntukDiubah(p, g, pm.id) : pm.id;
+        terapkanPemilih(p, pm.sasaran, id, ids);
+      });
       return true;
     }
   }

@@ -4,6 +4,8 @@ import { skemaBawaan } from './skema';
 import { terapkanRuangSekolah } from './ruangSekolah';
 import { isiJenisRuangMapel, terapkanDataSekolah } from './sekolah';
 import type { HasilImpor } from '../io/imporTugas';
+import { versiReguler } from './kalender';
+import { jadikanWarisan } from './simpul';
 
 /** Mengisi `mapelIds` tiap guru dari beban yang dipegangnya (guru utama dan tim). Urutan mengikuti kemunculan. */
 export function isiMapelGuru(p: Proyek): void {
@@ -126,4 +128,30 @@ export function bangunGenap(h: HasilImpor, gasal: Proyek): Proyek {
   ];
   p.periodeAktifId = 'k-genap';
   return p;
+}
+
+/**
+ * Menyusun data Gasal dari jadwal-te sebagai semester induk dan kegiatan (model warisan):
+ * - induk = jadwal periode Pemadatan TKA (p_tka/p_tka2, isinya identik dan berlaku sejak awal semester sampai 18 Des);
+ * - kegiatan = ASAJ Praktik XII (16-20 Nov) dan ASAS X & ASAJ XII (30 Nov-4 Des); kelas yang sama dengan induk diikutkan induk;
+ * - periode Genap (Januari) dibuang dari data Gasal: Genap adalah semester tersendiri.
+ */
+export function strukturGasalJadwalTe(p: Proyek): void {
+  const tka = p.kalender.find((g) => g.id === 'k-tka');
+  const tka2 = p.kalender.find((g) => g.id === 'k-tka2');
+  const genap = p.kalender.find((g) => g.id === 'k-genap');
+  if (!tka || !tka2) throw new Error('Periode k-tka dan k-tka2 tidak ada.');
+  const reg = versiReguler(p);
+  p.semester = { nama: 'Gasal 2026/2027', mulai: tka.mulai, selesai: tka2.selesai, rombelTidakAktif: [...tka.rombelTidakAktif] };
+  p.kalender = p.kalender.filter((g) => g !== tka && g !== tka2 && g !== genap);
+  if (genap?.versiId) {
+    p.versi = p.versi.filter((v) => v.id !== genap.versiId);
+    p.beban = p.beban.filter((b) => b.versiId !== genap.versiId);
+  }
+  for (const b of p.beban) if (b.versiId === reg?.id) delete b.versiId;
+  const asas = p.kalender.find((g) => g.id === 'k-asas');
+  if (asas) asas.jenis = 'ASAS';
+  for (const g of p.kalender) jadikanWarisan(p, g);
+  if (reg) reg.nama = 'Jadwal reguler Gasal 2026/2027';
+  p.nama = 'SMK Negeri Bansari - Gasal 2026/2027';
 }
