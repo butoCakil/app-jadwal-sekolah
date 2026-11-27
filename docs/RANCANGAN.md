@@ -375,7 +375,7 @@ app-jadwal-sekolah/
 | UKK XII | 15 | 720 | 720 | 720 | 0 |
 | ASAS | 5 | 239 | 239 (4 JP bentrok pengawas, diterima) | 231 | 8 |
 
-- **Bacaan:** pada Pemadatan solver menempatkan lebih banyak JP daripada aSc dan tanpa pelanggaran (aSc meninggalkan 47 JP tak terjadwal dan 9 pelanggaran). Pada TKA dan UKK hasilnya setara. Satu-satunya yang kalah dari aSc adalah ASAS: selisih sekitar 4 JP di luar 4 JP PSRT yang memang mustahil tanpa melanggar (guru EDW mengawas). Sisa ASAS ada pada XI TE 2 dan XI TE 3 (beban yang dibatasi ke ruang I1, yang terkunci ujian, dan guru AZZ yang banyak mengawas) serta XI AT 2 (guru YDH mengawas). Hasil tidak berubah dengan waktu 30 dtk dan tiga benih berbeda, jadi ini macet pada optimum lokal, bukan kekurangan waktu.
+- **Bacaan:** pada Pemadatan solver menempatkan lebih banyak JP daripada aSc dan tanpa pelanggaran (aSc meninggalkan 47 JP tak terjadwal dan 9 pelanggaran). Pada TKA dan UKK hasilnya setara. Satu-satunya yang kalah dari aSc adalah ASAS: solver menyisakan 8 JP, padahal aSc menempatkan semuanya (hanya 4 JP PSRT XI TE 2 yang bentrok dengan pengawas dan sudah diterima). PSRT XI TE 2 sendiri tidak termasuk sisa solver. Sisanya: 3 JP XI TE 2 dan 3 JP XI TE 3 (beban yang dibatasi ke ruang I1, terkunci saat ujian, dan guru AZZ yang banyak mengawas) serta 2 JP XI AT 2 (guru YDH mengawas). Hasil tidak berubah dengan waktu 30 dtk dan tiga benih berbeda, jadi ini macet pada optimum lokal, bukan kekurangan waktu.
 - **Belum diukur:** kerapian (jam kosong guru, sebaran mapel), karena belum ada preferensi berbobot.
 - **Langkah berikutnya untuk solver:** mulai dari jadwal induk atau jadwal sebelumnya lalu menggeser hanya yang terdampak (bukan dari nol), dan rantai geser lebih dalam untuk kasus macet seperti ASAS.
 
