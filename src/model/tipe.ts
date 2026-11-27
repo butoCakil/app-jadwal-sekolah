@@ -1,6 +1,8 @@
-// Tipe data inti. Hari memakai indeks 0..4 (Senin..Jumat). Tanggal memakai string ISO "YYYY-MM-DD".
+// Tipe data inti. Hari memakai indeks 0..5 (Senin..Sabtu); jumlah hari kerja = panjang pola reguler (5 atau 6). Tanggal memakai string ISO "YYYY-MM-DD".
 
-export const NAMA_HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at"] as const;
+export const NAMA_HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'] as const;
+/** Jumlah hari kerja yang boleh dipilih. */
+export const PILIHAN_HARI_KERJA = [5, 6] as const;
 
 export type JenisBaris = 'nonKbm' | 'kbm' | 'istirahat';
 
@@ -21,8 +23,15 @@ export interface Skema {
   baris: BarisSkema[];
 }
 
-/** Id skema untuk Senin..Jumat */
-export type PolaMinggu = [string, string, string, string, string];
+/** Id skema per hari kerja (Senin dst); panjangnya = jumlah hari kerja (5 atau 6). */
+export type PolaMinggu = string[];
+
+/** Pola mingguan selain pola reguler (default). */
+export interface PolaBernama {
+  id: string;
+  nama: string;
+  pola: PolaMinggu;
+}
 
 export type JenisKegiatan = 'TKA' | 'PKL' | 'ASAS' | 'ASAJ' | 'UKK' | 'libur' | 'lain';
 
@@ -32,7 +41,9 @@ export interface Kegiatan {
   jenis: JenisKegiatan;
   mulai: string;
   selesai: string;
-  /** Kosong = tidak mengubah pola */
+  /** Pola mingguan yang dipakai pada periode ini (id pola; kosong = pola default). */
+  polaId?: string;
+  /** Format lama (pola tertanam); dipindah ke `polaLain` saat data dimuat. */
   pola?: PolaMinggu;
   rombelTidakAktif: string[];
   /** Versi jadwal yang dipakai pada periode ini (kosong = reguler) */
@@ -135,7 +146,13 @@ export interface Proyek {
   versiSkemaData: number;
   nama: string;
   skema: Skema[];
+  /** Pola default (berlaku bila periode tidak memilih pola lain). Jumlah hari kerja = panjangnya. */
   polaReguler: PolaMinggu;
+  /** Id dan nama pola default (bawaan 'reguler' / 'Pola reguler'). */
+  polaRegulerId?: string;
+  polaRegulerNama?: string;
+  /** Pola mingguan lain yang bisa dipasang pada periode di kalender. */
+  polaLain?: PolaBernama[];
   penggantiManual: PenggantiManual | null;
   kalender: Kegiatan[];
   master: { guru: Guru[]; mapel: Mapel[]; rombel: Rombel[]; ruang: Ruang[] };

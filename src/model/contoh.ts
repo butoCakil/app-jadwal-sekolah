@@ -38,11 +38,12 @@ export function proyekContoh(): Proyek {
     nama: 'Contoh (data fiktif)',
     skema: skemaBawaan(),
     polaReguler: ['skema11', 'skema10', 'skema10', 'skema11', 'skema9'],
+    polaLain: [{ id: 'pola_asas', nama: 'Pola ASAS (contoh)', pola: ['skema10', 'skema10', 'skema11', 'skema11', 'skema9'] }],
     penggantiManual: null,
     kalender: [
       {
         id: 'k1', nama: 'Pekan ASAS (contoh)', jenis: 'ASAS', mulai: '2026-11-30', selesai: '2026-12-04',
-        pola: ['skema10', 'skema10', 'skema11', 'skema11', 'skema9'], rombelTidakAktif: [],
+        polaId: 'pola_asas', rombelTidakAktif: [],
       },
       { id: 'k2', nama: 'Libur contoh', jenis: 'libur', mulai: '2026-12-25', selesai: '2026-12-25', rombelTidakAktif: [] },
     ],

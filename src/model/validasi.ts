@@ -1,6 +1,6 @@
 import type { Proyek } from './tipe';
 import { VERSI_DATA_SAAT_INI } from './tipe';
-import { cekKegiatan, cekPola } from './kalender';
+import { cekKegiatan, cekPola, daftarPola } from './kalender';
 import { cekSkema } from './skema';
 
 /** Memeriksa proyek hasil impor. Mengembalikan daftar masalah; kosong berarti aman dimuat. */
@@ -16,16 +16,24 @@ export function validasiProyek(x: unknown): string[] {
     if (!Array.isArray(p[k])) galat.push(`Bagian "${k}" harus berupa daftar.`);
   }
   if (!p.master || typeof p.master !== 'object') galat.push('Bagian "master" tidak ada.');
-  if (!Array.isArray(p.polaReguler) || p.polaReguler.length !== 5) galat.push('"polaReguler" harus berisi 5 id skema.');
+  if (!Array.isArray(p.polaReguler) || (p.polaReguler.length !== 5 && p.polaReguler.length !== 6)) galat.push('"polaReguler" harus berisi 5 atau 6 id skema (jumlah hari kerja).');
   if (galat.length) return galat;
 
   const proyek = p as Proyek;
   proyek.skema.forEach((s) => cekSkema(s).forEach((g) => galat.push(`Skema ${s.id}: ${g}`)));
-  cekPola(proyek.polaReguler, proyek.skema).forEach((g) => galat.push(`Pola reguler: ${g}`));
-  if (proyek.penggantiManual) cekPola(proyek.penggantiManual.pola, proyek.skema).forEach((g) => galat.push(`Pengganti manual: ${g}`));
+  const hari = proyek.polaReguler.length;
+  cekPola(proyek.polaReguler, proyek.skema).forEach((g) => galat.push(`Pola default: ${g}`));
+  const idPola = daftarPola(proyek).map((x) => x.id);
+  if (new Set(idPola).size !== idPola.length) galat.push('Ada id pola mingguan ganda.');
+  for (const x of proyek.polaLain ?? []) {
+    if (!x.nama?.trim()) galat.push(`Pola ${x.id}: nama kosong.`);
+    cekPola(x.pola, proyek.skema, hari).forEach((g) => galat.push(`Pola ${x.nama}: ${g}`));
+  }
+  if (proyek.penggantiManual) cekPola(proyek.penggantiManual.pola, proyek.skema, hari).forEach((g) => galat.push(`Pengganti manual: ${g}`));
   proyek.kalender.forEach((k) => {
     cekKegiatan(k).forEach((g) => galat.push(`Kegiatan ${k.nama}: ${g}`));
-    if (k.pola) cekPola(k.pola, proyek.skema).forEach((g) => galat.push(`Kegiatan ${k.nama}: ${g}`));
+    if (k.pola) cekPola(k.pola, proyek.skema, hari).forEach((g) => galat.push(`Kegiatan ${k.nama}: ${g}`));
+    if (k.polaId && !idPola.includes(k.polaId)) galat.push(`Kegiatan ${k.nama}: pola mingguan tidak ada.`);
   });
   const adaGuru = new Set(proyek.master.guru.map((x) => x.id));
   const adaMapel = new Set(proyek.master.mapel.map((x) => x.id));

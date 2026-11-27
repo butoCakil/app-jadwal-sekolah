@@ -1,4 +1,5 @@
 import type { Proyek } from './tipe';
+import { migrasiPola } from './kalender';
 import gasal from '../../data/sekolah/gasal-2026.json';
 import genap from '../../data/sekolah/genap-2027.json';
 
@@ -23,5 +24,5 @@ export const DAFTAR_DATA: { id: IdDataSekolah; judul: string; keterangan: string
  * Pembangun datanya ada di test/bangun-data.test.ts.
  */
 export function proyekSekolah(id: IdDataSekolah = 'genap'): Proyek {
-  return structuredClone(id === 'gasal' ? gasal : genap) as unknown as Proyek;
+  return migrasiPola(structuredClone(id === 'gasal' ? gasal : genap) as unknown as Proyek);
 }

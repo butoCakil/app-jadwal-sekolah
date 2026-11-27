@@ -7,12 +7,12 @@ export function isoLokal(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Tanggal ISO Senin pada pekan yang memuat tanggal ini (Sabtu/Minggu dianggap pekan berikutnya). */
-export function seninPekan(tanggal: string): string {
+/** Tanggal ISO Senin pada pekan yang memuat tanggal ini (hari setelah hari kerja terakhir dianggap pekan berikutnya). */
+export function seninPekan(tanggal: string, hariKerja = 5): string {
   const [y, m, d] = tanggal.split('-').map(Number) as [number, number, number];
   const dt = new Date(Date.UTC(y, m - 1, d));
   const h = (dt.getUTCDay() + 6) % 7; // 0 = Senin
-  dt.setUTCDate(dt.getUTCDate() + (h > 4 ? 7 - h : -h));
+  dt.setUTCDate(dt.getUTCDate() + (h >= hariKerja ? 7 - h : -h));
   return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
 }
 

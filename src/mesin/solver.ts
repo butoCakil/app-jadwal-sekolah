@@ -17,7 +17,6 @@ import { ruangDilarang } from './validator';
  * rombel dan guru, pertemuan beban yang sama di hari yang sama, pertemuan yang terpotong istirahat, jam akhir hari).
  */
 
-const HARI = 5;
 const LEBAR = 16;
 
 export interface OpsiSusun {
@@ -131,7 +130,12 @@ class Mesin {
   jpTetap = 0;
   total = 0;
 
+  /** jumlah hari kerja per pekan (dari panjang skemaPerHari) */
+  readonly hari: number;
+
   constructor(readonly p: Proyek, opsi: OpsiSusun) {
+    this.hari = opsi.skemaPerHari.length || 5;
+    const HARI = this.hari;
     const skemaById = new Map(p.skema.map((s) => [s.id, s]));
     this.cap = opsi.skemaPerHari.map((id) => {
       const s = id ? skemaById.get(id) : undefined;
@@ -378,7 +382,7 @@ class Mesin {
   terbaik(c: Chunk, acakFn: () => number): { hari: number; mulai: number; ruang: number[] } | null {
     let terbaik: { hari: number; mulai: number; ruang: number[] } | null = null;
     let nilai = Infinity;
-    for (let h = 0; h < HARI; h++) {
+    for (let h = 0; h < this.hari; h++) {
       for (let m = 1; m + c.size - 1 <= (this.cap[h] as number); m++) {
         const r = this.muat(c, h, m);
         if (!r) continue;
@@ -437,7 +441,7 @@ class Mesin {
     }
     if (!ejeksi) return false;
     const calon: { h: number; m: number; hal: number[] }[] = [];
-    for (let h = 0; h < HARI; h++) {
+    for (let h = 0; h < this.hari; h++) {
       for (let m = 1; m + c.size - 1 <= (this.cap[h] as number); m++) {
         const hal = this.penghalang(c, h, m);
         if (hal && hal.size > 0 && hal.size <= 2) calon.push({ h, m, hal: [...hal] });
@@ -522,7 +526,7 @@ class Mesin {
 
   diagnosa(c: Chunk): string {
     const hit: Record<string, number> = { rombel: 0, guru: 0, tutup: 0, ruang: 0, kapasitas: 0 };
-    for (let h = 0; h < HARI; h++) {
+    for (let h = 0; h < this.hari; h++) {
       for (let m = 1; m + c.size - 1 <= (this.cap[h] as number); m++) {
         const s = { v: '' };
         if (!this.muat(c, h, m, s)) hit[s.v] = (hit[s.v] ?? 0) + 1;

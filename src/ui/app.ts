@@ -1,6 +1,6 @@
 import type { Proyek, Slot } from '../model/tipe';
 import { cekSkema } from '../model/skema';
-import { cekKegiatan, cekPola, versiUntukTanggal } from '../model/kalender';
+import { cekKegiatan, cekPola, migrasiPola, versiUntukTanggal } from '../model/kalender';
 import { proyekContoh } from '../model/contoh';
 import { proyekSekolah, type IdDataSekolah } from '../model/sekolahData';
 import { Riwayat } from '../mesin/riwayat';
@@ -17,7 +17,8 @@ import { klikSusun, renderSusun, ubahSusun } from './susun';
 import { klikSkema, renderSkemaTab, ubahSkema } from './skemaTab';
 import { klikPemilih, renderPemilih, segarkanPemilih, ubahPemilih } from './pemilih';
 import { klikPeriode, ubahPeriode } from './periode';
-import { bulanDari, tanggalUntukPeriode } from './kalenderTab';
+import { klikDataset, muatDaftarDataset, ubahDataset } from './dataset';
+import { bulanDari, renderDlgKegiatan, tanggalUntukPeriode } from './kalenderTab';
 import { esc, isoLokal, unduh } from './util';
 
 const TAB: { id: Tab; label: string }[] = [
@@ -41,7 +42,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     tanggal: awalTanggal(p),
     kalBulan: bulanDari(awalTanggal(p)),
     kalTanggal: awalTanggal(p),
-    kalBuka: new Set(),
+    dlg: null,
     skemaSub: 'kalender',
     masterTab: 'guru',
     pemilih: null,
@@ -77,8 +78,9 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
   const periksaProyek = (): string => {
     const g = [
       ...p.skema.flatMap((s) => cekSkema(s).map((x) => `${s.nama}: ${x}`)),
-      ...cekPola(p.polaReguler, p.skema),
-      ...(p.penggantiManual ? cekPola(p.penggantiManual.pola, p.skema) : []),
+      ...cekPola(p.polaReguler, p.skema).map((x) => `Pola default: ${x}`),
+      ...(p.polaLain ?? []).flatMap((q) => cekPola(q.pola, p.skema, p.polaReguler.length).map((x) => `Pola ${q.nama}: ${x}`)),
+      ...(p.penggantiManual ? cekPola(p.penggantiManual.pola, p.skema, p.polaReguler.length) : []),
       ...p.kalender.flatMap((x) => cekKegiatan(x).map((y) => `${x.nama}: ${y}`)),
     ];
     return g.length ? `Perlu diperbaiki: ${g.join(' | ')}` : '';
@@ -103,6 +105,22 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     },
     gambar: () => gambar(),
     lapor,
+    ganti(baru, pesan) {
+      riwayat.catat(p);
+      p = baru;
+      ui.entitasId = p.master.rombel[0]?.id ?? '';
+      ui.mode = 'rombel';
+      ui.tanggal = awalTanggal(p);
+      ui.kalTanggal = ui.tanggal;
+      ui.kalBulan = bulanDari(ui.tanggal);
+      ui.bebanRombel = p.master.rombel[0]?.id ?? '';
+      ui.pemilih = null;
+      ui.dlg = null;
+      galat = periksaProyek();
+      void hapusDraf().then(() => simpanDraf(p)).catch(() => undefined);
+      gambar();
+      if (pesan) lapor(pesan);
+    },
     ke(tab) {
       ui.tab = tab;
       ui.modal = null;
@@ -144,7 +162,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
             <button class="tombol" data-aksi="ekspor">Ekspor JSON</button>
             <label class="tombol cursor-pointer">Impor JSON<input type="file" accept="application/json,.json" id="impor" class="hidden"></label></div></div>
         <nav class="mx-auto flex max-w-[1600px] gap-1 overflow-x-auto px-4">${TAB.map((t) => `<button data-tab="${t.id}" class="whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${t.id === ui.tab ? 'border-[#2347b8] text-[#2347b8]' : 'border-transparent text-slate-500 hover:text-slate-800'}">${t.label}${t.id === 'inspektur' ? badge : ''}</button>`).join('')}</nav></header>
-      <main class="mx-auto max-w-[1600px] px-4 py-4">${galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(galat)}</div>` : ''}${isi}</main>${renderPemilih(ctx)}`;
+      <main class="mx-auto max-w-[1600px] px-4 py-4">${galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(galat)}</div>` : ''}${isi}</main>${renderPemilih(ctx)}${renderDlgKegiatan(ctx)}`;
     segarkanPemilih(ctx);
   }
 
@@ -178,21 +196,10 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       case 'muat': {
         const set = el.dataset.set as IdDataSekolah | 'contoh';
         if (!confirm('Memuat data ini mengganti draf yang ada di peramban ini. Lanjutkan?')) return;
-        riwayat.catat(p);
-        p = set === 'contoh' ? proyekContoh() : proyekSekolah(set);
-        ui.entitasId = p.master.rombel[0]?.id ?? '';
-        ui.mode = 'rombel';
-        ui.tanggal = awalTanggal(p);
-        ui.kalTanggal = ui.tanggal;
-        ui.kalBulan = bulanDari(ui.tanggal);
-        ui.bebanRombel = p.master.rombel[0]?.id ?? '';
-        ui.pemilih = null;
-        galat = '';
-        void hapusDraf();
-        return gambar();
+        return ctx.ganti(set === 'contoh' ? migrasiPola(proyekContoh()) : proyekSekolah(set));
       }
     }
-    void (klikPemilih(ctx, el) || klikPeriode(ctx, el) || klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikSkema(ctx, el));
+    void (klikPemilih(ctx, el) || klikPeriode(ctx, el) || klikDataset(ctx, el) || klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikSkema(ctx, el));
   });
 
   akar.addEventListener('change', (e) => {
@@ -216,7 +223,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       });
       return;
     }
-    void (ubahPemilih(ctx, el) || ubahPeriode(ctx, el) || ubahGrid(ctx, el) || ubahBeban(ctx, el) || ubahMaster(ctx, el) || ubahImpor(ctx, el) || ubahSusun(ctx, el) || ubahSkema(ctx, el));
+    void (ubahPemilih(ctx, el) || ubahPeriode(ctx, el) || ubahDataset(ctx, el) || ubahGrid(ctx, el) || ubahBeban(ctx, el) || ubahMaster(ctx, el) || ubahImpor(ctx, el) || ubahSusun(ctx, el) || ubahSkema(ctx, el));
   });
 
   akar.addEventListener('input', (e) => {
@@ -226,9 +233,10 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
 
   document.addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement;
-    if (e.key === 'Escape' && (ui.modal || ui.pemilih)) {
+    if (e.key === 'Escape' && (ui.modal || ui.pemilih || ui.dlg)) {
       ui.modal = null;
       ui.pemilih = null;
+      ui.dlg = null;
       return gambar();
     }
     if (/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
@@ -307,4 +315,5 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
   akar.addEventListener('dragend', bersihkan);
 
   gambar();
+  void muatDaftarDataset(ctx);
 }

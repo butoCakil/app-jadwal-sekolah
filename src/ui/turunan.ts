@@ -5,8 +5,9 @@ import type { Turunan } from './konteks';
 import { seninPekan, tambahHari } from './util';
 
 export function hitungTurunan(p: Proyek, tanggal: string): Turunan {
-  const senin = seninPekan(tanggal);
-  const hari = [0, 1, 2, 3, 4].map((i) => {
+  const n = p.polaReguler.length;
+  const senin = seninPekan(tanggal, n);
+  const hari = Array.from({ length: n }, (_, i) => i).map((i) => {
     const tgl = tambahHari(senin, i);
     return { tgl, info: skemaUntukTanggal(tgl, p) };
   });

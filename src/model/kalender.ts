@@ -1,4 +1,4 @@
-import type { Kegiatan, PolaMinggu, Proyek, Rombel, Skema, VersiJadwal } from './tipe';
+import type { Kegiatan, PolaBernama, PolaMinggu, Proyek, Rombel, Skema, VersiJadwal } from './tipe';
 import { kapasitasKbm } from './skema';
 
 /** Hari dalam pekan dari tanggal ISO: 0 = Senin .. 6 = Minggu. Memakai UTC agar tidak terpengaruh zona waktu. */
@@ -16,6 +16,96 @@ export function dalamRentang(tanggal: string, mulai: string, selesai: string): b
 
 export type SumberPola = 'manual' | 'kegiatan' | 'reguler';
 
+type DataPola = Pick<Proyek, 'polaReguler' | 'penggantiManual' | 'kalender'> & Partial<Pick<Proyek, 'polaRegulerId' | 'polaRegulerNama' | 'polaLain'>>;
+
+export const ID_POLA_DEFAULT = 'reguler';
+export const NAMA_POLA_DEFAULT = 'Pola reguler';
+
+/** Jumlah hari kerja per pekan (5 atau 6) = panjang pola default. */
+export const jumlahHariKerja = (p: Pick<Proyek, 'polaReguler'>): number => p.polaReguler.length;
+
+export interface InfoPola extends PolaBernama {
+  /** true = pola default */
+  default: boolean;
+}
+
+/** Semua pola mingguan: default di urutan pertama, lalu pola lain. */
+export function daftarPola(p: DataPola): InfoPola[] {
+  return [
+    { id: p.polaRegulerId ?? ID_POLA_DEFAULT, nama: p.polaRegulerNama ?? NAMA_POLA_DEFAULT, pola: p.polaReguler, default: true },
+    ...(p.polaLain ?? []).map((x) => ({ ...x, default: false })),
+  ];
+}
+
+export function polaDariId(p: DataPola, id: string | undefined): PolaMinggu | undefined {
+  if (!id) return undefined;
+  return daftarPola(p).find((x) => x.id === id)?.pola;
+}
+
+/** Nama kegiatan/ketentuan yang memakai pola ini (pola yang dipakai tidak boleh dihapus). */
+export function pemakaiPola(p: DataPola, id: string): string[] {
+  const hasil: string[] = [];
+  if ((p.polaRegulerId ?? ID_POLA_DEFAULT) === id) hasil.push('pola default');
+  for (const k of p.kalender) if (k.polaId === id) hasil.push(k.nama);
+  return hasil;
+}
+
+const idBaru = (p: Pick<Proyek, 'polaLain' | 'polaRegulerId'>): string => {
+  const ada = new Set([p.polaRegulerId ?? ID_POLA_DEFAULT, ...(p.polaLain ?? []).map((x) => x.id)]);
+  let n = (p.polaLain?.length ?? 0) + 1;
+  while (ada.has(`pola_${n}`)) n++;
+  return `pola_${n}`;
+};
+
+/** Menambah pola baru: `dari` = id pola yang disalin, kosong = semua hari memakai skema pertama. Mengembalikan id pola baru. */
+export function tambahPola(p: Proyek, nama: string, dari?: string): string {
+  const sumber = dari ? polaDariId(p, dari) : undefined;
+  const awal = (p.skema[0]?.id ?? '') as string;
+  const id = idBaru(p);
+  (p.polaLain ??= []).push({ id, nama, pola: sumber ? [...sumber] : p.polaReguler.map(() => awal) });
+  return id;
+}
+
+/** Menjadikan pola ini default: isi dan identitas pola default lama pindah ke daftar pola lain. */
+export function jadikanDefault(p: Proyek, id: string): void {
+  const idLama = p.polaRegulerId ?? ID_POLA_DEFAULT;
+  if (id === idLama) return;
+  const lain = p.polaLain ?? [];
+  const i = lain.findIndex((x) => x.id === id);
+  const baru = lain[i];
+  if (!baru) return;
+  lain[i] = { id: idLama, nama: p.polaRegulerNama ?? NAMA_POLA_DEFAULT, pola: p.polaReguler };
+  p.polaReguler = baru.pola;
+  p.polaRegulerId = baru.id;
+  p.polaRegulerNama = baru.nama;
+  p.polaLain = lain;
+}
+
+/** Mengganti jumlah hari kerja (5 atau 6) pada semua pola; hari baru memakai skema pertama. */
+export function ubahJumlahHari(p: Proyek, n: number): void {
+  const awal = (p.skema[0]?.id ?? '') as string;
+  const sesuaikan = (pola: PolaMinggu): PolaMinggu => (pola.length >= n ? pola.slice(0, n) : [...pola, ...Array.from({ length: n - pola.length }, () => awal)]);
+  p.polaReguler = sesuaikan(p.polaReguler);
+  for (const x of p.polaLain ?? []) x.pola = sesuaikan(x.pola);
+  if (p.penggantiManual) p.penggantiManual.pola = sesuaikan(p.penggantiManual.pola);
+  for (const k of p.kalender) if (k.pola) k.pola = sesuaikan(k.pola);
+}
+
+/** Memindahkan pola tertanam pada kegiatan (format lama) ke daftar pola bernama. Data tanpa format lama tidak diubah. */
+export function migrasiPola<T extends Proyek>(p: T): T {
+  for (const k of p.kalender) {
+    if (!k.pola) continue;
+    const sama = daftarPola(p).find((x) => x.pola.join('|') === (k.pola as PolaMinggu).join('|'));
+    if (sama) k.polaId = sama.id;
+    else {
+      k.polaId = tambahPola(p, `Pola ${k.nama}`);
+      (p.polaLain as PolaBernama[]).find((x) => x.id === k.polaId)!.pola = [...k.pola];
+    }
+    delete k.pola;
+  }
+  return p;
+}
+
 export interface PolaTanggal {
   pola: PolaMinggu;
   sumber: SumberPola;
@@ -30,17 +120,22 @@ export interface PolaTanggal {
  *    yang tertulis paling belakang di daftar,
  * 3. pola reguler.
  */
-export function polaUntukTanggal(tanggal: string, p: Pick<Proyek, 'polaReguler' | 'penggantiManual' | 'kalender'>): PolaTanggal {
+export function polaUntukTanggal(tanggal: string, p: DataPola): PolaTanggal {
   const m = p.penggantiManual;
   if (m && (!m.mulai || tanggal >= m.mulai) && (!m.selesai || tanggal <= m.selesai)) {
     return { pola: m.pola, sumber: 'manual' };
   }
   let terpilih: Kegiatan | undefined;
+  let polaTerpilih: PolaMinggu | undefined;
   for (const k of p.kalender) {
-    if (!k.pola || !dalamRentang(tanggal, k.mulai, k.selesai)) continue;
-    if (!terpilih || k.mulai >= terpilih.mulai) terpilih = k;
+    const pk = k.polaId ? polaDariId(p, k.polaId) : k.pola;
+    if (!pk || !dalamRentang(tanggal, k.mulai, k.selesai)) continue;
+    if (!terpilih || k.mulai >= terpilih.mulai) {
+      terpilih = k;
+      polaTerpilih = pk;
+    }
   }
-  if (terpilih?.pola) return { pola: terpilih.pola, sumber: 'kegiatan', kegiatanId: terpilih.id };
+  if (terpilih && polaTerpilih) return { pola: polaTerpilih, sumber: 'kegiatan', kegiatanId: terpilih.id };
   return { pola: p.polaReguler, sumber: 'reguler' };
 }
 
@@ -53,9 +148,9 @@ export interface SkemaHari {
 }
 
 /** Skema yang dipakai pada satu tanggal; libur dan akhir pekan menghasilkan `skemaId: null`. */
-export function skemaUntukTanggal(tanggal: string, p: Pick<Proyek, 'polaReguler' | 'penggantiManual' | 'kalender'>): SkemaHari {
+export function skemaUntukTanggal(tanggal: string, p: DataPola): SkemaHari {
   const h = hariPekan(tanggal);
-  if (h > 4) return { skemaId: null, alasan: 'akhirPekan' };
+  if (h >= p.polaReguler.length) return { skemaId: null, alasan: 'akhirPekan' };
   const libur = p.kalender.find((k) => k.jenis === 'libur' && dalamRentang(tanggal, k.mulai, k.selesai));
   if (libur) return { skemaId: null, alasan: 'libur', kegiatanLibur: libur.nama };
   const pt = polaUntukTanggal(tanggal, p);
@@ -87,10 +182,10 @@ export function kapasitasPola(pola: PolaMinggu, skema: Skema[]): KapasitasPekan 
   return { perHari, total: perHari.reduce((a, b) => a + b, 0) };
 }
 
-export function cekPola(pola: PolaMinggu, skema: Skema[]): string[] {
+export function cekPola(pola: PolaMinggu, skema: Skema[], jumlah?: number): string[] {
   const ada = new Set(skema.map((s) => s.id));
   const galat: string[] = [];
-  if (pola.length !== 5) galat.push('Pola harus berisi 5 hari (Senin–Jumat).');
+  if (jumlah !== undefined ? pola.length !== jumlah : pola.length !== 5 && pola.length !== 6) galat.push(`Pola harus berisi ${jumlah ?? '5 atau 6'} hari kerja.`);
   pola.forEach((id, i) => {
     if (!ada.has(id)) galat.push(`Hari ke-${i + 1}: skema "${id}" tidak ada.`);
   });

@@ -1,4 +1,4 @@
-import type { Kegiatan, Proyek, Slot, VersiJadwal } from '../model/tipe';
+import type { JenisKegiatan, Kegiatan, Proyek, Slot, VersiJadwal } from '../model/tipe';
 import type { Kategori, Masalah } from '../mesin/validator';
 import type { SkemaHari } from '../model/kalender';
 
@@ -17,6 +17,25 @@ export interface Pemilih {
   cari: string;
 }
 
+/** Isian sementara pada modal kegiatan; baru masuk ke data setelah Simpan. */
+export interface DlgKegiatan {
+  id: string;
+  baru: boolean;
+  nama: string;
+  jenis: JenisKegiatan;
+  mulai: string;
+  selesai: string;
+  /** rombel tidak aktif (mis. PKL) */
+  tdk: Set<string>;
+  /** '' = pola default */
+  polaId: string;
+  /** '' = jadwal reguler; id versi; '__salin' / '__kosong' = buat versi baru saat disimpan */
+  versi: string;
+  catatan: string;
+  aktifkan: boolean;
+  galat: string;
+}
+
 export type Modal = { jenis: 'sel'; hari: number; jam: number } | { jenis: 'slot'; slotId: string };
 
 export interface StatusUI {
@@ -31,12 +50,13 @@ export interface StatusUI {
   bebanRombel: string;
   /** tab kalender: bulan yang ditampilkan (YYYY-MM) dan tanggal terpilih */
   kalBulan: string;
-  kalBuka: Set<string>;
   /** sub-tab pada tab Skema & Kalender */
   skemaSub: 'kalender' | 'pola' | 'skema';
   kalTanggal: string;
   /** modal pemilih centang (ruang/mapel) */
   pemilih: Pemilih | null;
+  /** modal ubah/tambah kegiatan kalender */
+  dlg: DlgKegiatan | null;
   bebanTerbuka: Set<string>;
   saring: Kategori | 'semua';
 }
@@ -66,5 +86,7 @@ export interface Konteks {
   ubahSlots(fn: (slots: Slot[]) => Slot[]): void;
   gambar(): void;
   lapor(pesan: string): void;
+  /** Mengganti seluruh draf dengan proyek lain (data bawaan, dataset tersimpan, semester baru). */
+  ganti(baru: Proyek, pesan?: string): void;
   ke(tab: Tab): void;
 }

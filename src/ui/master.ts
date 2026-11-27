@@ -3,7 +3,7 @@ import { KATEGORI_BAWAAN, kategoriRuang } from '../model/ruang';
 import type { Aturan, Mapel, Proyek } from '../model/tipe';
 import { NAMA_HARI } from '../model/tipe';
 import { kodeGuruBerikut, usulKodeMapel } from '../model/kode';
-import { DAFTAR_DATA } from '../model/sekolahData';
+import { renderDataTab } from './dataset';
 import type { Konteks, SubMaster } from './konteks';
 import { ringkasKode, tombolPemilih } from './pemilih';
 import { esc, opsi, simpanCek } from './util';
@@ -139,7 +139,7 @@ function kartuAturan(k: Konteks): string {
           .join('');
         return `<div class="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-2"><span class="lencana bg-violet-100 text-violet-800">Guru tidak tersedia</span>
           ${guruPilih(a.guruId)}
-          <select class="isian" data-aksi="af" data-f="hari" data-id="${esc(a.id)}">${NAMA_HARI.map((h, i) => `<option value="${i}" ${i === a.hari ? 'selected' : ''}>${h}</option>`).join('')}</select>
+          <select class="isian" data-aksi="af" data-f="hari" data-id="${esc(a.id)}">${NAMA_HARI.slice(0, k.p.polaReguler.length).map((h, i) => `<option value="${i}" ${i === a.hari ? 'selected' : ''}>${h}</option>`).join('')}</select>
           <span class="flex flex-wrap items-center gap-1 text-xs text-slate-500">Pelajaran ke- ${jam}<span class="ml-1">${a.jam.length ? '' : '(tidak ada yang dicentang = sehari penuh)'}</span></span>${ket}${hapus}</div>`;
       }
       if (a.jenis === 'guruRuang') {
@@ -160,18 +160,9 @@ function kartuAturan(k: Konteks): string {
     <div class="mt-3 flex flex-wrap gap-2"><button class="tombol" data-aksi="atambah" data-jenis="guruTidakTersedia">+ Guru tidak tersedia</button><button class="tombol" data-aksi="atambah" data-jenis="guruRuang">+ Guru hanya di ruang tertentu</button><button class="tombol" data-aksi="atambah" data-jenis="ruangTerlarang">+ Ruang terlarang</button></div></div>`;
 }
 
-function kartuData(k: Konteks): string {
-  const aktif = k.p.nama;
-  return `<div class="kartu p-3"><h3 class="text-base font-semibold">Data</h3>
-    <div class="mb-3 text-xs text-slate-500">Data aktif: <b>${esc(aktif)}</b>. Draf tersimpan otomatis di peramban ini; ekspor JSON untuk cadangan. Memuat data di bawah mengganti draf yang sedang ada.</div>
-    <div class="grid gap-3 md:grid-cols-2">${DAFTAR_DATA.map((d) => `<div class="rounded-xl border border-slate-200 p-3"><div class="font-semibold">${esc(d.judul)}</div><div class="mb-2 text-xs text-slate-500">${esc(d.keterangan)}</div><button class="tombol" data-aksi="muat" data-set="${d.id}">Muat data ini</button></div>`).join('')}
-      <div class="rounded-xl border border-slate-200 p-3"><div class="font-semibold">Data contoh fiktif</div><div class="mb-2 text-xs text-slate-500">Data rekaan kecil untuk mencoba fitur tanpa menyentuh data sekolah.</div><button class="tombol" data-aksi="muat" data-set="contoh">Muat data contoh</button></div>
-      <div class="rounded-xl border border-slate-200 p-3"><div class="font-semibold">Ruang menurut site plan 2026</div><div class="mb-2 text-xs text-slate-500">Mengganti daftar ruang dengan 42 ruang menurut site plan, beserta kategorinya.</div><button class="tombol" data-aksi="isiRuang">Isi ruang dari site plan</button></div></div></div>`;
-}
-
 export function renderMaster(k: Konteks): string {
   const t = k.ui.masterTab;
-  const isi = t === 'aturan' ? kartuAturan(k) : t === 'data' ? kartuData(k) : kartuTabel(k, t);
+  const isi = t === 'aturan' ? kartuAturan(k) : t === 'data' ? renderDataTab(k) : kartuTabel(k, t);
   return `<div class="mb-3 text-lg font-semibold">Master Data</div>
     <div class="mb-3 flex flex-wrap gap-1 border-b border-slate-200">${SUB.map((s) => {
       const n = s.id === 'aturan' ? k.p.aturan.length : s.id === 'data' ? '' : daftar(k.p, s.id).length;

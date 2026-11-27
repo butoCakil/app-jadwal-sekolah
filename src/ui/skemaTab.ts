@@ -1,6 +1,7 @@
 import type { BarisSkema, JenisBaris, PolaMinggu, Proyek, Skema } from '../model/tipe';
 import { hitungSkema, jumlahJamTampil, kapasitasKbm, keMenit } from '../model/skema';
-import { kapasitasPola, selisihKapasitas } from '../model/kalender';
+import { daftarPola, jadikanDefault, jumlahHariKerja, kapasitasPola, pemakaiPola, polaDariId, selisihKapasitas, tambahPola, ubahJumlahHari } from '../model/kalender';
+import { NAMA_HARI } from '../model/tipe';
 import { esc } from './util';
 import type { Konteks } from './konteks';
 import { barisPola, klikKalender, renderKalender, ubahKalender } from './kalenderTab';
@@ -14,24 +15,38 @@ const SUB = [
 const WARNA_BARU = ['#b45309', '#0e7490', '#6d28d9', '#be123c', '#4d7c0f', '#0f766e'];
 
 function bagianPola(p: Proyek): string {
-  const kap = (pola: PolaMinggu) => kapasitasPola(pola, p.skema);
-  const kapReg = kap(p.polaReguler);
+  const n = jumlahHariKerja(p);
+  const kapReg = kapasitasPola(p.polaReguler, p.skema);
   const sel = selisihKapasitas(p.master.rombel, kapReg);
   const infoSelisih = sel.length
-    ? `<div class="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-800">Selisih terhadap kebutuhan (data sumber), diputuskan manual: ${sel.map((s) => `${esc(p.master.rombel.find((r) => r.id === s.rombelId)?.kode ?? s.rombelId)} butuh ${s.butuh}, tersedia ${s.kapasitas}`).join('; ')}</div>`
+    ? `<div class="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-800">Selisih terhadap kebutuhan (data sumber), diputuskan manual: ${sel.map((x) => `${esc(p.master.rombel.find((r) => r.id === x.rombelId)?.kode ?? x.rombelId)} butuh ${x.butuh}, tersedia ${x.kapasitas}`).join('; ')}</div>`
     : '';
+  const hariKerja = `<section class="mb-5 rounded-xl border border-slate-200 bg-white p-3"><div class="flex flex-wrap items-center gap-3"><h2 class="text-base font-semibold">Hari kerja per pekan</h2>
+      <div class="inline-flex rounded-lg border border-slate-300 bg-white p-0.5">${[5, 6].map((x) => `<button class="rounded-md px-3 py-1 text-sm font-medium ${x === n ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}" data-aksi="hariKerja" data-n="${x}">${x} hari (Senin–${NAMA_HARI[x - 1]})</button>`).join('')}</div>
+      <span class="text-xs text-slate-500">Hari di luar ini dianggap libur: tidak ada KBM dan tidak dihitung di kalender. Hari baru (Sabtu) memakai skema pertama; ubah di pola di bawah.</span></div></section>`;
+  const kartu = daftarPola(p)
+    .map((x) => {
+      const pakai = pemakaiPola(p, x.id).filter((y) => y !== 'pola default');
+      const bisaHapus = !x.default && pakai.length === 0;
+      return `<div class="rounded-xl border ${x.default ? 'border-sky-400 bg-sky-50/40' : 'border-slate-200 bg-white'} p-3">
+        <div class="flex flex-wrap items-center gap-2"><input class="isian min-w-56 flex-1 font-semibold" value="${esc(x.nama)}" data-aksi="namaPola" data-id="${esc(x.id)}" title="Nama pola (bisa diubah)">
+          ${x.default ? '<span class="lencana bg-sky-100 text-sky-800">✓ Default</span>' : `<button class="tombol" data-aksi="polaDefault" data-id="${esc(x.id)}" title="Jadikan pola ini default; pola default lama tetap tersimpan">Jadikan default</button>`}
+          <button class="tombol" data-aksi="polaSalin" data-id="${esc(x.id)}">Salin</button>
+          <button class="tombol !text-red-600 disabled:opacity-40" data-aksi="polaHapus" data-id="${esc(x.id)}" ${bisaHapus ? '' : 'disabled'} title="${x.default ? 'Pola default tidak bisa dihapus; jadikan pola lain default dulu' : pakai.length ? `Dipakai: ${esc(pakai.join(', '))}` : 'Hapus pola'}">Hapus</button></div>
+        <div class="mt-2">${barisPola(p, x.pola, `p:${x.id}`)}</div>
+        ${x.default ? infoSelisih : ''}
+        <div class="mt-1 text-[11px] text-slate-500">${x.default ? 'Dipakai bila periode di kalender tidak memilih pola lain.' : pakai.length ? `Dipakai oleh: ${esc(pakai.join(', '))}` : 'Belum dipakai periode mana pun; pasang lewat kegiatan di kalender.'}</div></div>`;
+    })
+    .join('');
   const manual = p.penggantiManual;
   const blokManual = manual
-    ? `${barisPola(p, manual.pola, 'manual', kap)}
-       <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">Berlaku
-         <input type="date" class="isian" value="${esc(manual.mulai ?? '')}" data-aksi="manualMulai"> s/d
-         <input type="date" class="isian" value="${esc(manual.selesai ?? '')}" data-aksi="manualSelesai">
-         <span class="text-slate-500">(kosong = semua tanggal)</span>
-         <button class="tombol" data-aksi="hapusManual">Lepas penggantian manual</button></div>`
-    : '<button class="tombol" data-aksi="aktifkanManual">Pasang pola manual (salin dari reguler)</button>';
-  return `<section class="mb-6"><h2 class="mb-1 text-lg font-semibold">Pola mingguan reguler</h2><div class="mb-2 text-xs text-slate-500">Skema jam yang dipakai tiap hari Senin–Jum'at. Periode di kalender boleh punya pola sendiri.</div>
-      ${barisPola(p, p.polaReguler, 'reguler', kap)}${infoSelisih}</section>
-    <section><h2 class="mb-1 text-lg font-semibold">Pola manual (menimpa kalender dan reguler)</h2>${blokManual}</section>`;
+    ? `<section class="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-3"><h2 class="mb-1 text-base font-semibold">Penggantian manual (format lama)</h2><div class="mb-2 text-xs text-slate-600">Menimpa semua pola sampai dilepas. Sebaiknya lepas, lalu pasang pola yang diinginkan pada kegiatan di kalender.</div>
+        ${barisPola(p, manual.pola, 'manual')}
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">Berlaku <input type="date" class="isian" value="${esc(manual.mulai ?? '')}" data-aksi="manualMulai"> s/d <input type="date" class="isian" value="${esc(manual.selesai ?? '')}" data-aksi="manualSelesai"> <span class="text-slate-500">(kosong = semua tanggal)</span> <button class="tombol" data-aksi="hapusManual">Lepas penggantian manual</button></div></section>`
+    : '';
+  return `${hariKerja}<section><div class="mb-2 flex flex-wrap items-center gap-3"><h2 class="text-lg font-semibold">Pola mingguan</h2><button class="tombol-utama" data-aksi="polaBaru">+ Pola baru</button>
+      <span class="text-xs text-slate-500">Skema jam untuk tiap hari kerja. Pola baru dimulai dari kosong (semua hari memakai skema pertama). Satu pola menjadi default; pola lain dipasang pada periode di kalender (mis. bulan puasa).</span></div>
+    <div class="space-y-3">${kartu}</div></section>${blokManual}`;
 }
 
 function kartuSkema(p: Proyek, s: Skema): string {
@@ -66,7 +81,7 @@ function kartuSkema(p: Proyek, s: Skema): string {
 /** Tempat skema dipakai (pola reguler, manual, kegiatan); skema yang dipakai tidak boleh dihapus. */
 function pemakaiSkema(p: Proyek, id: string): string[] {
   const ket: string[] = [];
-  if (p.polaReguler.includes(id)) ket.push('pola reguler');
+  for (const x of daftarPola(p)) if (x.pola.includes(id)) ket.push(x.default ? `pola default “${x.nama}”` : `pola “${x.nama}”`);
   if (p.penggantiManual?.pola.includes(id)) ket.push('pola manual');
   for (const g of p.kalender) if (g.pola?.includes(id)) ket.push(g.nama);
   return ket;
@@ -81,14 +96,11 @@ function bagianSkema(p: Proyek): string {
 
 export function renderSkemaTab(k: Konteks): string {
   const sub = k.ui.skemaSub;
-  const kap = (pola: PolaMinggu) => kapasitasPola(pola, k.p.skema);
-  const isi = sub === 'kalender' ? renderKalender(k, kap) : sub === 'pola' ? bagianPola(k.p) : bagianSkema(k.p);
+  const isi = sub === 'kalender' ? renderKalender(k) : sub === 'pola' ? bagianPola(k.p) : bagianSkema(k.p);
   return `<div class="mb-3 flex flex-wrap gap-1 border-b border-slate-200">${SUB.map((s) => `<button data-aksi="skemaSub" data-sub="${s.id}" class="-mb-px border-b-2 px-3 py-1.5 text-sm font-medium ${s.id === sub ? 'border-[#2347b8] text-[#2347b8]' : 'border-transparent text-slate-500 hover:text-slate-800'}">${s.label}</button>`).join('')}</div>${isi}`;
 }
 
-const salinPola = (x: PolaMinggu): PolaMinggu => [...x] as PolaMinggu;
-const polaDari = (p: Proyek, kunci: string): PolaMinggu | undefined =>
-  kunci === 'reguler' ? p.polaReguler : kunci === 'manual' ? p.penggantiManual?.pola : p.kalender.find((x) => x.id === kunci.slice(2))?.pola;
+const polaDari = (p: Proyek, kunci: string): PolaMinggu | undefined => (kunci === 'manual' ? p.penggantiManual?.pola : kunci.startsWith('p:') ? polaDariId(p, kunci.slice(2)) : undefined);
 
 const idSkemaBaru = (p: Proyek): string => {
   let n = p.skema.length + 1;
@@ -144,9 +156,36 @@ export function klikSkema(k: Konteks, el: HTMLElement): boolean {
       k.ubah((x) => void (x.skema = x.skema.filter((y) => y.id !== d.skema)));
       return true;
     }
-    case 'aktifkanManual':
-      k.ubah((x) => void (x.penggantiManual = { pola: salinPola(x.polaReguler) }));
+    case 'hariKerja': {
+      const n = Number(d.n);
+      if (n === jumlahHariKerja(k.p)) return true;
+      const terpakai = n < jumlahHariKerja(k.p) ? k.p.versi.reduce((a, v) => a + v.slots.filter((sl) => sl.hari >= n).length, 0) : 0;
+      if (terpakai && !confirm(`${terpakai} JP terjadwal pada hari yang dihapus (${NAMA_HARI[n] ?? ''} dst) akan keluar dari kapasitas dan tampil di Tampungan. Lanjutkan?`)) return true;
+      k.ubah((x) => ubahJumlahHari(x, n));
+      k.lapor(`Hari kerja diubah menjadi ${n} hari (Senin–${NAMA_HARI[n - 1]}).`);
       return true;
+    }
+    case 'polaBaru':
+    case 'polaSalin': {
+      const sumber = d.aksi === 'polaSalin' ? daftarPola(k.p).find((x) => x.id === d.id) : undefined;
+      k.ubah((x) => void tambahPola(x, sumber ? `${sumber.nama} (salinan)` : `Pola ${(x.polaLain?.length ?? 0) + 2}`, sumber?.id));
+      k.lapor('Pola baru ditambahkan di akhir daftar. Ubah nama dan skema tiap harinya.');
+      return true;
+    }
+    case 'polaDefault': {
+      const x = daftarPola(k.p).find((y) => y.id === d.id);
+      if (!x) return true;
+      k.ubah((pp) => jadikanDefault(pp, x.id));
+      k.lapor(`“${x.nama}” kini menjadi pola default.`);
+      return true;
+    }
+    case 'polaHapus': {
+      const x = daftarPola(k.p).find((y) => y.id === d.id);
+      if (!x || x.default || pemakaiPola(k.p, x.id).length) return true;
+      if (!confirm(`Hapus pola “${x.nama}”?`)) return true;
+      k.ubah((pp) => void (pp.polaLain = (pp.polaLain ?? []).filter((y) => y.id !== x.id)));
+      return true;
+    }
     case 'hapusManual':
       k.ubah((x) => void (x.penggantiManual = null));
       return true;
@@ -166,6 +205,22 @@ export function ubahSkema(k: Konteks, el: HTMLInputElement & HTMLSelectElement):
         if (pola) pola[Number(d.hari)] = el.value;
       });
       return true;
+    case 'namaPola': {
+      const nama = el.value.trim();
+      if (!nama) {
+        k.lapor('Nama pola tidak boleh kosong.');
+        k.gambar();
+        return true;
+      }
+      k.ubah((x) => {
+        if ((x.polaRegulerId ?? 'reguler') === d.id) x.polaRegulerNama = nama;
+        else {
+          const y = x.polaLain?.find((z) => z.id === d.id);
+          if (y) y.nama = nama;
+        }
+      });
+      return true;
+    }
     case 'namaSkema':
       if (!el.value.trim()) {
         k.lapor('Nama skema tidak boleh kosong.');
