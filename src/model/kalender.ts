@@ -1,4 +1,4 @@
-import type { Kegiatan, PolaMinggu, Proyek, Rombel, Skema } from './tipe';
+import type { Kegiatan, PolaMinggu, Proyek, Rombel, Skema, VersiJadwal } from './tipe';
 import { kapasitasKbm } from './skema';
 
 /** Hari dalam pekan dari tanggal ISO: 0 = Senin .. 6 = Minggu. Memakai UTC agar tidak terpengaruh zona waktu. */
@@ -128,4 +128,39 @@ export function selisihKapasitas(rombel: Rombel[], kapasitas: KapasitasPekan): S
       selisih: (r.jpButuh as number) - kapasitas.total,
     }))
     .filter((s) => s.selisih !== 0);
+}
+
+/** Id rombel yang tidak aktif pada tanggal (gabungan semua kegiatan yang mencakup tanggal itu, mis. PKL). */
+export function rombelTidakAktifIds(tanggal: string, kalender: Kegiatan[]): Set<string> {
+  const hasil = new Set<string>();
+  for (const k of kalender) if (dalamRentang(tanggal, k.mulai, k.selesai)) k.rombelTidakAktif.forEach((r) => hasil.add(r));
+  return hasil;
+}
+
+/**
+ * Periode yang berlaku pada tanggal: kegiatan bukan libur yang mencakup tanggal itu; bila beberapa, yang `mulai`-nya paling akhir
+ * (paling spesifik), dan bila sama yang tertulis paling belakang.
+ */
+export function periodeUntukTanggal(tanggal: string, kalender: Kegiatan[]): Kegiatan | undefined {
+  let terpilih: Kegiatan | undefined;
+  for (const k of kalender) {
+    if (k.jenis === 'libur' || !dalamRentang(tanggal, k.mulai, k.selesai)) continue;
+    if (!terpilih || k.mulai >= terpilih.mulai) terpilih = k;
+  }
+  return terpilih;
+}
+
+/** Versi reguler: yang berjenis reguler, selain itu versi pertama. */
+export function versiReguler(p: Pick<Proyek, 'versi'>): VersiJadwal | undefined {
+  return p.versi.find((v) => v.jenis === 'reguler') ?? p.versi[0];
+}
+
+/** Versi jadwal yang berlaku pada tanggal: versi milik kegiatan terspesifik yang mencakup tanggal dan punya `versiId`, selain itu reguler. */
+export function versiUntukTanggal(tanggal: string, p: Pick<Proyek, 'versi' | 'kalender'>): VersiJadwal | undefined {
+  let terpilih: Kegiatan | undefined;
+  for (const k of p.kalender) {
+    if (!k.versiId || !dalamRentang(tanggal, k.mulai, k.selesai)) continue;
+    if (!terpilih || k.mulai >= terpilih.mulai) terpilih = k;
+  }
+  return (terpilih && p.versi.find((v) => v.id === terpilih.versiId)) ?? versiReguler(p);
 }

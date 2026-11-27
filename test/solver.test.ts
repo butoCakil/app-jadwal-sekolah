@@ -80,7 +80,7 @@ describe('susun (data sekolah, jadwal reguler aSc Gasal 2026)', () => {
   // XI AT 1, XI AT 2, XI DKV 3, XI TE 2, XI TE 3 butuh 49 JP padahal kapasitas pekan 48 JP: 5 JP pasti tidak muat
   const PASTI_SISA = 5;
   it('dari nol: tanpa bentrok, semua slot beruang, hampir semua JP tertempatkan', () => {
-    const p = kosong(proyekSekolah());
+    const p = kosong(proyekSekolah('gasal'));
     const h = susun(p, { skemaPerHari: p.polaReguler, batasMs: 3000, benih: 1 });
     expect(pelanggaran(p, h.slots)).toEqual([]);
     expect(h.slots.every((s) => s.ruangId)).toBe(true);
@@ -89,7 +89,7 @@ describe('susun (data sekolah, jadwal reguler aSc Gasal 2026)', () => {
     expect(h.peringatan.some((x) => x.includes('XI AT 1'))).toBe(true);
   }, 20000);
   it('lengkapi: 1200 JP jadwal reguler tetap di tempatnya, lima rombel XI yang belum terjadwal diisi di sekitarnya', () => {
-    const p = proyekSekolah();
+    const p = proyekSekolah('gasal');
     const reguler = p.versi[0]?.slots ?? [];
     expect(reguler).toHaveLength(1200);
     const h = susun(p, { skemaPerHari: p.polaReguler, tetap: reguler, batasMs: 3000, benih: 1 });

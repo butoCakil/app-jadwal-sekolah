@@ -43,6 +43,20 @@ export function validasiProyek(x: unknown): string[] {
   proyek.versi.forEach((v) => v.slots.forEach((sl) => {
     if (!idBeban.has(sl.bebanId)) galat.push(`Versi ${v.nama}: slot ${sl.id} mengacu ke beban yang tidak ada.`);
   }));
+  const adaRuang = new Set(proyek.master.ruang.map((x) => x.id));
+  for (const a of proyek.aturan) {
+    if ((a.jenis === 'guruRuang' || a.jenis === 'guruTidakTersedia') && !adaGuru.has(a.guruId)) galat.push(`Aturan ${a.id}: guru tidak ada.`);
+    if ((a.jenis === 'guruRuang' || a.jenis === 'ruangTerlarang') && a.ruangIds.some((i) => !adaRuang.has(i))) galat.push(`Aturan ${a.id}: ada ruang yang tidak ada.`);
+  }
+  for (const m of proyek.master.mapel) if (m.ruangIds?.some((i) => !adaRuang.has(i))) galat.push(`Mapel ${m.kode}: ada ruang yang tidak ada.`);
+  for (const r of proyek.master.rombel) if (r.ruangIds?.some((i) => !adaRuang.has(i))) galat.push(`Rombel ${r.kode}: ada ruang yang tidak ada.`);
+  for (const g of proyek.master.guru) if (g.mapelIds?.some((i) => !adaMapel.has(i))) galat.push(`Guru ${g.kode}: ada mapel yang tidak ada.`);
+  const idVersi = new Set(proyek.versi.map((v) => v.id));
+  for (const kg of proyek.kalender) {
+    if (kg.versiId && !idVersi.has(kg.versiId)) galat.push(`Kegiatan ${kg.nama}: versi jadwal tidak ada.`);
+    if (kg.rombelTidakAktif.some((i) => !adaRombel.has(i))) galat.push(`Kegiatan ${kg.nama}: ada rombel yang tidak ada.`);
+  }
+  if (proyek.periodeAktifId && !proyek.kalender.some((kg) => kg.id === proyek.periodeAktifId)) galat.push('Periode aktif tidak ada di kalender.');
   const idSkema = proyek.skema.map((s) => s.id);
   if (new Set(idSkema).size !== idSkema.length) galat.push('Ada id skema ganda.');
   return galat;

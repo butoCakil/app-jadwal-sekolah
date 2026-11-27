@@ -303,6 +303,15 @@ app-jadwal-sekolah/
 - **Hasil pada data sekolah:** jadwal reguler aSc lolos validator (0 bentrok guru/rombel/ruang, 0 pelanggaran aturan, 0 slot di luar kapasitas, semua slot beruang). Solver dari nol (3 dtk, ruang prioritas ikut kenyataan): 1440 dari 1448 JP tertempatkan, 0 bentrok. Mode lengkapi dengan 1200 JP reguler dikunci: 1441 dari 1448 JP, 0 bentrok; sisa 7 JP (5 pasti karena kapasitas).
 - **Belum:** preferensi berbobot yang bisa diatur, mode "saran" (AI), laporan ruang, adaptor skema khusus (ASAS), cetak, ekspor xlsx, peta kode yang bisa diedit sebelum menerapkan impor.
 
+### 11.5b Tahap 5: master data, aturan ruang, kalender (27 Nov 2026)
+
+- **Koreksi sumber (Benny, 27 Nov):** data guru memakai sheet Genap; Laila Zuhaida sudah pindah. Jadwal Gasal hanya acuan (ruang yang tersedia per kelas dan perilaku lain). Dataset: `genap-2027.json` (bawaan; 61 guru, 24 mapel, 30 rombel, 316 beban, jadwal kosong) dan `gasal-2026.json` (historis, masih memuat Laila). Dibangun oleh `src/model/bangunData.ts`; Genap dari Excel bila `XL_TUGAS` diset (`TULIS_DATA=1 XL_TUGAS=... npx vitest run test/bangun-data.test.ts`). Prioritas ruang dan pola beban Genap disalin dari beban Gasal yang (tingkat, jurusan, mapel)-nya sama.
+- **Model:** `Ruang.kategori`, `Guru.mapelIds`, `Mapel.ruangIds` dan `Rombel.ruangIds` (daftar putih), aturan `guruRuang`, `JenisKegiatan` + ASAJ, `Kegiatan.catatan`, `Proyek.periodeAktifId`. `ruangDilarang` = ruang terlarang + komplemen semua daftar putih (rombel, mapel, guruRuang guru utama dan tim).
+- **Periode = kegiatan kalender** dengan pola, `versiId`, dan `rombelTidakAktif` (PKL). Genap: k-genap, PKL XII, 3 Jan s.d. 18 Jun 2027 (dari p_genap jadwal-te). Gasal: TKA, ASAJ, TKA lanjutan, ASAS (X dan XII tidak aktif).
+- **UI:** modal pemilih generik (`src/ui/pemilih.ts`; urutan klik dipertahankan untuk ruang prioritas), Master bertab, Beban bertab per rombel, kalender kotak + tabel + impor berkas (`src/io/imporKalender.ts`), skema jam bisa ditambah, bilah periode.
+- **Format berkas kalender ditebak** (kolom Kegiatan + Tanggal atau Mulai/Selesai; rentang dalam satu sel); perlu contoh berkas asli Benny untuk memastikan.
+- **Hasil uji Genap:** Susun Otomatis tanpa XII: 0 pelanggaran; 978 dari 1018 JP tertempatkan, 40 JP sisanya tepat sama dengan kelebihan kapasitas (beban kelas X dan XI di atas 48 JP/pekan).
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?

@@ -91,7 +91,7 @@ export function klikImpor(k: Konteks, el: HTMLElement): boolean {
       });
       k.ui.mode = 'rombel';
       k.ui.entitasId = h.rombel[0]?.id ?? '';
-      k.ui.bebanRombel = 'semua';
+      k.ui.bebanRombel = k.p.master.rombel[0]?.id ?? '';
       k.ke('beban');
       k.lapor(`Impor selesai: ${n.guru} guru, ${n.mapel} mapel, ${n.rombel} rombel, ${n.beban} beban.`);
       return true;

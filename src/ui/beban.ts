@@ -1,21 +1,24 @@
 import type { Beban } from '../model/tipe';
-import { warnaMapel, esc, opsi, pecahKode } from './util';
+import { warnaMapel, esc, opsi } from './util';
+import { ringkasKode, tombolPemilih } from './pemilih';
+import type { Guru, Proyek } from '../model/tipe';
 import { jpRombel } from '../model/jp';
 import type { Konteks } from './konteks';
 
-/** Mengubah daftar kode ("A, B") menjadi id; mengembalikan kode yang tidak dikenal. */
-function kodeKeId(daftar: { id: string; kode: string }[], teks: string): { ids: string[]; salah: string[] } {
-  const peta = new Map(daftar.map((x) => [x.kode.toUpperCase(), x.id]));
-  const ids: string[] = [];
-  const salah: string[] = [];
-  for (const k of pecahKode(teks)) {
-    const id = peta.get(k);
-    if (id) ids.push(id);
-    else salah.push(k);
-  }
-  return { ids, salah };
+const kodeGuruDari = (p: Proyek, ids: string[]) => ids.map((i) => p.master.guru.find((g) => g.id === i)?.kode ?? '?');
+const kodeRuangDari = (p: Proyek, ids: string[]) => ids.map((i) => p.master.ruang.find((r) => r.id === i)?.kode ?? '?');
+
+/** Pilihan guru; bila ada guru yang mendaftarkan mapel ini (atau induknya) sebagai mapel yang diampu, mereka dikelompokkan di atas. */
+export function opsiGuru(p: Proyek, mapelId: string, terpilih: string, kosong?: string): string {
+  const mapel = p.master.mapel.find((m) => m.id === mapelId);
+  const cocok = (g: Guru) => !!g.mapelIds && (g.mapelIds.includes(mapelId) || (!!mapel?.induk && g.mapelIds.includes(mapel.induk)));
+  const label = (g: Guru) => `${g.kode} · ${g.nama}`;
+  const awal = kosong !== undefined ? `<option value="">${esc(kosong)}</option>` : '';
+  const ampu = mapelId ? p.master.guru.filter(cocok) : [];
+  if (ampu.length === 0) return awal + opsi(p.master.guru, terpilih, (g) => g.id, label);
+  const lain = p.master.guru.filter((g) => !cocok(g));
+  return `${awal}<optgroup label="Mengampu ${esc(mapel?.kode ?? '')}">${opsi(ampu, terpilih, (g) => g.id, label)}</optgroup><optgroup label="Guru lain">${opsi(lain, terpilih, (g) => g.id, label)}</optgroup>`;
 }
-const idKeKode = (daftar: { id: string; kode: string }[], ids: string[]) => ids.map((i) => daftar.find((x) => x.id === i)?.kode ?? '?').join(', ');
 
 function barisBeban(k: Konteks, b: Beban): string {
   const p = k.p;
@@ -29,42 +32,64 @@ function barisBeban(k: Konteks, b: Beban): string {
   const lanjut = buka
     ? `<div class="mt-2 grid gap-3 rounded-lg bg-slate-50 p-3 sm:grid-cols-2 lg:grid-cols-3">
         <label class="text-xs text-slate-600">Pola pertemuan (mis. 2,2)<input class="isian mt-1 w-full" value="${esc((b.pola ?? []).join(','))}" data-aksi="bf" data-f="pola" data-id="${esc(b.id)}"></label>
-        <label class="text-xs text-slate-600">Guru tim teaching (kode)<input class="isian mt-1 w-full" placeholder="mis. E, F" value="${esc(idKeKode(p.master.guru, b.timGuruIds))}" data-aksi="bf" data-f="tim" data-id="${esc(b.id)}"></label>
+        <div class="text-xs text-slate-600">Guru tim teaching<div class="mt-1">${tombolPemilih('bebanTim', b.id, ringkasKode(kodeGuruDari(p, b.timGuruIds), 'guru'), 'Pilih guru…', 'w-full')}</div></div>
         <label class="text-xs text-slate-600">Kelompok paralel<input class="isian mt-1 w-full" placeholder="mis. PA" value="${esc(b.paralel ?? '')}" data-aksi="bf" data-f="paralel" data-id="${esc(b.id)}"></label>
-        <label class="text-xs text-slate-600">Ruang prioritas (urut, kode)<input class="isian mt-1 w-full" placeholder="mis. B3, B4" value="${esc(idKeKode(p.master.ruang, b.ruangPrioritas))}" data-aksi="bf" data-f="prio" data-id="${esc(b.id)}"></label>
-        <label class="text-xs text-slate-600">Ruang terlarang (kode)<input class="isian mt-1 w-full" placeholder="mis. AT1" value="${esc(idKeKode(p.master.ruang, b.ruangTerlarang))}" data-aksi="bf" data-f="larang" data-id="${esc(b.id)}"></label>
+        <div class="text-xs text-slate-600">Ruang prioritas (urut)<div class="mt-1">${tombolPemilih('bebanPrio', b.id, kodeRuangDari(p, b.ruangPrioritas).join(' › '), 'Semua yang diperbolehkan', 'w-full')}</div></div>
+        <div class="text-xs text-slate-600">Ruang terlarang<div class="mt-1">${tombolPemilih('bebanLarang', b.id, ringkasKode(kodeRuangDari(p, b.ruangTerlarang), 'ruang'), 'Tidak ada', 'w-full')}</div></div>
         <label class="flex items-end gap-2 pb-1 text-xs text-slate-600"><input type="checkbox" ${b.nonTatapMuka ? 'checked' : ''} data-aksi="bf" data-f="ntm" data-id="${esc(b.id)}"> Non-tatap-muka (mis. pembimbing PKL)</label></div>`
     : '';
   return `<div class="rounded-lg border border-slate-200 p-2" style="border-left:4px solid ${w.garis}">
     <div class="flex flex-wrap items-center gap-2">
-      <select class="isian min-w-40 flex-1" data-aksi="bf" data-f="mapelId" data-id="${esc(b.id)}">${opsi(p.master.mapel, b.mapelId, (m) => m.id, (m) => `${m.kode} · ${m.nama}`)}</select>
-      <select class="isian min-w-36" data-aksi="bf" data-f="guruId" data-id="${esc(b.id)}">${opsi(p.master.guru, b.guruId, (g) => g.id, (g) => `${g.kode} · ${g.nama}`)}</select>
+      <select class="isian min-w-40 flex-1" data-aksi="bf" data-f="mapelId" data-id="${esc(b.id)}">${opsi(p.master.mapel, b.mapelId, (m) => m.id, (m) => `${m.induk ? '   ↳ ' : ''}${m.kode} · ${m.nama}`)}</select>
+      <select class="isian min-w-36" data-aksi="bf" data-f="guruId" data-id="${esc(b.id)}">${opsiGuru(p, b.mapelId, b.guruId)}</select>
       <label class="text-xs text-slate-500">JP <input type="number" min="0" class="isian w-14" value="${b.jp}" data-aksi="bf" data-f="jp" data-id="${esc(b.id)}"></label>
       <div class="w-28"><div class="h-2 overflow-hidden rounded-full bg-slate-200"><div class="h-full ${warnaBar}" style="width:${persen}%"></div></div><div class="mt-0.5 text-[11px] text-slate-500">${status}${b.paralel ? ` · ${esc(b.paralel)}` : ''}</div></div>
       <button class="tombol !px-2" data-aksi="bebanBuka" data-id="${esc(b.id)}" title="Pengaturan lanjutan">${buka ? '▲' : '⚙'}</button>
       <button class="tombol !px-2 !text-red-600" data-aksi="bebanHapus" data-id="${esc(b.id)}" title="Hapus beban">✕</button></div>${lanjut}</div>`;
 }
 
+/** Tab rombel dikelompokkan per tingkat dan jurusan; tiap tab memuat total JP bebannya. */
+function tabRombel(k: Konteks, aktif: string): string {
+  const p = k.p;
+  const kelompok = new Map<string, typeof p.master.rombel>();
+  for (const r of p.master.rombel) {
+    const nama = `${r.tingkat} ${r.jurusan}`;
+    const l = kelompok.get(nama);
+    if (l) l.push(r);
+    else kelompok.set(nama, [r]);
+  }
+  return `<div class="mb-3 flex flex-wrap gap-x-4 gap-y-2 rounded-xl border border-slate-200 bg-white p-2">${[...kelompok]
+    .map(([nama, daftar]) => `<div><div class="mb-0.5 px-1 text-[10px] font-semibold tracking-wide text-slate-400">KELAS ${esc(nama)}</div><div class="flex gap-1">${daftar
+      .map((r) => {
+        const total = jpRombel(p.beban.filter((b) => b.rombelId === r.id));
+        const tdkAktif = k.turunan.rombelTidakAktif.has(r.id);
+        return `<button data-aksi="bebanTab" data-id="${esc(r.id)}" class="rounded-lg border px-2.5 py-1 text-sm font-medium ${r.id === aktif ? 'border-[#2347b8] bg-[#2347b8] text-white' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'}" title="${esc(r.kode)} · ${total} JP${tdkAktif ? ' · tidak aktif pada tanggal acuan (mis. PKL)' : ''}">${esc(`${r.jurusan} ${r.nomor}`)} <span class="text-[10px] opacity-70">${total}${tdkAktif ? ' · off' : ''}</span></button>`;
+      })
+      .join('')}</div></div>`)
+    .join('')}</div>`;
+}
+
 export function renderBeban(k: Konteks): string {
   const p = k.p;
-  const pilih = k.ui.bebanRombel;
-  const rombel = p.master.rombel.filter((r) => pilih === 'semua' || r.id === pilih);
-  const kartu = rombel
-    .map((r) => {
-      const daftar = p.beban.filter((b) => b.rombelId === r.id);
-      const total = jpRombel(daftar);
-      const jadi = daftar.filter((b) => !b.nonTatapMuka).reduce((a, b) => a + Math.min(b.jp, k.turunan.slots.filter((s) => s.bebanId === b.id).length), 0);
-      const ket = r.jpButuh !== undefined ? ` · data sumber: ${r.jpButuh} JP${r.jpButuh !== total ? ` <span class="text-red-600">(selisih ${total - r.jpButuh >= 0 ? '+' : ''}${total - r.jpButuh})</span>` : ''}` : '';
-      return `<div class="kartu p-3"><div class="mb-2 flex flex-wrap items-baseline gap-2"><h3 class="text-base font-semibold">${esc(r.kode)}</h3>
-        <span class="text-sm text-slate-500">Beban ${total} JP · terjadwal ${jadi}${ket}</span></div>
+  const aktif = p.master.rombel.some((r) => r.id === k.ui.bebanRombel) ? k.ui.bebanRombel : (p.master.rombel[0]?.id ?? '');
+  const r = p.master.rombel.find((x) => x.id === aktif);
+  const kartu = !r
+    ? ''
+    : (() => {
+        const daftar = p.beban.filter((b) => b.rombelId === r.id);
+        const total = jpRombel(daftar);
+        const jadi = daftar.filter((b) => !b.nonTatapMuka).reduce((a, b) => a + Math.min(b.jp, k.turunan.slots.filter((s) => s.bebanId === b.id).length), 0);
+        const ket = r.jpButuh !== undefined ? ` · data sumber: ${r.jpButuh} JP${r.jpButuh !== total ? ` <span class="text-red-600">(selisih ${total - r.jpButuh >= 0 ? '+' : ''}${total - r.jpButuh})</span>` : ''}` : '';
+        const nonaktif = k.turunan.rombelTidakAktif.has(r.id) ? ' <span class="lencana bg-amber-100 text-amber-800">tidak aktif pada tanggal acuan (mis. PKL)</span>' : '';
+        return `<div class="kartu p-3"><div class="mb-2 flex flex-wrap items-baseline gap-2"><h3 class="text-base font-semibold">${esc(r.kode)}</h3>
+        <span class="text-sm text-slate-500">Beban ${total} JP · terjadwal ${jadi}${ket}</span>${nonaktif}</div>
         <div class="space-y-2">${daftar.map((b) => barisBeban(k, b)).join('') || '<div class="text-sm text-slate-500">Belum ada beban.</div>'}</div>
         <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3" data-form="${esc(r.id)}">
-          <select class="isian min-w-40 flex-1" data-nb="mapel">${opsi(p.master.mapel, '', (m) => m.id, (m) => `${m.kode} · ${m.nama}`, '— pilih mapel —')}</select>
-          <select class="isian min-w-36" data-nb="guru">${opsi(p.master.guru, '', (g) => g.id, (g) => `${g.kode} · ${g.nama}`, '— pilih guru —')}</select>
+          <select class="isian min-w-40 flex-1" data-nb="mapel">${opsi(p.master.mapel, '', (m) => m.id, (m) => `${m.induk ? '   ↳ ' : ''}${m.kode} · ${m.nama}`, '— pilih mapel —')}</select>
+          <select class="isian min-w-36" data-nb="guru">${opsiGuru(p, '', '', '— pilih guru —')}</select>
           <label class="text-xs text-slate-500">JP <input type="number" min="0" value="2" class="isian w-14" data-nb="jp"></label>
           <button class="tombol-utama" data-aksi="bebanTambah" data-rombel="${esc(r.id)}">+ Tambah beban</button></div></div>`;
-    })
-    .join('');
+      })();
 
   const guruRekap = p.master.guru
     .map((g) => {
@@ -75,8 +100,7 @@ export function renderBeban(k: Konteks): string {
     })
     .filter((x) => x.tatap + x.non > 0);
 
-  return `<div class="mb-3 flex flex-wrap items-center gap-3"><div class="text-lg font-semibold">Beban mengajar</div>
-      <select id="bebanRombel" class="isian">${opsi([{ id: 'semua', kode: 'Semua rombel' }, ...p.master.rombel], pilih, (r) => r.id, (r) => r.kode)}</select></div>
+  return `<div class="mb-3 text-lg font-semibold">Beban mengajar</div>${tabRombel(k, aktif)}
     <div class="grid gap-3 xl:grid-cols-[1fr_300px]"><div class="space-y-3">${kartu || '<div class="kartu p-6 text-center text-sm text-slate-500">Belum ada rombel. Tambahkan di Master Data.</div>'}</div>
     <aside class="kartu h-fit p-3"><div class="mb-2 text-sm font-semibold">Rekap JP per guru</div>
       <table class="w-full text-sm"><thead class="text-left text-xs text-slate-500"><tr><th>Guru</th><th class="text-right">JP</th><th class="text-right">Non-tatap</th><th class="text-right">Rombel</th></tr></thead>
@@ -85,6 +109,11 @@ export function renderBeban(k: Konteks): string {
 
 export function klikBeban(k: Konteks, el: HTMLElement): boolean {
   const d = el.dataset;
+  if (d.aksi === 'bebanTab') {
+    k.ui.bebanRombel = d.id ?? '';
+    k.gambar();
+    return true;
+  }
   if (d.aksi === 'bebanBuka') {
     const s = k.ui.bebanTerbuka;
     if (s.has(d.id ?? '')) s.delete(d.id ?? '');
@@ -123,12 +152,13 @@ export function klikBeban(k: Konteks, el: HTMLElement): boolean {
 }
 
 export function ubahBeban(k: Konteks, el: HTMLInputElement & HTMLSelectElement): boolean {
-  if (el.id === 'bebanRombel') {
-    k.ui.bebanRombel = el.value;
-    k.gambar();
+  const d = el.dataset;
+  if (d.nb === 'mapel') {
+    // memilih mapel: guru yang mengampu mapel itu dikelompokkan di atas
+    const guru = el.closest<HTMLElement>('[data-form]')?.querySelector<HTMLSelectElement>('[data-nb=guru]');
+    if (guru) guru.innerHTML = opsiGuru(k.p, el.value, guru.value, '— pilih guru —');
     return true;
   }
-  const d = el.dataset;
   if (d.aksi !== 'bf') return false;
   const b = k.p.beban.find((x) => x.id === d.id);
   if (!b) return true;
@@ -150,16 +180,6 @@ export function ubahBeban(k: Konteks, el: HTMLInputElement & HTMLSelectElement):
     k.ubah(() => {
       if (angka.length) b.pola = angka;
       else delete b.pola;
-    });
-  } else if (f === 'tim' || f === 'prio' || f === 'larang') {
-    const sumber: { id: string; kode: string }[] = f === 'tim' ? k.p.master.guru : k.p.master.ruang;
-    const { ids, salah } = kodeKeId(sumber, el.value);
-    if (salah.length) return tolak(`Kode tidak dikenal: ${salah.join(', ')}.`);
-    if (f === 'tim' && ids.includes(b.guruId)) return tolak('Guru utama tidak perlu ditulis di tim teaching.');
-    k.ubah(() => {
-      if (f === 'tim') b.timGuruIds = ids;
-      else if (f === 'prio') b.ruangPrioritas = ids;
-      else b.ruangTerlarang = ids;
     });
   } else if (f === 'paralel') {
     const v = el.value.trim();

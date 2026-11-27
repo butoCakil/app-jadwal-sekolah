@@ -5,8 +5,8 @@ import { usulKodeGuru } from '../src/model/kode';
 import { validasiProyek } from '../src/model/validasi';
 import { ruangDilarang } from '../src/mesin/validator';
 
-describe('data sekolah', () => {
-  const p = proyekSekolah();
+describe('data sekolah (Gasal 2026/2027)', () => {
+  const p = proyekSekolah('gasal');
   it('valid dan lengkap', () => {
     expect(validasiProyek(p)).toEqual([]);
     expect(p.master.guru).toHaveLength(62);

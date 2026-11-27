@@ -24,7 +24,7 @@ export interface Skema {
 /** Id skema untuk Senin..Jumat */
 export type PolaMinggu = [string, string, string, string, string];
 
-export type JenisKegiatan = 'TKA' | 'PKL' | 'ASAS' | 'UKK' | 'libur' | 'lain';
+export type JenisKegiatan = 'TKA' | 'PKL' | 'ASAS' | 'ASAJ' | 'UKK' | 'libur' | 'lain';
 
 export interface Kegiatan {
   id: string;
@@ -37,6 +37,7 @@ export interface Kegiatan {
   rombelTidakAktif: string[];
   /** Versi jadwal yang dipakai pada periode ini (kosong = reguler) */
   versiId?: string;
+  catatan?: string;
 }
 
 /** Penggantian manual oleh admin. Tanpa rentang tanggal = berlaku untuk semua tanggal. */
@@ -50,6 +51,8 @@ export interface Guru {
   id: string;
   nama: string;
   kode: string;
+  /** Mapel/elemen yang diampu (kompetensi). Dipakai untuk menyaring pilihan mapel dan memberi peringatan; kosong = tidak dibatasi. */
+  mapelIds?: string[];
 }
 export interface Mapel {
   id: string;
@@ -59,6 +62,8 @@ export interface Mapel {
   induk?: string;
   /** Jenis ruang yang boleh dipakai, berurutan (yang pertama dicoba dulu). Kosong = teori, praktik, lab. */
   jenisRuang?: Ruang['jenis'][];
+  /** Ruang yang boleh dipakai mapel ini (daftar putih). Kosong = tidak dibatasi. */
+  ruangIds?: string[];
 }
 export interface Rombel {
   id: string;
@@ -68,6 +73,8 @@ export interface Rombel {
   kode: string;
   /** Kebutuhan JP pelajaran per pekan menurut data sumber (opsional; diisi dari impor Excel) */
   jpButuh?: number;
+  /** Ruang yang boleh dipakai rombel ini (daftar putih). Kosong = tidak dibatasi. */
+  ruangIds?: string[];
 }
 export interface Ruang {
   id: string;
@@ -78,6 +85,8 @@ export interface Ruang {
   bersama?: boolean;
   /** false = bukan ruang belajar (mis. ruang guru/instruktur); tidak dipilih otomatis. Kosong = true. */
   dijadwalkan?: boolean;
+  /** Kelompok ruang untuk pemilihan massal, mis. "Ruang teori", "Lab AT", "Lab DKV", "Lab TE". Kosong = turunan dari jenis. */
+  kategori?: string;
 }
 
 /** Beban mengajar: satu guru mengajar satu mapel di satu rombel sebanyak `jp` JP per pekan. */
@@ -102,6 +111,7 @@ export interface Beban {
 
 export type Aturan =
   | { id: string; jenis: 'guruTidakTersedia'; guruId: string; hari: number; /** nomor KBM; kosong = sehari penuh */ jam: number[]; catatan?: string }
+  | { id: string; jenis: 'guruRuang'; guruId: string; /** guru ini hanya boleh memakai ruang-ruang ini */ ruangIds: string[]; catatan?: string }
   | { id: string; jenis: 'ruangTerlarang'; /** salah satu terisi */ rombelId?: string; jurusan?: string; ruangIds: string[]; catatan?: string };
 
 /** Satu sel jadwal. `jam` = nomor KBM internal (1 = pelajaran pertama; jam 0 = non-KBM tidak dijadwalkan). */
@@ -132,6 +142,8 @@ export interface Proyek {
   beban: Beban[];
   aturan: Aturan[];
   versi: VersiJadwal[];
+  /** Periode (kegiatan kalender) yang sedang dikerjakan; tanggal acuan awal aplikasi mengikuti periode ini. */
+  periodeAktifId?: string;
 }
 
 export const VERSI_DATA_SAAT_INI = 2;

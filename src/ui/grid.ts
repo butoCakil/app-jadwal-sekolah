@@ -9,6 +9,7 @@ import type { Blok } from '../mesin/blok';
 import { cekPenempatan, rencanaPindah, terapkanRencana } from '../mesin/penempatan';
 import { jpRombel } from '../model/jp';
 import { esc, opsi, tambahHari, tanggalPendek, warnaMapel } from './util';
+import { barPeriode } from './periode';
 import type { Konteks, ModeLihat } from './konteks';
 
 const LABEL_SUMBER = { manual: 'manual', kegiatan: 'kalender', reguler: 'reguler' } as const;
@@ -386,7 +387,7 @@ export function renderGrid(k: Konteks): string {
   const rombelMode = k.ui.mode === 'rombel';
   const semua = k.ui.tata === 'semua';
 
-  const kontrol = `<div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+  const kontrol = `${barPeriode(k)}<div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
     <div class="inline-flex rounded-lg border border-slate-300 bg-white p-0.5">${MODE.map((m) => `<button class="rounded-md px-3 py-1 text-sm font-medium ${m.id === k.ui.mode ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}" data-aksi="mode" data-mode="${m.id}">${m.label}</button>`).join('')}</div>
     <div class="inline-flex rounded-lg border border-slate-300 bg-white p-0.5" title="Pilih cara melihat jadwal">${(
       [['hari', 'Satu per satu'], ['semua', 'Semua sekaligus']] as const

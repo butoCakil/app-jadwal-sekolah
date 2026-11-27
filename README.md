@@ -13,7 +13,18 @@ npm test         # tes
 npm run build    # hasil di dist/
 ```
 
-Data awal aplikasi = **data sekolah** (`data/sekolah/proyek.json`): 62 guru, 30 rombel, 42 ruang site plan 2026, aturan ruang per jurusan, dan **jadwal reguler Gasal 2026/2027** dari aSc (25 rombel x 48 JP = 1200 JP, tanpa bentrok) beserta beban turunannya (guru, mapel/elemen, JP, pola pertemuan, ruang). Lima rombel XI yang tidak ada di PDF aSc memakai beban dari Excel dan belum terjadwal. Tidak memuat NIP. Sumber: `data/sekolah/sumber/reguler-gasal-2026.json` (diekstrak dari PDF Jadwal Kelas dan Jadwal Guru oleh `tools/ekstrak-asc-pdf.py`); data dibangun ulang dengan `TULIS_DATA=1 npx vitest run test/bangun-data.test.ts`. Data contoh fiktif untuk demo/tes ada di `data/contoh/contoh.json` (tombol **Ganti dengan data contoh fiktif** di Master Data).
+Data awal aplikasi = **data sekolah** (`data/sekolah/genap-2027.json` bawaan, `data/sekolah/gasal-2026.json` untuk Gasal): 62 guru, 30 rombel, 42 ruang site plan 2026, aturan ruang per jurusan, dan **jadwal reguler Gasal 2026/2027** dari aSc (25 rombel x 48 JP = 1200 JP, tanpa bentrok) beserta beban turunannya (guru, mapel/elemen, JP, pola pertemuan, ruang). Lima rombel XI yang tidak ada di PDF aSc memakai beban dari Excel dan belum terjadwal. Tidak memuat NIP. Sumber: `data/sekolah/sumber/reguler-gasal-2026.json` (diekstrak dari PDF Jadwal Kelas dan Jadwal Guru oleh `tools/ekstrak-asc-pdf.py`); data dibangun ulang dengan `TULIS_DATA=1 npx vitest run test/bangun-data.test.ts`. Data contoh fiktif untuk demo/tes ada di `data/contoh/contoh.json` (tombol **Ganti dengan data contoh fiktif** di Master Data).
+
+## Yang sudah ada (tahap 5: master data dan kalender)
+
+- **Dua dataset sekolah**, dipilih lewat tombol **Muat data ini** di Master Data > Data: **Genap 2026/2027** (bawaan: guru dari sheet Genap, tanpa Laila Zuhaida; 61 guru, 30 rombel, 316 beban, jadwal kosong, kelas XII PKL) dan **Gasal 2026/2027** (jadwal reguler aSc 1200 JP, periode TKA/ASAJ/ASAS). Draf lama di browser tidak ikut berganti otomatis: pakai tombol itu.
+- **Master Data bertab** (Guru, Mapel & elemen, Rombel, Ruang, Aturan & kondisi, Data). Ruang punya **kategori** (Ruang teori, Lab TE, Lab DKV, Lab AT, ...). Pilihan relasi memakai **modal centang** dengan pencarian, "Pilih semua", dan pilih per kategori: mapel yang diampu guru, ruang yang boleh per mapel dan per rombel, ruang dan guru tim pada beban.
+- **Aturan baru:** guru hanya di ruang tertentu (boleh lebih dari satu). Aturan memilih dari data master (guru, ruang, jam), bukan mengetik kode. Daftar putih ruang pada guru, mapel, dan rombel berlaku bersamaan (ruang harus lolos semuanya) di validator, penempatan, dan solver.
+- **Perbaikan:** centang "Ikut dijadwalkan" kini bisa dibatalkan.
+- **Beban mengajar** bertab per rombel (dikelompokkan per tingkat dan jurusan).
+- **Kalender akademik:** kalender bulan kotak (kiri) dengan panel info tanggal (kanan), tabel semua kegiatan, tambah/ubah/hapus kegiatan, dan **impor dari berkas** (.xlsx, .csv/.tsv, .ics, .json).
+- **Periode** (seperti jadwal-te): setiap kegiatan bisa membawa pola mingguan, versi jadwal sendiri, dan daftar rombel tidak aktif (PKL); satu periode ditandai **aktif** dan dipilih dari bilah di tab Jadwal. Slot rombel PKL disembunyikan, tidak diperiksa, dan dilewati Susun Otomatis.
+- **Template skema jam** bisa ditambah, disalin, diubah, dan dihapus (tidak bisa jika masih dipakai), misalnya untuk bulan puasa.
 
 ## Yang sudah ada (tahap 4)
 

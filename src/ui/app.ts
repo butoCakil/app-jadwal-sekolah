@@ -1,8 +1,8 @@
 import type { Proyek, Slot } from '../model/tipe';
 import { cekSkema } from '../model/skema';
-import { cekKegiatan, cekPola } from '../model/kalender';
+import { cekKegiatan, cekPola, versiUntukTanggal } from '../model/kalender';
 import { proyekContoh } from '../model/contoh';
-import { proyekSekolah } from '../model/sekolahData';
+import { proyekSekolah, type IdDataSekolah } from '../model/sekolahData';
 import { Riwayat } from '../mesin/riwayat';
 import { dariJson, hapusDraf, keJson, muatDraf, simpanDraf } from '../io/simpan';
 import type { Konteks, StatusUI, Tab, Turunan } from './konteks';
@@ -15,6 +15,9 @@ import { klikMaster, renderMaster, ubahMaster } from './master';
 import { klikImpor, renderImpor, ubahImpor } from './imporExcel';
 import { klikSusun, renderSusun, ubahSusun } from './susun';
 import { klikSkema, renderSkemaTab, ubahSkema } from './skemaTab';
+import { klikPemilih, renderPemilih, segarkanPemilih, ubahPemilih } from './pemilih';
+import { klikPeriode, ubahPeriode } from './periode';
+import { bulanDari, tanggalUntukPeriode } from './kalenderTab';
 import { esc, isoLokal, unduh } from './util';
 
 const TAB: { id: Tab; label: string }[] = [
@@ -29,14 +32,24 @@ const TAB: { id: Tab; label: string }[] = [
 
 export async function mulaiApp(akar: HTMLElement): Promise<void> {
   let p: Proyek = (await muatDraf().catch(() => null)) ?? proyekSekolah();
+  const awalTanggal = (x: Proyek): string => {
+    const aktif = x.kalender.find((g) => g.id === x.periodeAktifId);
+    return aktif ? tanggalUntukPeriode(aktif, isoLokal(new Date())) : isoLokal(new Date());
+  };
   const ui: StatusUI = {
     tab: 'grid',
-    tanggal: isoLokal(new Date()),
+    tanggal: awalTanggal(p),
+    kalBulan: bulanDari(awalTanggal(p)),
+    kalTanggal: awalTanggal(p),
+    kalBuka: new Set(),
+    skemaSub: 'kalender',
+    masterTab: 'guru',
+    pemilih: null,
     mode: 'rombel',
     tata: 'hari',
     entitasId: p.master.rombel[0]?.id ?? '',
     modal: null,
-    bebanRombel: 'semua',
+    bebanRombel: p.master.rombel[0]?.id ?? '',
     bebanTerbuka: new Set(),
     saring: 'semua',
   };
@@ -84,7 +97,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     },
     ubahSlots(fn: (s: Slot[]) => Slot[]) {
       ctx.ubah((x) => {
-        const v = x.versi[0];
+        const v = versiUntukTanggal(ui.tanggal, x);
         if (v) v.slots = fn(v.slots);
       });
     },
@@ -100,7 +113,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
   function gambar(): void {
     const entitas = daftarEntitas(p, ui.mode);
     if (!entitas.some((e) => e.id === ui.entitasId)) ui.entitasId = entitas[0]?.id ?? '';
-    if (ui.bebanRombel !== 'semua' && !p.master.rombel.some((r) => r.id === ui.bebanRombel)) ui.bebanRombel = 'semua';
+    if (!p.master.rombel.some((r) => r.id === ui.bebanRombel)) ui.bebanRombel = p.master.rombel[0]?.id ?? '';
     turunan = hitungTurunan(p, ui.tanggal);
     if (ui.modal?.jenis === 'slot') {
       const id = ui.modal.slotId;
@@ -119,7 +132,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       : ui.tab === 'master' ? renderMaster(ctx)
       : ui.tab === 'impor' ? renderImpor(ctx)
       : ui.tab === 'susun' ? renderSusun(ctx)
-      : renderSkemaTab(p);
+      : renderSkemaTab(ctx);
     akar.innerHTML = `<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div class="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-2.5">
           <div class="flex items-center gap-3"><div class="grid h-10 w-10 place-items-center rounded-xl bg-[#0d1e33]"><svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="12" width="4" height="8" rx="1.5" fill="#f5b21a"/><rect x="9" y="7" width="4" height="13" rx="1.5" fill="#157f6e"/><rect x="16" y="2" width="4" height="18" rx="1.5" fill="#2347b8"/></svg></div>
@@ -131,7 +144,8 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
             <button class="tombol" data-aksi="ekspor">Ekspor JSON</button>
             <label class="tombol cursor-pointer">Impor JSON<input type="file" accept="application/json,.json" id="impor" class="hidden"></label></div></div>
         <nav class="mx-auto flex max-w-[1600px] gap-1 overflow-x-auto px-4">${TAB.map((t) => `<button data-tab="${t.id}" class="whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${t.id === ui.tab ? 'border-[#2347b8] text-[#2347b8]' : 'border-transparent text-slate-500 hover:text-slate-800'}">${t.label}${t.id === 'inspektur' ? badge : ''}</button>`).join('')}</nav></header>
-      <main class="mx-auto max-w-[1600px] px-4 py-4">${galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(galat)}</div>` : ''}${isi}</main>`;
+      <main class="mx-auto max-w-[1600px] px-4 py-4">${galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(galat)}</div>` : ''}${isi}</main>${renderPemilih(ctx)}`;
+    segarkanPemilih(ctx);
   }
 
   const urungkan = () => {
@@ -161,18 +175,24 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       case 'redo': return ulangi();
       case 'ekspor': return unduh(`jadwal-${isoLokal(new Date())}.json`, keJson(p));
       case 'keInspektur': return ctx.ke('inspektur');
-      case 'reset':
-      case 'resetContoh':
-        if (!confirm(el.dataset.aksi === 'reset' ? 'Kembalikan ke data sekolah? Draf yang ada di peramban ini akan diganti.' : 'Ganti dengan data contoh fiktif? Draf yang ada di peramban ini akan diganti.')) return;
+      case 'muat': {
+        const set = el.dataset.set as IdDataSekolah | 'contoh';
+        if (!confirm('Memuat data ini mengganti draf yang ada di peramban ini. Lanjutkan?')) return;
         riwayat.catat(p);
-        p = el.dataset.aksi === 'reset' ? proyekSekolah() : proyekContoh();
+        p = set === 'contoh' ? proyekContoh() : proyekSekolah(set);
         ui.entitasId = p.master.rombel[0]?.id ?? '';
         ui.mode = 'rombel';
+        ui.tanggal = awalTanggal(p);
+        ui.kalTanggal = ui.tanggal;
+        ui.kalBulan = bulanDari(ui.tanggal);
+        ui.bebanRombel = p.master.rombel[0]?.id ?? '';
+        ui.pemilih = null;
         galat = '';
         void hapusDraf();
         return gambar();
+      }
     }
-    void (klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikSkema(ctx, el));
+    void (klikPemilih(ctx, el) || klikPeriode(ctx, el) || klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikSkema(ctx, el));
   });
 
   akar.addEventListener('change', (e) => {
@@ -187,6 +207,8 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
           p = h.proyek;
           ui.entitasId = p.master.rombel[0]?.id ?? '';
           ui.mode = 'rombel';
+          ui.tanggal = awalTanggal(p);
+          ui.bebanRombel = p.master.rombel[0]?.id ?? '';
           galat = '';
           simpanTertunda();
         } else galat = `Impor ditolak: ${h.galat.join(' | ')}`;
@@ -194,13 +216,19 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       });
       return;
     }
-    void (ubahGrid(ctx, el) || ubahBeban(ctx, el) || ubahMaster(ctx, el) || ubahImpor(ctx, el) || ubahSusun(ctx, el) || ubahSkema(ctx, el));
+    void (ubahPemilih(ctx, el) || ubahPeriode(ctx, el) || ubahGrid(ctx, el) || ubahBeban(ctx, el) || ubahMaster(ctx, el) || ubahImpor(ctx, el) || ubahSusun(ctx, el) || ubahSkema(ctx, el));
+  });
+
+  akar.addEventListener('input', (e) => {
+    const el = e.target as HTMLInputElement;
+    if (el.dataset.aksi === 'pmCari') ubahPemilih(ctx, el);
   });
 
   document.addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement;
-    if (e.key === 'Escape' && ui.modal) {
+    if (e.key === 'Escape' && (ui.modal || ui.pemilih)) {
       ui.modal = null;
+      ui.pemilih = null;
       return gambar();
     }
     if (/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;

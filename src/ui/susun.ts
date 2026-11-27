@@ -1,5 +1,7 @@
 import type { HasilSusun, Kemajuan } from '../mesin/solver';
+import type { Slot } from '../model/tipe';
 import { esc } from './util';
+import { polaUntukTanggal, rombelTidakAktifIds, versiUntukTanggal } from '../model/kalender';
 import type { Konteks } from './konteks';
 
 type Mode = 'nol' | 'lengkapi';
@@ -22,11 +24,14 @@ const bar = (m: Kemajuan | null) => {
 
 export function renderSusun(k: Konteks): string {
   const p = k.p;
-  const kini = p.versi[0]?.slots.length ?? 0;
-  const pola = p.polaReguler.map((id) => p.skema.find((s) => s.id === id)?.nama.replace(/ Jam\/Hari/, '') ?? '?').join(' · ');
+  const versi = versiUntukTanggal(k.ui.tanggal, p);
+  const kini = versi?.slots.length ?? 0;
+  const tdkAktif = rombelTidakAktifIds(k.ui.tanggal, p.kalender);
+  const polaAktif = polaUntukTanggal(k.ui.tanggal, p).pola;
+  const pola = polaAktif.map((id) => p.skema.find((s) => s.id === id)?.nama.replace(/ Jam\/Hari/, '') ?? '?').join(' · ');
   const opsi = `<div class="mt-3 grid gap-3 sm:grid-cols-2">
       <fieldset class="rounded-lg border border-slate-200 p-3 text-sm"><legend class="px-1 text-xs font-semibold text-slate-500">Cara</legend>
-        <label class="flex items-start gap-2"><input type="radio" name="modeSusun" value="nol" ${st.mode === 'nol' ? 'checked' : ''}><span><b>Susun dari nol</b><br><span class="text-xs text-slate-500">Mengganti seluruh jadwal versi Reguler (${kini} slot sekarang).</span></span></label>
+        <label class="flex items-start gap-2"><input type="radio" name="modeSusun" value="nol" ${st.mode === 'nol' ? 'checked' : ''}><span><b>Susun dari nol</b><br><span class="text-xs text-slate-500">Mengganti seluruh jadwal versi “${esc(versi?.nama ?? '—')}” (${kini} slot sekarang).</span></span></label>
         <label class="mt-2 flex items-start gap-2"><input type="radio" name="modeSusun" value="lengkapi" ${st.mode === 'lengkapi' ? 'checked' : ''}><span><b>Lengkapi</b><br><span class="text-xs text-slate-500">Mempertahankan slot yang sudah ada, hanya mengisi sisa JP.</span></span></label></fieldset>
       <fieldset class="rounded-lg border border-slate-200 p-3 text-sm"><legend class="px-1 text-xs font-semibold text-slate-500">Waktu menyusun</legend>
         <select id="detikSusun" class="isian">${[5, 10, 20, 40].map((d) => `<option value="${d}" ${st.detik === d ? 'selected' : ''}>${d} detik</option>`).join('')}</select>
@@ -65,8 +70,8 @@ export function renderSusun(k: Konteks): string {
       <div class="mt-2 text-xs text-slate-500">Menerapkan dapat dibatalkan dengan Urungkan. Hasil dilihat dulu di tab Grid Jadwal setelah diterapkan.</div></div>`;
   }
   return `<h2 class="mb-3 text-lg font-bold">Susun Otomatis</h2>
-    <div class="kartu p-4"><div class="text-sm text-slate-600">Menempatkan JP semua beban (${p.beban.filter((b) => !b.nonTatapMuka).length} beban tatap muka) ke versi Reguler tanpa bentrok guru, rombel, atau ruang, dengan memperhatikan guru tidak tersedia, ruang terlarang, jenis ruang per mapel, pola pertemuan, dan kelompok paralel. Yang tidak muat <b>tidak dipaksakan</b>: dilaporkan beserta alasannya.</div>
-      <div class="mt-2 text-xs text-slate-500">Kapasitas jam mengikuti pola reguler: ${esc(pola)} (Senin–Jum'at).</div>
+    <div class="kartu p-4"><div class="text-sm text-slate-600">Menempatkan JP semua beban (${p.beban.filter((b) => !b.nonTatapMuka).length} beban tatap muka) ke versi “${esc(versi?.nama ?? '—')}” tanpa bentrok guru, rombel, atau ruang, dengan memperhatikan guru tidak tersedia, ruang terlarang, jenis ruang per mapel, pola pertemuan, dan kelompok paralel. Yang tidak muat <b>tidak dipaksakan</b>: dilaporkan beserta alasannya.</div>
+      <div class="mt-2 text-xs text-slate-500">Kapasitas jam mengikuti pola pada tanggal acuan (${esc(k.ui.tanggal)}): ${esc(pola)} (Senin–Jum'at). Versi dan periode diganti lewat bilah Periode di Grid Jadwal.${tdkAktif.size ? ` ${tdkAktif.size} rombel tidak aktif (PKL) dilewati.` : ''}</div>
       ${opsi}${bagian}</div>`;
 }
 
@@ -78,8 +83,15 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
       st.kemajuan = null;
       st.jalan = true;
       const kloning = structuredClone(k.p);
-      const tetap = st.mode === 'lengkapi' ? [...(k.p.versi[0]?.slots ?? [])] : [];
+      const versiIni = versiUntukTanggal(k.ui.tanggal, k.p);
+      const tdk = rombelTidakAktifIds(k.ui.tanggal, k.p.kalender);
+      const rombelBeban = new Map(k.p.beban.map((b) => [b.id, b.rombelId]));
+      const aktifSaja = (sl: Slot) => !tdk.has(rombelBeban.get(sl.bebanId) ?? '');
+      // rombel tidak aktif (PKL) tidak ikut disusun; slot miliknya (bila ada) dibiarkan apa adanya
+      kloning.beban = kloning.beban.filter((b) => !tdk.has(b.rombelId));
+      const tetap = st.mode === 'lengkapi' ? (versiIni?.slots ?? []).filter(aktifSaja) : [];
       if (st.mode === 'nol') for (const v of kloning.versi) v.slots = [];
+      const polaSusun = polaUntukTanggal(k.ui.tanggal, k.p).pola;
       try {
         pekerja = new Worker(new URL('../mesin/solver.worker.ts', import.meta.url), { type: 'module' });
       } catch (e) {
@@ -111,7 +123,7 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
         pekerja = null;
         k.gambar();
       };
-      w.postMessage({ p: kloning, skemaPerHari: k.p.polaReguler, tetap, batasMs: st.detik * 1000 });
+      w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, batasMs: st.detik * 1000 });
       k.gambar();
       return true;
     }
@@ -128,7 +140,9 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
     case 'susunTerapkan': {
       const h = st.hasil;
       if (!h) return true;
-      k.ubahSlots(() => h.slots);
+      const tdk2 = rombelTidakAktifIds(k.ui.tanggal, k.p.kalender);
+      const rb = new Map(k.p.beban.map((b) => [b.id, b.rombelId]));
+      k.ubahSlots((lama) => [...h.slots, ...lama.filter((sl) => tdk2.has(rb.get(sl.bebanId) ?? ''))]);
       st.hasil = null;
       k.ui.mode = 'rombel';
       k.ke('grid');

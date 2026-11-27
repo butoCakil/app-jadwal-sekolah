@@ -32,8 +32,15 @@ export const adalahPelanggaran = (m: Masalah): boolean => m.kategori === 'bentro
 export interface OpsiPeriksa {
   /** id skema untuk Senin..Jumat pada pekan yang dilihat; bila ada, slot di luar kapasitas dilaporkan */
   skemaPerHari?: (string | null)[];
+  /** rombel yang tidak aktif pada periode yang dilihat (mis. PKL): kekurangan JP-nya tidak dilaporkan */
+  rombelTidakAktif?: ReadonlySet<string>;
 }
 
+/**
+ * Ruang yang tidak boleh dipakai suatu beban: ruang terlarang di beban, aturan "ruang terlarang" (per rombel atau jurusan),
+ * ditambah semua ruang di luar daftar putih yang berlaku: ruang rombel, ruang mapel, dan aturan "guru hanya boleh memakai ruang tertentu"
+ * (guru utama dan tim). Bila ada beberapa daftar putih, ruang harus lolos semuanya.
+ */
 export function ruangDilarang(p: Pick<Proyek, 'aturan' | 'master'>, beban: Beban): Set<string> {
   const r = new Set(beban.ruangTerlarang);
   const rombel = p.master.rombel.find((x) => x.id === beban.rombelId);
@@ -41,6 +48,13 @@ export function ruangDilarang(p: Pick<Proyek, 'aturan' | 'master'>, beban: Beban
     if (a.jenis !== 'ruangTerlarang') continue;
     if ((a.rombelId && a.rombelId === beban.rombelId) || (a.jurusan && rombel && a.jurusan === rombel.jurusan)) a.ruangIds.forEach((x) => r.add(x));
   }
+  const putih: Set<string>[] = [];
+  if (rombel?.ruangIds?.length) putih.push(new Set(rombel.ruangIds));
+  const mapel = p.master.mapel.find((m) => m.id === beban.mapelId);
+  if (mapel?.ruangIds?.length) putih.push(new Set(mapel.ruangIds));
+  const gurus = new Set([beban.guruId, ...beban.timGuruIds]);
+  for (const a of p.aturan) if (a.jenis === 'guruRuang' && gurus.has(a.guruId) && a.ruangIds.length) putih.push(new Set(a.ruangIds));
+  if (putih.length) for (const u of p.master.ruang) if (!putih.every((s) => s.has(u.id))) r.add(u.id);
   return r;
 }
 
@@ -137,7 +151,7 @@ export function periksa(p: Proyek, slots: Slot[], opsi: OpsiPeriksa = {}): Masal
   const hitung = new Map<string, number>();
   for (const s of slots) hitung.set(s.bebanId, (hitung.get(s.bebanId) ?? 0) + 1);
   for (const b of p.beban) {
-    if (b.nonTatapMuka) continue;
+    if (b.nonTatapMuka || opsi.rombelTidakAktif?.has(b.rombelId)) continue;
     const n = hitung.get(b.id) ?? 0;
     const sisa = b.jp - n;
     if (sisa > 0) hasil.push({ id: `jp-kurang:${b.id}`, jenis: 'jp-kurang', kategori: 'gap', pesan: `${deskripsi(b)} (${gk(b.guruId)}) baru ${n} dari ${b.jp} JP; kurang ${sisa}.`, slotIds: [], bebanId: b.id, rombelId: b.rombelId });

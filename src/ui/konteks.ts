@@ -1,10 +1,21 @@
-import type { Proyek, Slot } from '../model/tipe';
+import type { Kegiatan, Proyek, Slot, VersiJadwal } from '../model/tipe';
 import type { Kategori, Masalah } from '../mesin/validator';
 import type { SkemaHari } from '../model/kalender';
 
+export type SubMaster = 'guru' | 'mapel' | 'rombel' | 'ruang' | 'aturan' | 'data';
 export type Tab = 'grid' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor' | 'susun';
 export type Tata = 'hari' | 'semua';
 export type ModeLihat = 'rombel' | 'guru' | 'ruang';
+
+/** Modal daftar centang untuk memilih banyak ruang/mapel sekaligus. */
+export interface Pemilih {
+  /** Siapa yang diatur: tabel master + id barisnya, atau aturan (a) / beban (b) */
+  sasaran: 'mapelRuang' | 'rombelRuang' | 'guruMapel' | 'aturanRuang' | 'bebanPrio' | 'bebanLarang' | 'bebanTim' | 'kegiatanRombel';
+  id: string;
+  /** pilihan sementara selama modal terbuka */
+  pilih: Set<string>;
+  cari: string;
+}
 
 export type Modal = { jenis: 'sel'; hari: number; jam: number } | { jenis: 'slot'; slotId: string };
 
@@ -16,7 +27,16 @@ export interface StatusUI {
   tata: Tata;
   entitasId: string;
   modal: Modal | null;
+  masterTab: SubMaster;
   bebanRombel: string;
+  /** tab kalender: bulan yang ditampilkan (YYYY-MM) dan tanggal terpilih */
+  kalBulan: string;
+  kalBuka: Set<string>;
+  /** sub-tab pada tab Skema & Kalender */
+  skemaSub: 'kalender' | 'pola' | 'skema';
+  kalTanggal: string;
+  /** modal pemilih centang (ruang/mapel) */
+  pemilih: Pemilih | null;
   bebanTerbuka: Set<string>;
   saring: Kategori | 'semua';
 }
@@ -30,6 +50,10 @@ export interface Turunan {
   masalah: Masalah[];
   peta: Map<string, Masalah[]>;
   jumlahPelanggaran: number;
+  /** versi jadwal yang berlaku pada tanggal acuan */
+  versi: VersiJadwal | undefined;
+  periode: Kegiatan | undefined;
+  rombelTidakAktif: ReadonlySet<string>;
 }
 
 export interface Konteks {

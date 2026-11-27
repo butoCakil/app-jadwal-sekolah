@@ -55,3 +55,12 @@ export function tanggalPendek(iso: string): string {
   const [, m, d] = iso.split('-').map(Number) as [number, number, number];
   return `${d} ${NAMA_BULAN[m - 1]}`;
 }
+
+/**
+ * Menyimpan nilai centang pada baris master. Nilai yang sama dengan bawaan kolom dihapus (tidak disimpan), selain itu disimpan apa adanya,
+ * jadi centang berbawaan "true" yang dihilangkan tersimpan sebagai `false` dan tidak kembali tercentang.
+ */
+export function simpanCek(baris: Record<string, unknown>, f: string, nilai: boolean, bawaan: boolean): void {
+  if (nilai === bawaan) delete baris[f];
+  else baris[f] = nilai;
+}
