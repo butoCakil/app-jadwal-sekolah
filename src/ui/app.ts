@@ -172,7 +172,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       if (!turunan.slots.some((s) => s.id === id)) ui.modal = null;
     }
     const n = turunan.jumlahPelanggaran;
-    const semua = turunan.masalah.length;
+    const semua = turunan.masalah.filter((m) => !m.diterima).length;
     const status = n === 0
       ? `<button class="lencana bg-emerald-100 text-emerald-800 hover:bg-emerald-200" data-aksi="keInspektur" title="Tidak ada bentrok atau pelanggaran aturan">● 0 Bentrok</button>`
       : `<button class="lencana bg-red-100 text-red-800 hover:bg-red-200" data-aksi="keInspektur" title="Lihat di Conflict Inspector">⚠ ${n} Bentrok</button>`;
