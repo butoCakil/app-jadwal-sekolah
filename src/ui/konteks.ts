@@ -34,6 +34,9 @@ export interface DlgKegiatan {
   polaId: string;
   /** hari berlaku (0 = Senin); kosong = setiap hari kerja */
   hari: Set<number>;
+  /** agenda referensi (tidak mengubah jadwal) */
+  agenda: boolean;
+  untuk: string;
   catatan: string;
   aktifkan: boolean;
   galat: string;

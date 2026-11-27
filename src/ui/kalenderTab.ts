@@ -8,13 +8,16 @@ import { bukaSimpul } from './hub';
 import { semesterPada } from '../model/simpul';
 import { esc, isoLokal } from './util';
 
-export const JENIS: JenisKegiatan[] = ['TKA', 'PKL', 'ASAS', 'ASAJ', 'UKK', 'libur', 'lain'];
+export const JENIS: JenisKegiatan[] = ['TKA', 'PKL', 'ASAS', 'ASAJ', 'UKK', 'ujian', 'upacara', 'rapor', 'libur', 'lain'];
 const WARNA: Record<JenisKegiatan, { titik: string; chip: string }> = {
   TKA: { titik: '#0284c7', chip: 'bg-sky-100 text-sky-800' },
   PKL: { titik: '#d97706', chip: 'bg-amber-100 text-amber-800' },
   ASAS: { titik: '#7c3aed', chip: 'bg-violet-100 text-violet-800' },
   ASAJ: { titik: '#c026d3', chip: 'bg-fuchsia-100 text-fuchsia-800' },
   UKK: { titik: '#0d9488', chip: 'bg-teal-100 text-teal-800' },
+  ujian: { titik: '#4f46e5', chip: 'bg-indigo-100 text-indigo-800' },
+  upacara: { titik: '#ca8a04', chip: 'bg-yellow-100 text-yellow-800' },
+  rapor: { titik: '#16a34a', chip: 'bg-green-100 text-green-800' },
   libur: { titik: '#dc2626', chip: 'bg-red-100 text-red-800' },
   lain: { titik: '#64748b', chip: 'bg-slate-200 text-slate-700' },
 };
@@ -105,7 +108,7 @@ function infoTanggal(k: Konteks, tgl: string): string {
     <div class="mt-1 space-y-2">${keg.length
       ? keg.map((g) => `<div class="rounded-lg border border-slate-200 p-2"><div class="flex flex-wrap items-center gap-2"><span class="lencana ${WARNA[g.jenis].chip}">${g.jenis}</span><b class="text-sm">${esc(g.nama)}</b></div>
           <div class="mt-0.5 text-xs text-slate-500">${esc(tglRentang(g.mulai, g.selesai))}${g.catatan ? ` · ${esc(g.catatan)}` : ''}</div>
-          <div class="mt-1.5 flex flex-wrap gap-1.5"><button class="tombol !px-2 !py-0.5 !text-xs" data-aksi="kegBuka" data-id="${esc(g.id)}">${g.jenis === 'libur' ? 'Ubah' : 'Buka jadwal kegiatan'}</button></div></div>`).join('')
+          <div class="mt-1.5 flex flex-wrap gap-1.5"><button class="tombol !px-2 !py-0.5 !text-xs" data-aksi="kegBuka" data-id="${esc(g.id)}">${g.jenis === 'libur' || g.agenda ? 'Ubah' : 'Buka jadwal kegiatan'}</button></div></div>`).join('')
       : '<div class="text-sm text-slate-500">Tidak ada kegiatan.</div>'}</div>
     <div class="mt-3 flex flex-wrap gap-2"><button class="tombol-utama" data-aksi="kegBaru" data-tgl="${tgl}">+ Kegiatan pada tanggal ini</button>
       <button class="tombol" data-aksi="acuanGrid" data-tgl="${tgl}">Lihat di Grid Jadwal</button></div>`;
@@ -128,11 +131,11 @@ function daftarKegiatan(k: Konteks): string {
       const rentang = g.mulai === g.selesai ? tglSingkat(g.mulai) : `${tglSingkat(g.mulai)} – ${tglSingkat(g.selesai)}`;
       return `<tr class="border-t border-slate-100 align-top ${aktif ? 'bg-sky-50/70' : ''}">
         <td class="whitespace-nowrap px-3 py-2 text-xs text-slate-600">${esc(rentang)}</td>
-        <td class="px-2 py-2"><div class="font-medium">${esc(g.nama)}</div>${g.catatan ? `<div class="text-xs text-slate-500">${esc(g.catatan)}</div>` : ''}</td>
+        <td class="px-2 py-2"><div class="font-medium">${esc(g.nama)}${g.agenda ? ' <span class="lencana bg-slate-100 !py-0 text-slate-500" title="Agenda kalender akademik: referensi, tidak mengubah jadwal">agenda</span>' : ''}${g.untuk ? ` <span class="text-xs text-slate-500">· ${esc(g.untuk)}</span>` : ''}</div>${g.catatan ? `<div class="text-xs text-slate-500">${esc(g.catatan)}</div>` : ''}</td>
         <td class="px-2 py-2"><span class="lencana ${WARNA[g.jenis].chip}">${g.jenis}</span></td>
         <td class="px-2 py-2 text-xs">${tdk.length ? `<span class="text-amber-800" title="${esc(tdk.join(', '))}">${esc(ringkasKode(tdk, 'rombel', 4))}</span>` : '<span class="text-slate-400">—</span>'}</td>
         <td class="px-2 py-2 text-xs">${pola ? `<span class="lencana bg-sky-100 text-sky-800">${esc(pola)}</span> ` : ''}${g.versiId ? `<span class="lencana bg-emerald-100 text-emerald-800">${g.rombelTerdampak ? `${g.rombelTerdampak.length} kelas khusus` : 'jadwal khusus'}</span>` : ''}${!pola && !g.versiId ? '<span class="text-slate-400">—</span>' : ''}</td>
-        <td class="whitespace-nowrap px-2 py-2 text-right"><button class="tombol !px-2 !py-0.5 !text-xs" data-aksi="kegBuka" data-id="${esc(g.id)}">${g.jenis === 'libur' ? 'Ubah' : 'Buka jadwal'}</button> <button class="px-1 text-red-600" data-aksi="hapusKegiatan" data-id="${esc(g.id)}" title="Hapus">✕</button></td></tr>`;
+        <td class="whitespace-nowrap px-2 py-2 text-right"><button class="tombol !px-2 !py-0.5 !text-xs" data-aksi="kegBuka" data-id="${esc(g.id)}">${g.jenis === 'libur' || g.agenda ? 'Ubah' : 'Buka jadwal'}</button> <button class="px-1 text-red-600" data-aksi="hapusKegiatan" data-id="${esc(g.id)}" title="Hapus">✕</button></td></tr>`;
     })
     .join('');
   return `<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white"><table class="w-full text-sm">
@@ -160,15 +163,17 @@ export function renderDlgKegiatan(k: Konteks): string {
   const p = k.p;
   const libur = d.jenis === 'libur';
   const n = jumlahHariKerja(p);
-  const hari = libur
+  const agendaHtml = `<div class="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 p-2"><label class="flex items-center gap-2 text-sm"><input type="checkbox" data-aksi="dkf" data-f="agenda" ${d.agenda ? 'checked' : ''}> Agenda saja (referensi kalender akademik, tidak mengubah jadwal)</label>
+      <label class="flex items-center gap-1 text-xs text-slate-600">Untuk<input class="isian !py-0.5 w-32 font-normal" value="${esc(d.untuk)}" placeholder="mis. X, XII / semua" data-aksi="dkf" data-f="untuk"></label></div>`;
+  const hari = libur || d.agenda
     ? ''
     : `<div class="mt-3"><div class="text-xs font-semibold text-slate-600">Berlaku pada hari</div>
         <div class="mt-1 flex flex-wrap items-center gap-3">${NAMA_HARI.slice(0, n).map((h, i) => `<label class="inline-flex items-center gap-1 text-sm"><input type="checkbox" data-aksi="dkHari" data-hari="${i}" ${d.hari.size === 0 || d.hari.has(i) ? 'checked' : ''}>${h}</label>`).join('')}</div>
         <div class="mt-0.5 text-[11px] text-slate-500">Semua dicentang = setiap hari kerja dalam rentang. Hilangkan centang bila kegiatan hanya pada hari tertentu (mis. TKA tiap Senin dan Kamis); hari lain mengikuti jadwal induk.</div></div>`;
-  const pola = libur
+  const pola = libur || d.agenda
     ? ''
     : `<label class="mt-3 block text-xs font-semibold text-slate-600">Pola jam (skema per hari)<select class="isian mt-1 w-full font-normal" data-aksi="dkf" data-f="polaId"><option value="">Ikut induk: ${esc(daftarPola(p)[0]?.nama ?? '')}</option>${daftarPola(p).filter((x) => !x.default).map((x) => `<option value="${esc(x.id)}" ${d.polaId === x.id ? 'selected' : ''}>${esc(x.nama)}</option>`).join('')}</select><span class="mt-0.5 block text-[11px] font-normal text-slate-500">Pola baru (mis. 10,10,11,11,9) dibuat di Skema &amp; Kalender › Pola mingguan.</span></label>`;
-  const ketBaru = !libur && d.baru ? '<div class="mt-3 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-900">Setelah disimpan, semua kelas mula-mula <b>ikut jadwal induk</b>. Atur kelas yang terdampak, tidak aktif, dan jadwal khususnya di halaman Periode &amp; Jadwal.</div>' : '';
+  const ketBaru = !libur && !d.agenda && d.baru ? '<div class="mt-3 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-900">Setelah disimpan, semua kelas mula-mula <b>ikut jadwal induk</b>. Atur kelas yang terdampak, tidak aktif, dan jadwal khususnya di halaman Periode &amp; Jadwal.</div>' : '';
   return `<div class="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 p-4" data-aksi="dkTutup">
     <div class="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl" data-aksi="dkDiam">
       <div class="flex items-center justify-between"><h3 class="text-lg font-bold">${d.baru ? 'Kegiatan baru' : 'Ubah kegiatan'}</h3><button class="px-2 text-xl leading-none text-slate-500 hover:text-slate-900" data-aksi="dkTutup" title="Tutup tanpa menyimpan (Esc)">×</button></div>
@@ -178,7 +183,7 @@ export function renderDlgKegiatan(k: Konteks): string {
         <label class="block text-xs font-semibold text-slate-600">Mulai<input type="date" class="isian mt-1 w-full font-normal" value="${esc(d.mulai)}" data-aksi="dkf" data-f="mulai"></label>
         <label class="block text-xs font-semibold text-slate-600">Selesai<input type="date" class="isian mt-1 w-full font-normal" value="${esc(d.selesai)}" data-aksi="dkf" data-f="selesai"></label>
         <div class="self-end pb-1 text-xs text-slate-500">${libur ? 'Libur: tidak ada KBM pada rentang ini.' : 'Akhir pekan dan hari non-kerja tidak ikut dihitung.'}</div></div>
-      ${hari}${pola}${ketBaru}
+      ${agendaHtml}${hari}${pola}${ketBaru}
       <label class="mt-3 block text-xs font-semibold text-slate-600">Catatan<textarea rows="2" class="isian mt-1 w-full font-normal" data-aksi="dkf" data-f="catatan">${esc(d.catatan)}</textarea></label>
       ${d.galat ? `<div class="mt-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(d.galat)}</div>` : ''}
       <div class="mt-4 flex flex-wrap items-center gap-2">${d.baru ? '' : '<button class="tombol !text-red-600" data-aksi="dkHapus">Hapus kegiatan</button>'}<span class="flex-1"></span><button class="tombol" data-aksi="dkTutup">Batal</button><button class="tombol-utama" data-aksi="dkSimpan">Simpan</button></div></div></div>`;
@@ -215,13 +220,13 @@ export function tanggalUntukPeriode(g: Kegiatan, hariIni: string, hariKerja = 5)
 
 const idKeg = () => `k${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
 
-const SIMPAN_DEFAULT = (tgl: string, aktifkan = false): DlgKegiatan => ({ id: '', baru: true, nama: '', jenis: 'lain', mulai: tgl, selesai: tgl, tdk: new Set(), polaId: '', hari: new Set(), catatan: '', aktifkan, galat: '' });
+const SIMPAN_DEFAULT = (tgl: string, aktifkan = false): DlgKegiatan => ({ id: '', baru: true, nama: '', jenis: 'lain', mulai: tgl, selesai: tgl, tdk: new Set(), polaId: '', hari: new Set(), agenda: false, untuk: '', catatan: '', aktifkan, galat: '' });
 
 /** Membuka modal untuk kegiatan yang ada (id) atau baru (tgl). Dipakai juga oleh tab Master Data > Data. */
 export function bukaDlgKegiatan(k: Konteks, opsi: { id?: string; tgl?: string; jenis?: JenisKegiatan }): void {
   const g = opsi.id ? k.p.kalender.find((x) => x.id === opsi.id) : undefined;
   if (g) {
-    k.ui.dlg = { id: g.id, baru: false, nama: g.nama, jenis: g.jenis, mulai: g.mulai, selesai: g.selesai, tdk: new Set(g.rombelTidakAktif), polaId: g.polaId ?? '', hari: new Set(g.hariBerlaku ?? []), catatan: g.catatan ?? '', aktifkan: k.p.periodeAktifId === g.id, galat: '' };
+    k.ui.dlg = { id: g.id, baru: false, nama: g.nama, jenis: g.jenis, mulai: g.mulai, selesai: g.selesai, tdk: new Set(g.rombelTidakAktif), polaId: g.polaId ?? '', hari: new Set(g.hariBerlaku ?? []), agenda: !!g.agenda, untuk: g.untuk ?? '', catatan: g.catatan ?? '', aktifkan: k.p.periodeAktifId === g.id, galat: '' };
   } else {
     const d = SIMPAN_DEFAULT(opsi.tgl ?? isoLokal(new Date()));
     if (opsi.jenis) d.jenis = opsi.jenis;
@@ -259,7 +264,7 @@ function simpanDlg(k: Konteks): void {
     return;
   }
   const id = d.baru ? idKeg() : d.id;
-  const libur = d.jenis === 'libur';
+  const libur = d.jenis === 'libur' || d.agenda;
   k.ui.dlg = null;
   if (!libur) aturPeriodeAktifUI(k, d);
   const n = jumlahHariKerja(k.p);
@@ -281,6 +286,10 @@ function simpanDlg(k: Konteks): void {
     g.jenis = d.jenis;
     g.mulai = d.mulai;
     g.selesai = d.selesai;
+    if (d.agenda) g.agenda = true;
+    else delete g.agenda;
+    if (d.untuk.trim()) g.untuk = d.untuk.trim();
+    else delete g.untuk;
     if (libur) g.rombelTidakAktif = [];
     if (!libur && d.polaId) g.polaId = d.polaId;
     else delete g.polaId;
@@ -322,7 +331,7 @@ export function klikKalender(k: Konteks, el: HTMLElement): boolean {
       return true;
     case 'kegBuka': {
       const g = k.p.kalender.find((x) => x.id === d.id);
-      if (g && g.jenis !== 'libur' && !d.modal) {
+      if (g && g.jenis !== 'libur' && !g.agenda && !d.modal) {
         bukaSimpul(k, g.id);
         return true;
       }
@@ -421,6 +430,8 @@ export function ubahKalender(k: Konteks, el: HTMLInputElement & HTMLSelectElemen
       case 'selesai': dlg.selesai = el.value; break;
       case 'polaId': dlg.polaId = el.value; break;
       case 'catatan': dlg.catatan = el.value; break;
+      case 'agenda': dlg.agenda = el.checked; k.gambar(); break;
+      case 'untuk': dlg.untuk = el.value; break;
       case 'aktifkan': dlg.aktifkan = el.checked; break;
     }
     return true;

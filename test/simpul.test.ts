@@ -111,8 +111,9 @@ describe('kegiatan model warisan', () => {
 describe('data Tahun 2026/2027: dua semester induk dan kegiatan dari PDF aSc', () => {
   const p = proyekSekolah('tahun');
   it('dua semester, enam kegiatan Gasal, valid', () => {
-    expect(p.semesters?.map((s) => [s.id, s.mulai, s.selesai])).toEqual([['gasal', '2026-07-12', '2026-12-18'], ['genap', '2027-01-03', '2027-06-18']]);
-    expect(p.kalender.map((g) => g.id)).toEqual(['k-pemadatan', 'k-tka1', 'k-tka2', 'k-asaj', 'k-ukk', 'k-asas']);
+    expect(p.semesters?.map((s) => [s.id, s.mulai, s.selesai])).toEqual([['gasal', '2026-07-13', '2026-12-18'], ['genap', '2027-01-04', '2027-06-18']]);
+    expect(p.kalender.filter((g) => !g.agenda).map((g) => g.id)).toEqual(['k-pemadatan', 'k-tka1', 'k-tka2', 'k-asaj', 'k-ukk', 'k-asas', 'k-pkl-xii-gasal', 'k-pkl-xii-genap']);
+    expect(p.kalender.filter((g) => g.agenda).length).toBe(56);
     expect(validasiProyek(p)).toEqual([]);
   });
   it('tiap pekan memakai jadwal yang benar', () => {
@@ -128,7 +129,15 @@ describe('data Tahun 2026/2027: dua semester induk dan kegiatan dari PDF aSc', (
     expect(cek('2026-11-23')).toEqual(['k-ukk', 720]);
     expect(cek('2026-11-30')).toEqual(['k-asas', 239]);
     expect(cek('2026-12-07')).toEqual(['gasal', 1200]);
-    expect(cek('2027-01-04')).toEqual(['genap', 0]);
+    expect(cek('2026-12-14')).toEqual(['k-pkl-xii-gasal', 1200 - 48 * 10]);
+    expect(cek('2027-01-04')).toEqual(['k-pkl-xii-genap', 0]);
+    expect(cek('2027-04-19')).toEqual(['genap', 0]);
+  });
+  it('agenda kalender akademik tidak mengubah jadwal (mis. libur Maulid 25 Agu tetap ada KBM)', () => {
+    const t = hitungTurunan(p, '2026-08-24');
+    expect(t.periode).toBeUndefined();
+    expect(t.hari[1]?.info.alasan).toBe('normal');
+    expect(t.slots.length).toBe(1200);
   });
   it('beban Genap terpisah dari Gasal; pola UKK 10,10,11,11,9', () => {
     const gasal = hitungTurunan(p, '2026-12-07').beban.length;
@@ -146,7 +155,7 @@ describe('data Tahun 2026/2027: dua semester induk dan kegiatan dari PDF aSc', (
   });
   it('mengubah induk Genap tidak menyentuh Gasal', () => {
     const q = proyekSekolah('tahun');
-    const t = hitungTurunan(q, '2027-01-04');
+    const t = hitungTurunan(q, '2027-01-04', 'sem:genap');
     const b = t.beban.find((x) => !x.nonTatapMuka)!;
     const h = alihkanPerubahan(q, t.pekan, [{ id: 'baru1', bebanId: b.id, hari: 0, jam: 1, ruangId: '' }], 'sem:genap');
     expect(h.ok).toBe(true);

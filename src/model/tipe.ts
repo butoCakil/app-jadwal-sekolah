@@ -33,7 +33,7 @@ export interface PolaBernama {
   pola: PolaMinggu;
 }
 
-export type JenisKegiatan = 'TKA' | 'PKL' | 'ASAS' | 'ASAJ' | 'UKK' | 'libur' | 'lain';
+export type JenisKegiatan = 'TKA' | 'PKL' | 'ASAS' | 'ASAJ' | 'UKK' | 'ujian' | 'upacara' | 'rapor' | 'libur' | 'lain';
 
 export interface Kegiatan {
   id: string;
@@ -55,6 +55,13 @@ export interface Kegiatan {
   rombelTerdampak?: string[];
   /** Semester induk kegiatan ini. Kosong = semester yang memuat tanggal mulainya. */
   semesterId?: string;
+  /**
+   * Agenda kalender akademik (referensi): tampil di kalender dan Jadwal Berlangsung, tetapi tidak mengubah jadwal, pola jam,
+   * kelas aktif, atau KBM (termasuk agenda berjenis libur).
+   */
+  agenda?: boolean;
+  /** Sasaran agenda menurut kalender akademik, mis. "X, XII" atau "semua". */
+  untuk?: string;
   /** Hari dalam pekan (0 = Senin) tempat kegiatan berlaku di dalam rentang tanggal. Kosong = setiap hari kerja. */
   hariBerlaku?: number[];
   catatan?: string;

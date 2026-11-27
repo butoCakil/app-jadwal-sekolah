@@ -14,9 +14,9 @@ export function dalamRentang(tanggal: string, mulai: string, selesai: string): b
   return tanggal >= mulai && tanggal <= selesai; // string ISO bisa dibandingkan leksikal
 }
 
-/** Kegiatan berlaku pada tanggal: di dalam rentang dan (bila `hariBerlaku` diisi) jatuh pada salah satu hari itu. */
-export function berlakuPada(k: Pick<Kegiatan, 'mulai' | 'selesai' | 'hariBerlaku'>, tanggal: string): boolean {
-  if (!dalamRentang(tanggal, k.mulai, k.selesai)) return false;
+/** Kegiatan berlaku pada tanggal (agenda referensi tidak pernah berlaku untuk jadwal): di dalam rentang dan (bila `hariBerlaku` diisi) jatuh pada salah satu hari itu. */
+export function berlakuPada(k: Pick<Kegiatan, 'mulai' | 'selesai' | 'hariBerlaku' | 'agenda'>, tanggal: string): boolean {
+  if (k.agenda || !dalamRentang(tanggal, k.mulai, k.selesai)) return false;
   return !k.hariBerlaku?.length || k.hariBerlaku.includes(hariPekan(tanggal));
 }
 

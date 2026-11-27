@@ -26,7 +26,7 @@ const urutRombel = (p: Proyek): Rombel[] => {
   return [...p.master.rombel].sort((a, b) => urutTingkat.indexOf(a.tingkat) - urutTingkat.indexOf(b.tingkat) || jur.indexOf(a.jurusan) - jur.indexOf(b.jurusan) || a.nomor - b.nomor);
 };
 
-const daftarKegiatan = (p: Proyek): Kegiatan[] => p.kalender.filter((g) => g.jenis !== 'libur').sort((a, b) => a.mulai.localeCompare(b.mulai) || a.selesai.localeCompare(b.selesai));
+const daftarKegiatan = (p: Proyek): Kegiatan[] => p.kalender.filter((g) => g.jenis !== 'libur' && !g.agenda).sort((a, b) => a.mulai.localeCompare(b.mulai) || a.selesai.localeCompare(b.selesai));
 
 /** Status waktu kegiatan terhadap hari ini. */
 function statusWaktu(mulai: string, selesai: string, hariIni: string): { teks: string; cls: string } {
@@ -329,9 +329,16 @@ export function renderLangsung(k: Konteks): string {
       return `<button class="lencana ${warna} max-w-[15rem] truncate ${h.tgl === hariIni ? 'ring-2 ring-[#2347b8]/50' : ''}" ${g ? `data-aksi="simpul" data-fokus="${esc(g.id)}"` : s ? `data-aksi="simpul" data-fokus="${esc(fokusSemester(s.id))}"` : ''} title="${esc(`${NAMA_HARI[i]} ${tgl(h.tgl)}: ${label}. Klik untuk mengubah di Periode & Jadwal.`)}"><b>${NAMA_HARI[i]?.slice(0, 3)}</b>&nbsp;${esc(label)}</button>`;
     })
     .join('');
-  return `<div class="mb-3 flex flex-wrap items-center gap-2"><span class="text-lg font-semibold">Jadwal berlangsung</span><span class="text-sm text-slate-500">pekan ${esc(tgl(t.senin))}</span>
+  const agenda = t.hari
+    .map((h, i) => {
+      const xs = p.kalender.filter((g) => g.agenda && dalamRentang(h.tgl, g.mulai, g.selesai));
+      return xs.length ? `<span class="text-xs text-slate-600"><b>${NAMA_HARI[i]?.slice(0, 3)}:</b> ${xs.map((g) => `<span class="lencana ${WARNA_JENIS[g.jenis].chip} !py-0" title="${esc(`${g.jenis}${g.untuk ? ` · untuk ${g.untuk}` : ''}`)}">${esc(g.nama)}${g.untuk && g.untuk !== 'semua' ? ` (${esc(g.untuk)})` : ''}</span>`).join(' ')}</span>` : '';
+    })
+    .filter(Boolean);
+  const barisAgenda = agenda.length ? `<div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-slate-50 px-3 py-1.5"><span class="text-[11px] font-semibold text-slate-500">AGENDA</span>${agenda.join('')}</div>` : '';
+  return `<div class="mb-2 flex flex-wrap items-center gap-2"><span class="text-lg font-semibold">Jadwal berlangsung</span><span class="text-sm text-slate-500">pekan ${esc(tgl(t.senin))}</span>
       <button class="tombol !py-0.5 !text-xs" data-aksi="pekanIni">Pekan ini</button><div class="flex flex-wrap gap-1.5">${chip}</div></div>
-    ${renderGrid(k)}${renderModal(k)}`;
+    ${barisAgenda}${renderGrid(k)}${renderModal(k)}`;
 }
 
 // ------------------------------------------------------------------ aksi

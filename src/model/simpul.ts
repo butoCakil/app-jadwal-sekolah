@@ -87,7 +87,7 @@ export function kalenderFokus(p: Proyek, fokus: Fokus): Kegiatan[] {
   return g ? [...libur, g] : libur;
 }
 
-export const kegiatanFokus = (p: Proyek, fokus: Fokus): Kegiatan | undefined => (fokus === 'auto' || fokusInduk(fokus) ? undefined : p.kalender.find((g) => g.id === fokus && g.jenis !== 'libur'));
+export const kegiatanFokus = (p: Proyek, fokus: Fokus): Kegiatan | undefined => (fokus === 'auto' || fokusInduk(fokus) ? undefined : p.kalender.find((g) => g.id === fokus && g.jenis !== 'libur' && !g.agenda));
 
 /** Kegiatan yang mengatur satu tanggal pada fokus tertentu. */
 export function kegiatanPadaTanggal(p: Proyek, tanggal: string, fokus: Fokus): Kegiatan | undefined {

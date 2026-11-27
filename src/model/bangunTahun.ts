@@ -7,6 +7,10 @@ import { jadikanWarisan } from './simpul';
 
 export interface SumberTahun {
   reguler: SumberAscKelas;
+  /** kegiatan tanpa jadwal sendiri (mis. pergantian PKL): kelas aktif lain mengikuti induk */
+  pkl?: { id: string; nama: string; mulai: string; selesai: string; semesterId: string; tingkatTidakAktif: string[]; catatan: string }[];
+  /** agenda kalender akademik: [mulai, selesai, jenis, judul, tingkat, semester] */
+  agenda?: [string, string, string, string, string, string][];
   kegiatan: { id: string; nama: string; jenis: Kegiatan['jenis']; mulai: string; selesai: string; sumber: SumberAscKelas; catatan?: string }[];
 }
 
@@ -131,6 +135,26 @@ export function bangunTahun(dasar: Proyek, genap: Proyek, src: SumberTahun, seme
     const w = jadikanWarisan(p, g);
     laporan.push({ id: k.id, jp: h.slots.length, rombelAktif: kodeAktif(k.sumber).size, terdampak: w.terdampak.length, ikut: w.ikut.length, pola: polaId ? (p.polaLain ?? []).find((x) => x.id === polaId)!.pola.join(',') : 'default' });
   }
+  // ---- pergantian PKL: versi kosong, semua kelas aktif ikut induk
+  for (const k of src.pkl ?? []) {
+    const vid = `v-${k.id.replace(/^k-/, '')}`;
+    p.versi.push({ id: vid, nama: k.nama, jenis: 'varian', slots: [] });
+    p.kalender.push({
+      id: k.id, nama: k.nama, jenis: 'PKL', mulai: k.mulai, selesai: k.selesai, semesterId: k.semesterId, versiId: vid, rombelTerdampak: [],
+      rombelTidakAktif: p.master.rombel.filter((r) => k.tingkatTidakAktif.includes(r.tingkat)).map((r) => r.id), catatan: k.catatan,
+    });
+    if (k.semesterId === 'genap') semGenap.rombelTidakAktif = [];
+  }
+  // ---- agenda kalender akademik (referensi)
+  const jenisAgenda = (j: string, nama: string): Kegiatan['jenis'] =>
+    j === 'libur' ? 'libur' : j === 'ujian' ? 'ujian' : j === 'rapor' ? 'rapor' : j === 'pkl' ? 'PKL' : /upacara/i.test(nama) ? 'upacara' : 'lain';
+  (src.agenda ?? []).forEach(([mulai, selesai, jenis, nama, untuk, sem], i) => {
+    p.kalender.push({
+      id: `a${String(i + 1).padStart(2, '0')}`, nama, jenis: jenisAgenda(jenis, nama), mulai, selesai, rombelTidakAktif: [], agenda: true, untuk,
+      ...(sem === 'Gasal' ? { semesterId: 'gasal' } : sem === 'Genap' ? { semesterId: 'genap' } : {}),
+      catatan: `Kalender akademik 2026/2027 (${sem}).`,
+    });
+  });
   // mapel yang tidak dipakai dibuang (PKL dan induk elemen tetap)
   const dipakai = new Set(p.beban.map((b) => b.mapelId));
   for (const m of p.master.mapel) if (m.kode.toUpperCase() === 'PKL') dipakai.add(m.id);
