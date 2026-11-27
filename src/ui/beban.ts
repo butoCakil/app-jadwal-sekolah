@@ -48,31 +48,35 @@ function barisBeban(k: Konteks, b: Beban): string {
       <button class="tombol !px-2 !text-red-600" data-aksi="bebanHapus" data-id="${esc(b.id)}" title="Hapus beban">✕</button></div>${lanjut}</div>`;
 }
 
-/** Pilihan rombel berupa kartu per tingkat lalu jurusan (X di atas, lalu XI, XII); tombol selalu berjarak dan berlebar sama. */
+/** Navigasi rombel yang ringkas: satu baris per tingkat (X, XI, XII), chip kecil per rombel, plus panah ◀ ▶ untuk berpindah rombel. */
 function tabRombel(k: Konteks, aktif: string): string {
   const p = k.p;
   const urutJurusan = [...new Set(p.master.rombel.map((r) => r.jurusan))];
-  const tombol = (r: (typeof p.master.rombel)[number]) => {
+  const urut = (['X', 'XI', 'XII'] as const).flatMap((t) => urutJurusan.flatMap((j) => p.master.rombel.filter((r) => r.tingkat === t && r.jurusan === j)));
+  const idx = urut.findIndex((r) => r.id === aktif);
+  const chip = (r: (typeof p.master.rombel)[number]) => {
     const total = jpRombel(k.turunan.beban.filter((b) => b.rombelId === r.id));
     const tdkAktif = k.turunan.rombelTidakAktif.has(r.id);
     const pilih = r.id === aktif;
-    return `<button data-aksi="bebanTab" data-id="${esc(r.id)}" class="flex flex-col items-center rounded-lg border px-1 py-1.5 leading-tight ${pilih ? 'border-[#2347b8] bg-[#2347b8] text-white' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'}" title="${esc(r.kode)} · ${total} JP${tdkAktif ? ' · tidak aktif pada tanggal acuan (mis. PKL)' : ''}">
-      <span class="text-sm font-semibold">${esc(`${r.jurusan} ${r.nomor}`)}</span>
-      <span class="text-[10px] ${pilih ? 'text-white/80' : 'text-slate-500'}">${total} JP${tdkAktif ? ' · off' : ''}</span></button>`;
+    return `<button data-aksi="bebanTab" data-id="${esc(r.id)}" class="shrink-0 rounded-md border px-2 py-0.5 text-xs font-medium ${pilih ? 'border-[#2347b8] bg-[#2347b8] text-white' : `border-slate-200 bg-slate-50 hover:bg-slate-100 ${tdkAktif ? 'text-slate-400' : 'text-slate-700'}`}" title="${esc(r.kode)} · ${total} JP${tdkAktif ? ' · tidak aktif pada tanggal acuan (mis. PKL)' : ''}">${esc(String(r.nomor))}</button>`;
   };
-  const bagian = (['X', 'XI', 'XII'] as const)
+  const baris = (['X', 'XI', 'XII'] as const)
     .map((tingkat) => {
-      const kartu = urutJurusan
+      const grup = urutJurusan
         .map((j) => ({ j, daftar: p.master.rombel.filter((r) => r.tingkat === tingkat && r.jurusan === j) }))
         .filter((x) => x.daftar.length)
-        .map(({ j, daftar }) => `<div class="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
-          <div class="mb-1.5 flex items-baseline justify-between"><span class="text-xs font-bold text-slate-700">Kelas ${tingkat} ${esc(j)}</span><span class="text-[10px] text-slate-400">${daftar.length} rombel</span></div>
-          <div class="grid grid-cols-4 gap-1.5">${daftar.map(tombol).join('')}</div></div>`)
-        .join('');
-      return kartu ? `<div class="mb-3"><div class="mb-1.5 text-[11px] font-semibold tracking-wide text-slate-400">TINGKAT ${tingkat}</div><div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">${kartu}</div></div>` : '';
+        .map(({ j, daftar }) => `<div class="flex shrink-0 items-center gap-1"><span class="text-[10px] font-semibold text-slate-400">${esc(j)}</span>${daftar.map(chip).join('')}</div>`)
+        .join('<span class="shrink-0 text-slate-200">|</span>');
+      return grup ? `<div class="flex items-center gap-2"><span class="w-7 shrink-0 text-[11px] font-bold text-slate-500">${tingkat}</span><div class="flex items-center gap-2 overflow-x-auto pb-0.5">${grup}</div></div>` : '';
     })
     .join('');
-  return `<div class="mb-1">${bagian}</div>`;
+  const r = urut[idx];
+  const sebelum = idx > 0 ? urut[idx - 1] : undefined;
+  const sesudah = idx >= 0 && idx < urut.length - 1 ? urut[idx + 1] : undefined;
+  const panah = (arah: -1 | 1, tujuan: typeof r | undefined, simbol: string) =>
+    `<button class="tombol !px-2" data-aksi="bebanGeser" data-arah="${arah}" ${tujuan ? `title="${esc(tujuan.kode)}"` : 'disabled'}>${simbol}</button>`;
+  return `<div class="kartu mb-3 p-2.5"><div class="mb-2 flex items-center gap-2">${panah(-1, sebelum, '◀')}<span class="min-w-24 text-center text-sm font-semibold">${r ? esc(r.kode) : '—'}</span>${panah(1, sesudah, '▶')}<span class="text-[11px] text-slate-400">klik nomor rombel atau gunakan panah</span></div>
+    <div class="space-y-1">${baris}</div></div>`;
 }
 
 export function renderBeban(k: Konteks): string {
@@ -119,6 +123,15 @@ export function klikBeban(k: Konteks, el: HTMLElement): boolean {
   const d = el.dataset;
   if (d.aksi === 'bebanTab') {
     k.ui.bebanRombel = d.id ?? '';
+    k.gambar();
+    return true;
+  }
+  if (d.aksi === 'bebanGeser') {
+    const jur = [...new Set(k.p.master.rombel.map((r) => r.jurusan))];
+    const urut = (['X', 'XI', 'XII'] as const).flatMap((t) => jur.flatMap((j) => k.p.master.rombel.filter((r) => r.tingkat === t && r.jurusan === j)));
+    const i = urut.findIndex((r) => r.id === k.ui.bebanRombel);
+    const tujuan = urut[Math.max(0, Math.min(urut.length - 1, (i < 0 ? 0 : i) + Number(d.arah ?? 0)))];
+    if (tujuan) k.ui.bebanRombel = tujuan.id;
     k.gambar();
     return true;
   }
