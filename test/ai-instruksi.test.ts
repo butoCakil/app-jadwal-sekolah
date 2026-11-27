@@ -140,6 +140,14 @@ describe('AI: penerapan instruksi pada data Tahun 2026', () => {
     expect(cocokkanBeban(p, {}, { guru: ['QQQ'] }).galat.join()).toMatch(/Kode guru tidak dikenal/);
   });
 
+  it('susun cara "induk" hanya untuk kegiatan', () => {
+    const p = proyekSekolah('tahun');
+    const r = rencanakan(p, {}, [{ op: 'susun', cara: 'induk' }]);
+    expect(r.ok).toBe(false);
+    expect(r.galat.join()).toMatch(/hanya untuk kegiatan/);
+    expect(rencanakan(p, {}, [{ op: 'susun', cara: 'lengkapi' }]).ok).toBe(true);
+  });
+
   it('susun tidak mengubah data; hanya dicatat sebagai tindakan', () => {
     const p = proyekSekolah('tahun');
     const awal = JSON.stringify(p);

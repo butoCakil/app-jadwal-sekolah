@@ -17,6 +17,7 @@ import { klikBeban, ubahBeban } from './beban';
 import { klikMaster, renderMaster, ubahMaster } from './master';
 import { klikImpor, renderImpor, ubahImpor } from './imporExcel';
 import { klikSusun, renderSusun, ubahSusun } from './susun';
+import { klikAi, masukanAi, renderAi, tombolAi } from './ai';
 import { klikSkema, renderSkemaTab, ubahSkema } from './skemaTab';
 import { klikPemilih, renderPemilih, segarkanPemilih, ubahPemilih } from './pemilih';
 import { klikDataset, muatDaftarDataset, ubahDataset } from './dataset';
@@ -31,6 +32,7 @@ const TAB: { id: Tab; label: string }[] = [
   { id: 'skema', label: 'Skema & Kalender' },
   { id: 'impor', label: 'Impor Excel' },
   { id: 'susun', label: 'Susun Otomatis' },
+  { id: 'ai', label: 'Asisten AI' },
 ];
 
 export async function mulaiApp(akar: HTMLElement): Promise<void> {
@@ -186,6 +188,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       : ui.tab === 'master' ? renderMaster(ctx)
       : ui.tab === 'impor' ? renderImpor(ctx)
       : ui.tab === 'susun' ? bilahSasaran(ctx) + renderSusun(ctx)
+      : ui.tab === 'ai' ? bilahSasaran(ctx) + renderAi(ctx)
       : renderSkemaTab(ctx);
     akar.innerHTML = `<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div class="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-2.5">
@@ -235,7 +238,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
         return ctx.ganti(set === 'contoh' ? migrasiPola(proyekContoh()) : proyekSekolah(set));
       }
     }
-    void (klikPemilih(ctx, el) || klikHub(ctx, el) || klikDataset(ctx, el) || klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikSkema(ctx, el));
+    void (klikPemilih(ctx, el) || klikHub(ctx, el) || klikDataset(ctx, el) || klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikAi(ctx, el) || klikSkema(ctx, el));
   });
 
   akar.addEventListener('change', (e) => {
@@ -265,6 +268,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
   akar.addEventListener('input', (e) => {
     const el = e.target as HTMLInputElement;
     if (el.dataset.aksi === 'pmCari') ubahPemilih(ctx, el);
+    else masukanAi(el);
   });
 
   document.addEventListener('keydown', (e) => {
@@ -275,6 +279,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       ui.dlg = null;
       return gambar();
     }
+    if (tombolAi(ctx, e)) return;
     if (/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
     const z = e.key.toLowerCase() === 'z';
     if ((e.ctrlKey || e.metaKey) && z && !e.shiftKey) {

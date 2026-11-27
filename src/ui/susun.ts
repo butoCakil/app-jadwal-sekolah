@@ -96,69 +96,89 @@ export function renderSusun(k: Konteks): string {
       ${opsi}${bagian}</div>`;
 }
 
+
+/** Mengatur pilihan penyusunan (dipakai asisten AI sebelum menjalankan penyusunan). `cara: 'induk'` hanya berlaku pada kegiatan. */
+export function aturSusun(o: { cara?: Mode; detik?: number; lunak?: boolean }, kegiatanAktif: boolean): void {
+  if (o.cara) st.mode = o.cara === 'induk' && !kegiatanAktif ? 'nol' : o.cara;
+  if (o.detik) st.detik = o.detik;
+  if (o.lunak !== undefined) st.lunak = o.lunak;
+}
+
+/** Pengamat hasil penyusunan (asisten AI melaporkan hasilnya ke percakapan). */
+let pengamat: ((h: HasilSusun) => void) | null = null;
+export function pasangPengamatSusun(fn: ((h: HasilSusun) => void) | null): void {
+  pengamat = fn;
+}
+
+/** Menjalankan penyusunan di pekerja latar sesuai pilihan saat ini. */
+export function mulaiSusun(k: Konteks): boolean {
+  st.galat = '';
+  st.hasil = null;
+  st.kemajuan = null;
+  st.jalan = true;
+  const kloning = structuredClone(k.p);
+  const tdk = k.turunan.rombelTidakAktif;
+  const g = k.turunan.periode;
+  const rombelBeban = new Map(k.p.beban.map((b) => [b.id, b.rombelId]));
+  // pada kegiatan model warisan, kelas yang ikut induk tidak disusun ulang: jadwalnya dipertahankan sebagai slot tetap
+  const ikutInduk = (sl: Slot) => !!g && modelWarisan(g) && !terdampak(g, rombelBeban.get(sl.bebanId) ?? '');
+  // rombel tidak aktif (PKL) tidak ikut disusun
+  kloning.beban = structuredClone(k.turunan.beban).filter((b) => !tdk.has(b.rombelId));
+  st.bebanHasil = kloning.beban;
+  const tetap: Slot[] = st.mode === 'lengkapi' ? k.turunan.slots : k.turunan.slots.filter(ikutInduk);
+  // mulai dari jadwal induk: beban kegiatan yang menggantikan beban induk memakai slot induknya; hanya kelas terdampak
+  let awal: Slot[] | undefined;
+  if (st.mode === 'induk' && g && modelWarisan(g)) {
+    const peta = new Map(kloning.beban.map((b) => [b.asal ?? b.id, b.id]));
+    awal = (versiSemester(k.p, k.turunan.semester)?.slots ?? []).flatMap((sl) => {
+      const id = peta.get(sl.bebanId);
+      return id && terdampak(g, rombelBeban.get(id) ?? '') ? [{ ...sl, bebanId: id }] : [];
+    });
+  }
+  for (const v of kloning.versi) v.slots = [];
+  const polaSusun = polaUntukTanggal(k.ui.tanggal, { ...k.p, kalender: kalenderFokus(k.p, k.ui.fokus) }).pola;
+  try {
+    pekerja = new Worker(new URL('../mesin/solver.worker.ts', import.meta.url), { type: 'module' });
+  } catch (e) {
+    st.jalan = false;
+    st.galat = `Pekerja latar tidak bisa dibuat: ${e instanceof Error ? e.message : String(e)}`;
+    k.gambar();
+    return true;
+  }
+  const w = pekerja;
+  w.onmessage = (e: MessageEvent<{ jenis: string; m?: Kemajuan; h?: HasilSusun; pesan?: string }>) => {
+    if (pekerja !== w) return;
+    if (e.data.jenis === 'kemajuan' && e.data.m) {
+      st.kemajuan = e.data.m;
+      const kotak = document.getElementById('kemajuanSusun');
+      if (kotak) kotak.innerHTML = bar(st.kemajuan);
+    } else {
+      st.jalan = false;
+      if (e.data.jenis === 'hasil' && e.data.h) {
+        st.hasil = e.data.h;
+        pengamat?.(e.data.h);
+      } else st.galat = e.data.pesan ?? 'Penyusunan gagal.';
+      w.terminate();
+      pekerja = null;
+      k.gambar();
+    }
+  };
+  w.onerror = (e) => {
+    st.jalan = false;
+    st.galat = `Penyusunan gagal: ${e.message}`;
+    w.terminate();
+    pekerja = null;
+    k.gambar();
+  };
+  w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, awal, aturan: k.turunan.aturan, kedalaman: 3, prioritasLunak: st.lunak ? (g && modelWarisan(g) ? true : 'bilaPerlu') : false, batasMs: st.detik * 1000 });
+  k.gambar();
+  return true;
+}
+
 export function klikSusun(k: Konteks, el: HTMLElement): boolean {
   switch (el.dataset.aksi) {
-    case 'susunMulai': {
-      st.galat = '';
-      st.hasil = null;
-      st.kemajuan = null;
-      st.jalan = true;
-      const kloning = structuredClone(k.p);
-      const tdk = k.turunan.rombelTidakAktif;
-      const g = k.turunan.periode;
-      const rombelBeban = new Map(k.p.beban.map((b) => [b.id, b.rombelId]));
-      // pada kegiatan model warisan, kelas yang ikut induk tidak disusun ulang: jadwalnya dipertahankan sebagai slot tetap
-      const ikutInduk = (sl: Slot) => !!g && modelWarisan(g) && !terdampak(g, rombelBeban.get(sl.bebanId) ?? '');
-      // rombel tidak aktif (PKL) tidak ikut disusun
-      kloning.beban = structuredClone(k.turunan.beban).filter((b) => !tdk.has(b.rombelId));
-      st.bebanHasil = kloning.beban;
-      const tetap: Slot[] = st.mode === 'lengkapi' ? k.turunan.slots : k.turunan.slots.filter(ikutInduk);
-      // mulai dari jadwal induk: beban kegiatan yang menggantikan beban induk memakai slot induknya; hanya kelas terdampak
-      let awal: Slot[] | undefined;
-      if (st.mode === 'induk' && g && modelWarisan(g)) {
-        const peta = new Map(kloning.beban.map((b) => [b.asal ?? b.id, b.id]));
-        awal = (versiSemester(k.p, k.turunan.semester)?.slots ?? []).flatMap((sl) => {
-          const id = peta.get(sl.bebanId);
-          return id && terdampak(g, rombelBeban.get(id) ?? '') ? [{ ...sl, bebanId: id }] : [];
-        });
-      }
-      for (const v of kloning.versi) v.slots = [];
-      const polaSusun = polaUntukTanggal(k.ui.tanggal, { ...k.p, kalender: kalenderFokus(k.p, k.ui.fokus) }).pola;
-      try {
-        pekerja = new Worker(new URL('../mesin/solver.worker.ts', import.meta.url), { type: 'module' });
-      } catch (e) {
-        st.jalan = false;
-        st.galat = `Pekerja latar tidak bisa dibuat: ${e instanceof Error ? e.message : String(e)}`;
-        k.gambar();
-        return true;
-      }
-      const w = pekerja;
-      w.onmessage = (e: MessageEvent<{ jenis: string; m?: Kemajuan; h?: HasilSusun; pesan?: string }>) => {
-        if (pekerja !== w) return;
-        if (e.data.jenis === 'kemajuan' && e.data.m) {
-          st.kemajuan = e.data.m;
-          const kotak = document.getElementById('kemajuanSusun');
-          if (kotak) kotak.innerHTML = bar(st.kemajuan);
-        } else {
-          st.jalan = false;
-          if (e.data.jenis === 'hasil' && e.data.h) st.hasil = e.data.h;
-          else st.galat = e.data.pesan ?? 'Penyusunan gagal.';
-          w.terminate();
-          pekerja = null;
-          k.gambar();
-        }
-      };
-      w.onerror = (e) => {
-        st.jalan = false;
-        st.galat = `Penyusunan gagal: ${e.message}`;
-        w.terminate();
-        pekerja = null;
-        k.gambar();
-      };
-      w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, awal, aturan: k.turunan.aturan, kedalaman: 3, prioritasLunak: st.lunak ? (g && modelWarisan(g) ? true : 'bilaPerlu') : false, batasMs: st.detik * 1000 });
-      k.gambar();
-      return true;
-    }
+    case 'susunMulai':
+      return mulaiSusun(k);
     case 'susunBatal':
       pekerja?.terminate();
       pekerja = null;

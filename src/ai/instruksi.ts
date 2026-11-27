@@ -475,6 +475,7 @@ export function terapkanInstruksi(p: Proyek, ktx: KonteksInstruksi, daftar: Inst
         break;
       }
       case 'susun':
+        if (ins.cara === 'induk' && !(g && warisan)) return void hasil.galat.push(`${t}: cara "induk" (mulai dari jadwal induk) hanya untuk kegiatan; pada jadwal induk pakai "nol" atau "lengkapi".`);
         hasil.susun = { ...(ins.cara ? { cara: ins.cara } : {}), ...(ins.detik ? { detik: ins.detik } : {}), ...(ins.lunak !== undefined ? { lunak: ins.lunak } : {}) };
         break;
     }

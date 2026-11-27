@@ -5,7 +5,7 @@ import type { Fokus, JadwalPekan } from '../model/simpul';
 import type { AturanPekan } from '../model/aturanKegiatan';
 
 export type SubMaster = 'guru' | 'mapel' | 'rombel' | 'ruang' | 'aturan' | 'data';
-export type Tab = 'langsung' | 'grid' | 'info' | 'kelas' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor' | 'susun';
+export type Tab = 'langsung' | 'grid' | 'info' | 'kelas' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor' | 'susun' | 'ai';
 /** Sub-tab halaman Periode & Jadwal. */
 export const TAB_HUB: Tab[] = ['info', 'kelas', 'beban', 'grid'];
 export type Tata = 'hari' | 'semua';

@@ -5,15 +5,17 @@ import { migrasiPola } from '../model/kalender';
 const NAMA_DB = 'app-jadwal-sekolah';
 const NAMA_STORE = 'draf';
 const STORE_DATASET = 'dataset';
+const STORE_AI = 'ai';
 const KUNCI = 'proyek';
 
 function bukaDb(): Promise<IDBDatabase> {
   return new Promise((ok, gagal) => {
-    const req = indexedDB.open(NAMA_DB, 2);
+    const req = indexedDB.open(NAMA_DB, 3);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(NAMA_STORE)) db.createObjectStore(NAMA_STORE);
       if (!db.objectStoreNames.contains(STORE_DATASET)) db.createObjectStore(STORE_DATASET);
+      if (!db.objectStoreNames.contains(STORE_AI)) db.createObjectStore(STORE_AI);
     };
     req.onsuccess = () => ok(req.result);
     req.onerror = () => gagal(req.error);
@@ -90,4 +92,15 @@ export function dariJson(teks: string): HasilImpor {
   }
   const galat = validasiProyek(x);
   return galat.length ? { ok: false, galat } : { ok: true, proyek: migrasiPola(x as Proyek) };
+}
+
+/** Pengaturan asisten AI di peramban ini: brankas kunci (terenkripsi), pengaturan model, status rotasi. Bukan bagian proyek, tidak ikut ekspor. */
+export async function bacaAi<T>(kunci: string): Promise<T | undefined> {
+  return jalankan<T | undefined>('readonly', (s) => s.get(kunci) as IDBRequest<T | undefined>, STORE_AI);
+}
+export async function tulisAi(kunci: string, nilai: unknown): Promise<void> {
+  await jalankan('readwrite', (s) => s.put(nilai, kunci), STORE_AI);
+}
+export async function hapusAi(kunci: string): Promise<void> {
+  await jalankan('readwrite', (s) => s.delete(kunci), STORE_AI);
 }
