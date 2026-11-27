@@ -3,7 +3,7 @@ import { proyekContoh } from '../src/model/contoh';
 import { proyekSekolah } from '../src/model/sekolahData';
 import { validasiProyek } from '../src/model/validasi';
 import { aturanPekan, jpBeririsan, ruangTerkunciPada, type AturanPekan } from '../src/model/aturanKegiatan';
-import { susun } from '../src/mesin/solver';
+import { ruangDiluarPrioritas, susun } from '../src/mesin/solver';
 import { adalahPelanggaran, periksa } from '../src/mesin/validator';
 import { rencanaPindah, tentukanRuang } from '../src/mesin/penempatan';
 import { hitungTurunan } from '../src/ui/turunan';
@@ -256,6 +256,22 @@ describe('solver: prioritas lunak, jadwal awal, rantai geser', () => {
     expect(sl.length).toBe(b.jp);
     expect(sl.every((x) => x.ruangId !== ruang)).toBe(true);
     expect(periksa(p, lunak.slots, { aturan: a }).filter(adalahPelanggaran)).toEqual([]);
+  });
+
+  it('mode bilaPerlu: tanpa kendala ruang prioritas tetap dipakai; bila terkunci, baru pindah dan tercatat', () => {
+    const p = kosong(proyekContoh());
+    const b = p.beban.find((x) => !x.nonTatapMuka && x.jp > 0)!;
+    const ruang = p.master.ruang.find((r) => r.dijadwalkan !== false)!.id;
+    b.ruangPrioritas = [ruang];
+    const bebas = susun(p, { skemaPerHari: p.polaReguler, prioritasLunak: 'bilaPerlu', batasMs: 800 });
+    expect(ruangDiluarPrioritas(p, bebas.slots)).toEqual([]);
+    expect(bebas.slots.filter((x) => x.bebanId === b.id).every((x) => x.ruangId === ruang)).toBe(true);
+    const a: AturanPekan = { kunci: [0, 1, 2, 3, 4].map((h) => ({ hari: h, ruangId: ruang, kegiatan: 'ASAS' })), pengawas: [], tanpaRuang: [] };
+    const terkunci = susun(p, { skemaPerHari: p.polaReguler, aturan: a, prioritasLunak: 'bilaPerlu', batasMs: 1500 });
+    expect(terkunci.sisa.some((x) => x.bebanId === b.id)).toBe(false);
+    const pindah = ruangDiluarPrioritas(p, terkunci.slots).find((x) => x.bebanId === b.id);
+    expect(pindah?.jp).toBe(b.jp);
+    expect(pindah?.ruangIds.includes(ruang)).toBe(false);
   });
 
   it('jadwal awal yang sudah sah hampir seluruhnya dipertahankan (hanya perbaikan kerapian yang jelas untung)', () => {

@@ -38,8 +38,15 @@ export interface OpsiSusun {
   /**
    * true = ruang prioritas beban hanya pilihan utama: bila semuanya terpakai atau terkunci, boleh memakai ruang lain yang diizinkan
    * (menurut jenis ruang mapel, tanpa ruang terlarang), dengan biaya. Bawaan false (ruang prioritas wajib).
+   * 'bilaPerlu' = disusun dulu dengan ruang prioritas wajib; hanya bila ada JP yang tidak muat, disusun lagi dengan ruang cadangan
+   * (mulai dari hasil pertama, biaya cadangan 60 kecuali ditentukan) dan hasil yang lebih penuh dipakai.
    */
-  prioritasLunak?: boolean;
+  prioritasLunak?: boolean | 'bilaPerlu';
+  /**
+   * Biaya tiap pertemuan yang memakai ruang cadangan (hanya berlaku bila `prioritasLunak`). Makin besar makin ketat: ruang cadangan
+   * dipakai hanya bila tidak ada pilihan lain. Bawaan 8 (kegiatan: ruang prioritas sekadar pilihan utama).
+   */
+  biayaRuangCadangan?: number;
   /** Kedalaman rantai geser saat menempatkan pertemuan yang buntu (1 = menggeser penghalang langsung). Bawaan 1. */
   kedalaman?: number;
   /** Batas waktu total (milidetik). Bawaan 8000. */
@@ -159,6 +166,7 @@ class Mesin {
   jpTetap = 0;
   total = 0;
   readonly kedalaman: number;
+  readonly biayaCadangan: number;
 
   /** jumlah hari kerja per pekan (dari panjang skemaPerHari) */
   readonly hari: number;
@@ -166,6 +174,7 @@ class Mesin {
   constructor(readonly p: Proyek, opsi: OpsiSusun) {
     this.hari = opsi.skemaPerHari.length || 5;
     this.kedalaman = Math.max(1, Math.floor(opsi.kedalaman ?? 1));
+    this.biayaCadangan = opsi.biayaRuangCadangan ?? 8;
     const HARI = this.hari;
     const skemaById = new Map(p.skema.map((s) => [s.id, s]));
     this.cap = opsi.skemaPerHari.map((id) => {
@@ -487,7 +496,7 @@ class Mesin {
     let b = 0;
     c.unit.anggota.forEach((a, i) => {
       const r = ruang[i];
-      if (r !== undefined && r >= 0 && a.calon.indexOf(r) >= a.prio) b += 8;
+      if (r !== undefined && r >= 0 && a.calon.indexOf(r) >= a.prio) b += this.biayaCadangan;
     });
     return b;
   }
@@ -752,7 +761,39 @@ class Mesin {
 }
 
 /** Menyusun jadwal untuk seluruh beban tatap muka. Murni dan dapat diulang bila `benih` sama (batas waktu memengaruhi hasil). */
+/** Beban yang sebagian pertemuannya memakai ruang di luar ruang prioritasnya (hanya beban yang punya ruang prioritas). */
+export interface RuangPindah {
+  bebanId: string;
+  /** JP yang berada di ruang non-prioritas */
+  jp: number;
+  /** ruang yang dipakai di luar prioritas (id, tanpa duplikat) */
+  ruangIds: string[];
+}
+export function ruangDiluarPrioritas(p: Proyek, slots: Slot[]): RuangPindah[] {
+  const prio = new Map(p.beban.filter((b) => b.ruangPrioritas.length > 0).map((b) => [b.id, new Set(b.ruangPrioritas)]));
+  const hasil = new Map<string, RuangPindah>();
+  for (const s of slots) {
+    const ok = prio.get(s.bebanId);
+    if (!ok || !s.ruangId || ok.has(s.ruangId)) continue;
+    const x = hasil.get(s.bebanId) ?? { bebanId: s.bebanId, jp: 0, ruangIds: [] };
+    x.jp++;
+    if (!x.ruangIds.includes(s.ruangId)) x.ruangIds.push(s.ruangId);
+    hasil.set(s.bebanId, x);
+  }
+  return [...hasil.values()];
+}
+
 export function susun(p: Proyek, opsi: OpsiSusun): HasilSusun {
+  if (opsi.prioritasLunak !== 'bilaPerlu') return susunSekali(p, { ...opsi, prioritasLunak: !!opsi.prioritasLunak });
+  const t0 = Date.now();
+  const batas = opsi.batasMs ?? 8000;
+  const ketat = susunSekali(p, { ...opsi, prioritasLunak: false, batasMs: batas * 0.6 });
+  if (ketat.sisa.length === 0) return { ...ketat, ms: Date.now() - t0 };
+  const lunak = susunSekali(p, { ...opsi, prioritasLunak: true, biayaRuangCadangan: opsi.biayaRuangCadangan ?? 60, awal: ketat.slots, batasMs: Math.max(500, batas - (Date.now() - t0)) });
+  return { ...(lunak.terjadwal > ketat.terjadwal ? lunak : ketat), ms: Date.now() - t0 };
+}
+
+function susunSekali(p: Proyek, opsi: OpsiSusun & { prioritasLunak?: boolean }): HasilSusun {
   const t0 = Date.now();
   const batas = opsi.batasMs ?? 8000;
   const laporan = (tahap: Kemajuan['tahap'], m: Mesin) =>

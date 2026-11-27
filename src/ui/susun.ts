@@ -1,5 +1,5 @@
-import type { HasilSusun, Kemajuan } from '../mesin/solver';
-import type { Slot } from '../model/tipe';
+import { ruangDiluarPrioritas, type HasilSusun, type Kemajuan } from '../mesin/solver';
+import type { Beban, Slot } from '../model/tipe';
 import { esc } from './util';
 import { polaUntukTanggal } from '../model/kalender';
 import { kalenderFokus, modelWarisan, terdampak, versiSemester } from '../model/simpul';
@@ -14,9 +14,11 @@ interface Status {
   jalan: boolean;
   kemajuan: Kemajuan | null;
   hasil: HasilSusun | null;
+  /** beban yang dipakai pada penyusunan terakhir (pada kegiatan: beban kegiatan, bukan beban induk) */
+  bebanHasil: Beban[];
   galat: string;
 }
-const st: Status = { mode: 'nol', detik: 10, lunak: true, jalan: false, kemajuan: null, hasil: null, galat: '' };
+const st: Status = { mode: 'nol', detik: 10, lunak: true, jalan: false, kemajuan: null, hasil: null, bebanHasil: [], galat: '' };
 let pekerja: Worker | null = null;
 
 const bar = (m: Kemajuan | null) => {
@@ -41,7 +43,7 @@ export function renderSusun(k: Konteks): string {
       <fieldset class="rounded-lg border border-slate-200 p-3 text-sm"><legend class="px-1 text-xs font-semibold text-slate-500">Waktu menyusun</legend>
         <select id="detikSusun" class="isian">${[5, 10, 20, 40].map((d) => `<option value="${d}" ${st.detik === d ? 'selected' : ''}>${d} detik</option>`).join('')}</select>
         <div class="mt-2 text-xs text-slate-500">Lebih lama = jadwal lebih rapi (lebih sedikit jam kosong di tengah hari). Jumlah JP yang muat biasanya sudah tercapai di detik pertama.</div>
-        <label class="mt-3 flex items-start gap-2"><input type="checkbox" id="lunakSusun" ${st.lunak ? 'checked' : ''}><span><b>Ruang prioritas boleh diganti</b><br><span class="text-xs text-slate-500">Bila ruang prioritas sebuah beban penuh atau terkunci kegiatan, boleh memakai ruang lain yang diizinkan (ruang terlarang tetap tidak dipakai). Matikan agar ruang prioritas wajib.</span></span></label></fieldset></div>`;
+        <label class="mt-3 flex items-start gap-2"><input type="checkbox" id="lunakSusun" ${st.lunak ? 'checked' : ''}><span><b>Ruang prioritas boleh diganti</b><br><span class="text-xs text-slate-500">${kegiatanAktif ? 'Pada kegiatan, ruang prioritas hanya pilihan utama: bila penuh atau terkunci, dipakai ruang lain yang diizinkan.' : 'Pada jadwal reguler, ruang prioritas dijaga ketat: ruang lain dipakai hanya bila tanpa itu ada JP yang tidak muat.'} Ruang terlarang tetap tidak dipakai. Matikan agar ruang prioritas wajib.</span></span></label></fieldset></div>`;
   let bagian = '';
   if (st.jalan) {
     bagian = `<div class="mt-4 rounded-lg bg-slate-50 p-3" id="kemajuanSusun">${bar(st.kemajuan)}</div>
@@ -55,7 +57,20 @@ export function renderSusun(k: Konteks): string {
     const rb = new Map(p.master.rombel.map((r) => [r.id, r.kode]));
     const mp = new Map(p.master.mapel.map((m) => [m.id, m.kode]));
     const gr = new Map(p.master.guru.map((g) => [g.id, g.kode]));
-    const bebanById = new Map(p.beban.map((b) => [b.id, b]));
+    const bebanById = new Map(st.bebanHasil.map((b) => [b.id, b]));
+    const ruangKode = new Map(p.master.ruang.map((r) => [r.id, r.kode]));
+    const pindah = ruangDiluarPrioritas({ ...p, beban: st.bebanHasil }, h.slots)
+      .map((x) => ({ x, b: bebanById.get(x.bebanId) }))
+      .filter((y) => y.b)
+      .sort((a, b) => (rb.get(a.b?.rombelId ?? '') ?? '').localeCompare(rb.get(b.b?.rombelId ?? '') ?? ''));
+    const pindahJp = pindah.reduce((a, y) => a + y.x.jp, 0);
+    const kodeRuang = (ids: string[]) => ids.map((id) => ruangKode.get(id) ?? '?').join(', ');
+    const pindahHtml = pindah.length
+      ? `<div class="mt-3"><div class="mb-1 text-sm font-semibold">${pindah.length} beban memakai ruang di luar prioritas (${pindahJp} JP) — mohon diperiksa</div>
+        <div class="max-h-60 overflow-auto rounded-lg border border-slate-200"><table class="w-full text-xs">${pindah
+          .map(({ x, b }) => `<tr class="border-t border-slate-100 first:border-0"><td class="px-2 py-1 font-semibold">${esc(rb.get(b?.rombelId ?? '') ?? '?')}</td><td class="px-2 py-1 font-mono">${esc(mp.get(b?.mapelId ?? '') ?? '?')}</td><td class="px-2 py-1 font-mono text-slate-500">${esc(gr.get(b?.guruId ?? '') ?? '?')}</td><td class="px-2 py-1 text-right">${x.jp} JP</td><td class="px-2 py-1 text-slate-600">prioritas ${esc(kodeRuang(b?.ruangPrioritas ?? []))} → dipakai ${esc(kodeRuang(x.ruangIds))}</td></tr>`)
+          .join('')}</table></div></div>`
+      : '';
     const baris = h.sisa
       .map((s) => ({ s, b: bebanById.get(s.bebanId) }))
       .filter((x) => x.b)
@@ -72,7 +87,7 @@ export function renderSusun(k: Konteks): string {
     bagian += `<div class="mt-5 rounded-xl border border-slate-200 p-4">
       <div class="flex flex-wrap items-center gap-3"><div class="text-base font-bold">Hasil: ${h.terjadwal} dari ${h.total} JP tertempatkan</div><div class="text-xs text-slate-500">0 bentrok · ${(h.ms / 1000).toFixed(1)} dtk · biaya kerapian ${h.biaya} (makin kecil makin rapi)</div>
         <div class="ml-auto flex gap-2"><button class="tombol !bg-emerald-600 !text-white" data-aksi="susunTerapkan">Terapkan ke jadwal</button><button class="tombol" data-aksi="susunBuang">Buang</button></div></div>
-      ${kapasitas}${sisa}
+      ${kapasitas}${sisa}${pindahHtml}
       <div class="mt-2 text-xs text-slate-500">Menerapkan dapat dibatalkan dengan Urungkan. Hasil dilihat dulu di tab Grid Jadwal setelah diterapkan.</div></div>`;
   }
   return `<h2 class="mb-3 text-lg font-bold">Susun Otomatis</h2>
@@ -96,6 +111,7 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
       const ikutInduk = (sl: Slot) => !!g && modelWarisan(g) && !terdampak(g, rombelBeban.get(sl.bebanId) ?? '');
       // rombel tidak aktif (PKL) tidak ikut disusun
       kloning.beban = structuredClone(k.turunan.beban).filter((b) => !tdk.has(b.rombelId));
+      st.bebanHasil = kloning.beban;
       const tetap: Slot[] = st.mode === 'lengkapi' ? k.turunan.slots : k.turunan.slots.filter(ikutInduk);
       // mulai dari jadwal induk: beban kegiatan yang menggantikan beban induk memakai slot induknya; hanya kelas terdampak
       let awal: Slot[] | undefined;
@@ -139,7 +155,7 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
         pekerja = null;
         k.gambar();
       };
-      w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, awal, aturan: k.turunan.aturan, kedalaman: 3, prioritasLunak: st.lunak, batasMs: st.detik * 1000 });
+      w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, awal, aturan: k.turunan.aturan, kedalaman: 3, prioritasLunak: st.lunak ? (g && modelWarisan(g) ? true : 'bilaPerlu') : false, batasMs: st.detik * 1000 });
       k.gambar();
       return true;
     }

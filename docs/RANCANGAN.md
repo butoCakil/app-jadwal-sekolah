@@ -401,6 +401,14 @@ app-jadwal-sekolah/
 - **Angka "bergeser"** menghitung slot induk yang tidak muncul pada waktu yang sama; sebagian besar wajar karena beban dan pola jam kegiatan memang berbeda dari induk (ASAS: hanya 5 kelas dengan beban ujian khusus).
 - **Belum:** kerapian belum diukur (preferensi berbobot belum ada); ruang cadangan yang dipakai belum ditandai di hasil (perlu agar admin tahu beban mana yang pindah ruang).
 
+### 11.5j Ruang prioritas menurut konteks, penanda ruang pindah (27 Nov 2026, malam)
+
+- **Keputusan Benny:** kelonggaran ruang prioritas bergantung pada situasi. Pada kegiatan (mis. ASAS memperbolehkan PART ke B3 karena ruang lain sudah habis, dan kegiatan itulah prioritasnya) ruang prioritas lunak. Pada jam reguler ruang prioritas lebih ketat; tidak mutlak 100% karena SMK memang kekurangan ruang atau ruang sangat pas, tetapi cadangan bukan pilihan yang diambil sembarangan.
+- **Dilaksanakan:** `prioritasLunak` kini boleh bernilai `'bilaPerlu'`. Solver menyusun dulu dengan ruang prioritas wajib (60% waktu); hanya bila ada JP yang tidak muat, menyusun lagi dari hasil pertama dengan ruang cadangan berbiaya 60 (`biayaRuangCadangan`, bawaan 8 untuk kegiatan), lalu memakai hasil yang lebih penuh. UI Susun Otomatis: pada kegiatan = lunak biasa (8), pada jadwal reguler = 'bilaPerlu'; kotak centang tetap bisa dimatikan (wajib mutlak).
+- **Pengukuran pada Gasal 2026/2027 reguler (346 beban, 1200 JP, kedalaman 3):** ruang prioritas wajib sudah menempatkan 1200/1200 JP tanpa ruang pindah. Dengan lunak (biaya 8 hingga 120) hasilnya juga 1200/1200 tetapi 71 sampai 82 JP berpindah ke ruang cadangan tanpa keuntungan nyata; karena itu reguler memakai 'bilaPerlu', bukan lunak penuh.
+- **Penanda ruang pindah:** `ruangDiluarPrioritas(p, slots)` mendaftar beban yang sebagian pertemuannya berada di luar ruang prioritas. Panel hasil Susun Otomatis menampilkan tabel "N beban memakai ruang di luar prioritas" (kelas, mapel, guru, JP, ruang prioritas → ruang dipakai).
+- **Perbaikan terkait:** panel hasil kini mencari beban pada beban yang benar-benar dipakai menyusun (pada kegiatan: beban kegiatan), bukan `p.beban` induk; sebelumnya sisa beban kegiatan bisa tidak tampil.
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?

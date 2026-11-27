@@ -9,7 +9,8 @@ interface Masuk {
   tetap?: Slot[];
   awal?: Slot[];
   kedalaman?: number;
-  prioritasLunak?: boolean;
+  prioritasLunak?: boolean | 'bilaPerlu';
+  biayaRuangCadangan?: number;
   aturan?: AturanPekan;
   batasMs: number;
   benih?: number;
