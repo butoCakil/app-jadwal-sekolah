@@ -434,6 +434,17 @@ app-jadwal-sekolah/
 - **Pengujian:** 239 tes (16 baru: privasi, bolak-balik JSON, 48 JP per kelas, konsistensi kelas/guru/ruang, status hari, pelolosan HTML, pemuatan gagal) dan dilihat di Chrome ukuran ponsel (390 px).
 - **Belum:** tombol Terapkan (token GitHub + PIN) yang membuat berkas terbit dari admin; cetak dan unduh dari halaman publik; perapian UI ponsel (menunggu review Benny); keterangan publik per kegiatan.
 
+### 11.5m Revisi halaman publik setelah dicoba di ponsel (28 Nov 2026)
+
+Masukan Benny setelah melihat di ponsel dan perubahannya:
+- **Tab Semua (tampilan awal):** matriks semua kelas (atau guru, atau ruang) x semua hari, tiap hari memakai kolom skema harinya sendiri (pembiasaan, pelajaran, istirahat sebagai kolom sempit hijau). Jam berurutan dengan mapel dan ruang sama digabung (colspan) dan terpotong istirahat. Kode di kotak = mapel (kelas pada baris guru/ruang); sentuh kotak untuk rincian (lembar bawah: waktu, jam ke-, mapel, guru, ruang). Kelas yang tidak belajar di sekolah diarsir. Pilihan: baris Kelas/Guru/Ruang; **zoom** Peta (muat satu layar, hanya warna), Sedang, Besar; dan **filter hari**: memilih satu hari membuat seluruh kelas muat di layar ponsel tanpa geser, dengan huruf terbaca. Kepala tabel dan kolom nama menempel saat digeser.
+- **Panah geser** (kiri/kanan) di samping pilihan kelas, guru, dan ruang.
+- **Per pekan kembali ke bentuk grid awal:** baris Pagi (pembiasaan dengan singkatan **PMB**, hanya pada hari bersekema 11 dan 9), baris pelajaran ke-n, dan baris istirahat; jam berurutan dengan guru dan mapel sama menjadi satu kotak (rowspan); istirahat memotong kotak; skema tiap hari tampil di kepala kolom. Pada skema 10 baris Pagi kosong dan pelajaran pertama langsung di baris 1. Per hari: pembiasaan ditampilkan dengan singkatannya.
+- Singkatan non-KBM: Pembiasaan = PMB, Upacara = UPC, selain itu tiga huruf pertama; legenda tampil di bawah tabel.
+- **Bawaan pertama kali dibuka:** tab Semua, semua hari, zoom Sedang; setelah itu pilihan terakhir diingat di peramban.
+- Pengujian: 246 tes, dan dilihat di Chrome ukuran ponsel (390 px).
+- **Catatan desain:** baris pelajaran pada tabel per pekan diratakan menurut nomor pelajaran (bukan nomor poster) supaya baris istirahat sejajar antar hari; nomor poster tampil di kepala kolom tab Semua dan di rincian.
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?

@@ -106,16 +106,41 @@ describe('tampilan publik', () => {
   });
 
   it('mode guru dan ruang memuat kelas yang sama dengan mode kelas', () => {
-    const pekan = jadwalPekanP(p, '2026-11-10', 'rombel', rombel('X TE 1'));
-    const sel = pekan.baris.flatMap((b, r) => b.map((c, h) => ({ r, h, c }))).find((x) => x.c && x.c.item.length && x.c.item[0]!.ruang)!;
-    const it = sel.c!.item[0]!;
+    const hari = jadwalHariP(p, '2026-11-10', 'rombel', rombel('X TE 1'));
+    const blok = hari.elemen.find((e) => e.jenis === 'blok' && e.item[0]!.ruang)!;
+    if (blok.jenis !== 'blok') throw new Error('bukan blok');
+    const it = blok.item[0]!;
     const idGuru = p.master.guru.find((g) => g.kode === it.guru[0]!.kode)!.id;
     const idRuang = p.master.ruang.find((r) => r.kode === it.ruang)!.id;
     for (const [mode, id] of [['guru', idGuru], ['ruang', idRuang]] as const) {
-      const lain = jadwalPekanP(p, '2026-11-10', mode, id);
-      const c = lain.baris[sel.r]![sel.h]!;
-      expect(c.item.some((x) => x.rombel === 'X TE 1' && x.mapel.kode === it.mapel.kode)).toBe(true);
+      const lain = jadwalHariP(p, '2026-11-10', mode, id);
+      const e = lain.elemen.find((x) => (x.jenis === 'blok') && blok.a >= x.a && blok.a <= x.b);
+      expect(e && e.jenis === 'blok' && e.item.some((x) => x.rombel === 'X TE 1' && x.mapel.kode === it.mapel.kode)).toBe(true);
     }
+  });
+
+  it('skema berpengaruh: skema 11 punya pembiasaan (PMB), skema 10 langsung pelajaran; istirahat memotong blok', () => {
+    const id = rombel('X AT 1');
+    const sen = jadwalHariP(p, '2026-11-09', 'rombel', id);
+    const sel = jadwalHariP(p, '2026-11-10', 'rombel', id);
+    expect(sen.skema).toMatch(/11/);
+    expect(sel.skema).toMatch(/10/);
+    expect(sen.elemen[0]).toMatchObject({ jenis: 'nonKbm', kode: 'PMB', label: '1' });
+    expect(sen.kolom[1]).toMatchObject({ tipe: 'kbm', label: '2', nomor: 1 });
+    expect(sel.elemen[0]!.jenis).not.toBe('nonKbm');
+    expect(sel.kolom[0]).toMatchObject({ tipe: 'kbm', label: '1', nomor: 1 });
+    // blok tidak pernah melintasi istirahat: nomor KBM 3 dan 4 tidak berada dalam satu blok
+    for (const d of [sen, sel]) for (const e of d.elemen) if (e.jenis === 'blok' || e.jenis === 'kosong') expect(e.a <= 3 && e.b >= 4).toBe(false);
+    // 5 JP DAT berurutan di hari Senin terbagi dua di sekitar istirahat
+    const dat = sen.elemen.filter((e) => e.jenis === 'blok' && e.item[0]!.mapel.kode === 'DAT');
+    expect(dat.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('jam berurutan dengan mapel dan ruang sama digabung menjadi satu elemen', () => {
+    const d = jadwalHariP(p, '2026-11-09', 'rombel', rombel('X AT 1'));
+    const gabung = d.elemen.filter((e) => e.jenis === 'blok' && e.jp >= 2);
+    expect(gabung.length).toBeGreaterThan(0);
+    for (const e of gabung) if (e.jenis === 'blok') expect(e.b - e.a + 1).toBe(e.jp);
   });
 
   it('daftar pilihan: kelas terurut, guru hanya yang mengajar, ruang yang dijadwalkan', () => {
@@ -129,11 +154,12 @@ describe('tampilan publik', () => {
 
 describe('halaman publik', () => {
   const t = bangunTerbit(p, new Date('2026-11-28T00:00:00Z'));
+  const K = { tab: 'rombel' as const, baris: 'rombel' as const, id: '', tanggal: '2026-11-10', tata: 'hari' as const, zoom: 'sedang' as const, hariSemua: -1 };
   const id = rombel('X TE 1');
 
   it('menampilkan hari: pilihan, jadwal, istirahat, dan jam diperbarui', async () => {
     const { gambarHalaman } = await import('../src/publik/halaman');
-    const html = gambarHalaman(t, { mode: 'rombel', id, tanggal: '2026-11-10', tata: 'hari' }, '2026-11-10');
+    const html = gambarHalaman(t, { ...K, tab: 'rombel', id, tanggal: '2026-11-10', tata: 'hari' }, '2026-11-10');
     expect(html).toContain('Selasa, 10 November 2026');
     expect(html).toContain('<select id="pilih"');
     expect(html).toContain('X TE 1');
@@ -144,10 +170,10 @@ describe('halaman publik', () => {
 
   it('menampilkan pekan, status libur/akhir pekan, dan kegiatan', async () => {
     const { gambarHalaman } = await import('../src/publik/halaman');
-    const pekan = gambarHalaman(t, { mode: 'guru', id: daftarEntitasP(p, 'guru')[0]!.id, tanggal: '2026-12-01', tata: 'pekan' }, '2026-12-01');
+    const pekan = gambarHalaman(t, { ...K, tab: 'guru', id: daftarEntitasP(p, 'guru')[0]!.id, tanggal: '2026-12-01', tata: 'pekan' }, '2026-12-01');
     expect(pekan).toContain('<table');
     expect(pekan).toMatch(/ASAS/);
-    const akhir = gambarHalaman(t, { mode: 'ruang', id: daftarEntitasP(p, 'ruang')[0]!.id, tanggal: '2026-11-28', tata: 'hari' }, '2026-11-28');
+    const akhir = gambarHalaman(t, { ...K, tab: 'ruang', id: daftarEntitasP(p, 'ruang')[0]!.id, tanggal: '2026-11-28', tata: 'hari' }, '2026-11-28');
     expect(akhir).toContain('Akhir pekan');
   });
 
@@ -155,7 +181,7 @@ describe('halaman publik', () => {
     const { gambarHalaman } = await import('../src/publik/halaman');
     const t2 = structuredClone(t);
     t2.proyek.master.rombel[0]!.kode = '<img src=x onerror=alert(1)>';
-    const html = gambarHalaman(t2, { mode: 'rombel', id: t2.proyek.master.rombel[0]!.id, tanggal: '2026-11-10', tata: 'hari' }, '2026-11-10');
+    const html = gambarHalaman(t2, { ...K, tab: 'rombel', id: t2.proyek.master.rombel[0]!.id, tanggal: '2026-11-10', tata: 'hari' }, '2026-11-10');
     expect(html).not.toContain('<img src=x');
     expect(html).toContain('&lt;img');
   });
@@ -177,5 +203,70 @@ describe('halaman publik', () => {
     expect((await muatTerbit(balas(500))).ok).toBe(false);
     const putus = (async () => { throw new Error('offline'); }) as unknown as typeof fetch;
     expect(await muatTerbit(putus)).toMatchObject({ ok: false });
+  });
+
+  it('per pekan berbentuk grid: baris Pagi, istirahat, dan sel digabung (rowspan)', async () => {
+    const { gambarHalaman } = await import('../src/publik/halaman');
+    const html = gambarHalaman(t, { ...K, tab: 'rombel', id: rombel('X AT 1'), tanggal: '2026-11-10', tata: 'pekan' }, '2026-11-10');
+    expect(html).toContain('>Pagi<');
+    expect(html).toContain('>PMB<');
+    expect(html).toContain('Istirahat</td>');
+    expect(html).toContain('Ist.');
+    expect(/rowspan="[2-9]"/.test(html)).toBe(true);
+    expect(html).toContain('Skema 11');
+    expect(html).toContain('Skema 10');
+  });
+
+  it('panah pindah kelas/guru/ruang ada di tiap tab per-entitas', async () => {
+    const { gambarHalaman } = await import('../src/publik/halaman');
+    for (const tab of ['rombel', 'guru', 'ruang'] as const) {
+      const html = gambarHalaman(t, { ...K, tab, id: daftarEntitasP(p, tab)[0]!.id }, '2026-11-10');
+      expect(html).toContain('data-aksi="sebelumnya"');
+      expect(html).toContain('data-aksi="berikutnya"');
+    }
+  });
+
+  it('tab Semua: satu baris per kelas, semua hari, kepala skema, dan bisa dibatasi satu hari', async () => {
+    const { gambarHalaman } = await import('../src/publik/halaman');
+    const semua = gambarHalaman(t, { ...K, tab: 'semua' }, '2026-11-10');
+    expect(semua).toContain('id="matriks"');
+    const jumlahBaris = (semua.match(/<tbody>([\s\S]*)<\/tbody>/)![1]!.match(/<tr>/g) ?? []).length;
+    expect(jumlahBaris).toBe(p.master.rombel.length);
+    for (const h of ['Sen', 'Sel', 'Rab', 'Kam', 'Jum']) expect(semua).toContain(`>${h} `);
+    const satu = gambarHalaman(t, { ...K, tab: 'semua', hariSemua: 1 }, '2026-11-10');
+    expect(satu).toContain('>Sel ');
+    expect(satu).not.toContain('>Sen ');
+    expect(satu.length).toBeLessThan(semua.length);
+    const guru = gambarHalaman(t, { ...K, tab: 'semua', baris: 'guru' }, '2026-11-10');
+    expect(guru).toContain('data-aksi="det"');
+  });
+
+  it('matriks: jumlah JP semua kelas sama dengan jumlah tiap kelas, dan Peta lebih sempit dari Besar', async () => {
+    const { matriksP } = await import('../src/publik/tampil');
+    const { gambarHalaman } = await import('../src/publik/halaman');
+    const m = matriksP(p, '2026-11-10', 'rombel');
+    for (const b of m.baris) expect(b.hari.reduce((a, h) => a + h.totalJp, 0)).toBe(sumPekan('2026-11-10', 'rombel', b.id));
+    const lebarTabel = (h: string) => Number(/table-layout:fixed;width:(\d+)px/.exec(h)![1]);
+    expect(lebarTabel(gambarHalaman(t, { ...K, tab: 'semua', zoom: 'peta' }, '2026-11-10', 390))).toBeLessThanOrEqual(390);
+    expect(lebarTabel(gambarHalaman(t, { ...K, tab: 'semua', zoom: 'besar' }, '2026-11-10', 390))).toBeGreaterThan(lebarTabel(gambarHalaman(t, { ...K, tab: 'semua', zoom: 'sedang' }, '2026-11-10', 390)));
+  });
+
+  it('rincian kotak: mapel, guru, ruang, dan waktu', async () => {
+    const { htmlRincian } = await import('../src/publik/halaman');
+    const d = jadwalHariP(p, '2026-11-10', 'rombel', rombel('X AT 1'));
+    const e = d.elemen.find((x) => x.jenis === 'blok')!;
+    if (e.jenis !== 'blok') throw new Error('x');
+    const h = htmlRincian(p, 'rombel', rombel('X AT 1'), '2026-11-10', e.a);
+    expect(h).toContain(e.item[0]!.mapel.nama);
+    expect(h).toContain(e.item[0]!.guru[0]!.nama);
+    expect(h).toContain(e.mulai);
+    expect(h).toContain('tutupRincian');
+  });
+
+  it('singkatan kegiatan non-KBM', async () => {
+    const { kodeNonKbm } = await import('../src/publik/tampil');
+    expect(kodeNonKbm('Pembiasaan/UB')).toBe('PMB');
+    expect(kodeNonKbm('Upacara bendera')).toBe('UPC');
+    expect(kodeNonKbm('Literasi')).toBe('LIT');
   });
 });
