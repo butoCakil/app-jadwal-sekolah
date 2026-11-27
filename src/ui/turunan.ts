@@ -3,6 +3,7 @@ import { skemaUntukTanggal } from '../model/kalender';
 import { adalahPelanggaran, masalahPerSlot, periksa } from '../mesin/validator';
 import { bebanRombel, fokusInduk, jadwalPekan, kalenderFokus, kegiatanFokus, kegiatanPadaTanggal, semesterKegiatan, semesterPadaFokus, tidakAktifPada, versiDari, versiSemester, type Fokus } from '../model/simpul';
 import type { Turunan } from './konteks';
+import { aturanPekan } from '../model/aturanKegiatan';
 import { seninPekan, tambahHari } from './util';
 
 /**
@@ -27,9 +28,11 @@ export function hitungTurunan(p: Proyek, tanggal: string, fokus: Fokus = 'auto')
   const beban: Beban[] = p.master.rombel.flatMap((r) => bebanRombel(p, periode, r.id, semester));
   const ada = new Set(beban.map((b) => b.id));
   const rujukan = p.beban.filter((b) => !ada.has(b.id) && pekan.slots.some((s) => s.bebanId === b.id));
-  const masalah = periksa({ ...p, beban: [...beban, ...rujukan] }, pekan.slots, { skemaPerHari, rombelTidakAktif });
+  const aturan = aturanPekan(p, pekan.kegiatanHari, hari.map((h) => h.tgl), skemaPerHari);
+  const diterima = new Map((p.diterima ?? []).map((x) => [x.pesan, x.catatan?.trim() || 'diterima']));
+  const masalah = periksa({ ...p, beban: [...beban, ...rujukan] }, pekan.slots, { skemaPerHari, rombelTidakAktif, aturan }).map((m) => (adalahPelanggaran(m) && diterima.has(m.pesan) ? { ...m, diterima: diterima.get(m.pesan) as string } : m));
   return {
-    senin, hari, skemaPerHari, slots: pekan.slots, beban, masalah, peta: masalahPerSlot(masalah), jumlahPelanggaran: masalah.filter(adalahPelanggaran).length,
-    versi, periode, semester, rombelTidakAktif, pekan, fokus,
+    senin, hari, skemaPerHari, slots: pekan.slots, beban, masalah, peta: masalahPerSlot(masalah.filter((m) => !m.diterima)), jumlahPelanggaran: masalah.filter((m) => adalahPelanggaran(m) && !m.diterima).length,
+    versi, periode, semester, rombelTidakAktif, pekan, fokus, aturan,
   };
 }

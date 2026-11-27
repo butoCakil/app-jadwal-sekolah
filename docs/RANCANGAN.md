@@ -347,9 +347,22 @@ app-jadwal-sekolah/
 - **Lanjutan (27 Nov, 13.30):** PKL kelas XI sampai 12 Des 2026, lalu sekitar 14 Des kelas XII PKL; kegiatan `k-pkl-xii-gasal` (14–18 Des, XII tidak aktif, kelas lain ikut induk). Genap: kegiatan PKL XII 4 Jan–16 Apr 2027; induk Genap tanpa kelas tidak aktif. Rentang semester mengikuti kalender akademik: Gasal 13 Jul–18 Des 2026 (rapor), Genap 4 Jan–18 Jun 2027. Kalender akademik 2026/2027 (56 baris) dimuat sebagai **agenda** (`Kegiatan.agenda`, `untuk`): tampil di kalender dan bilah Agenda pada Jadwal Berlangsung, tidak mengubah jadwal, pola, kelas aktif, atau KBM. Jenis baru: ujian, upacara, rapor.
 - **Belum pasti:** tanggal pergantian rombel XI (PKL) antara jadwal reguler Juli (PDF 16 Jul) dan jadwal 9–13 Nov; kini induk Gasal sepanjang semester memakai jadwal 9–13 Nov.
 
+### 11.5g Aturan per kegiatan (27 Nov 2026, siang; langkah 1 menyempurnakan engine)
+
+- **Urutan kerja (disepakati):** engine dulu (aturan per kegiatan, solver per kegiatan, uji dengan data nyata, lalu lapisan AI), baru akses admin dan halaman publik. Rencana hosting akhir: tetap di GitHub Pages, `jadwal.smknbansari.sch.id` diarahkan lewat CNAME (belum diputuskan; cadangan: server-te).
+- **Model (`Kegiatan`):** `ruangKunci[]` (`ruangIds`, `hari`, `mulai`/`selesai` jam dinding, `catatan`): ruang yang dipesan kegiatan, tidak boleh dipakai pelajaran lain pada hari/jendela itu; `pengawas[]` (`guruId`, `tanggal`, `mulai`, `selesai`, `ruangId?`): guru yang mengawas tidak boleh mengajar pada JP yang beririsan dengan waktunya (diubah ke nomor JP menurut skema hari itu); `rombelTanpaRuang[]`: rombel PJJ, tidak dilaporkan "belum punya ruang". Peserta kegiatan (mis. XII yang UKK) sudah tidak aktif, jadi tidak perlu pengecualian.
+- **Satu sumber aturan:** `aturanPekan()` (`src/model/aturanKegiatan.ts`) menurunkan aturan per hari untuk pekan yang dilihat; dipakai validator (pelanggaran baru `ruang-dikunci`, `pengawas-bentrok`), penempatan/seret jadwal (`tentukanRuang`, `cekPenempatan`, `rencanaPindah`), dan solver (ruang terkunci = ruang terpakai, pengawas = guru tidak tersedia).
+- **UI:** kartu "Aturan kegiatan" di Info kegiatan (Periode & Jadwal): kunci ruang lewat pemilih centang per kategori ruang, hari dan jam, catatan; rombel tanpa ruang; tugas mengawas per tanggal.
+- **Diterima:** pelanggaran bisa ditandai "diterima" (keputusan lapangan) di Conflict Inspector: tidak dihitung sebagai bentrok, tetap terlihat dengan catatan. Disimpan di `Proyek.diterima[]` dikenali dari pesannya, sehingga bila jadwal berubah keputusan itu gugur sendiri.
+- **Data:** jadwal pengawas ASAS (PDF "6. JADWAL PENGAWAS", 286 tugas, 22 ruang ujian, 3 jendela waktu) dimuat dari `data/sekolah/sumber/pengawas-asas-2026.json` (tanpa NIP); rombel PJJ TKA gel. 2 dimuat dari tanda PJJ aSc. **Uji nyata:** pekan ASAS hanya menghasilkan satu bentrok pengawas, yaitu PSRT XI TE 2 (guru EDW, Kamis jam 3–6), persis kasus yang Benny sebut; sudah ditandai diterima.
+- **Temuan:** PSRT XI TE 2 itu memakai ruang D1, yang di jadwal pengawas juga ruang ujian (kolom D.1) pada jam yang sama: tetap dilaporkan `ruang-dikunci` (4 JP) sampai dipastikan apakah D.1 sama dengan D1 (RP Home Appliances TE). Pola pemakaian ruang di PDF aSc: pada TKA gel. 1 kelima lab komputer (G1, G2, G3, I3, Q) hanya terpakai hari Jumat; pada UKK B3, C1, D1, G3, I3, Q kosong sepanjang pekan; ini belum dimuat sebagai kunci karena belum dikonfirmasi ruang mana yang dipesan.
+- **Ditunda:** target beban (pemadatan) tidak ada aturan khusus: beban per kegiatan sudah bisa diubah di tab Beban, dan permintaan seperti "gandakan jam mapel TKA" masuk lapisan AI (langkah 4).
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?
 2. Sheet Excel mana yang menjadi acuan Gasal (DUK, draft oktober, atau Genap_Harizka)? Ketiganya berbeda pada pembagian guru; jadwal aSc kini menjadi acuan untuk 25 rombel.
 3. KKA (2 JP kelas X) dan 1 JP IPAS ada di Excel tetapi tidak di jadwal reguler: sengaja tidak dijadwalkan?
 4. `mppAT` dan `mppDKV` pada aSc belum dipecah menjadi mapel nyata (di Excel: PTP, POHN, BC).
+5. Apakah lima lab komputer untuk TKA = G1, G2, G3, I3, Q, dan ruang mana saja yang dikunci UKK? Setelah dikonfirmasi dimuat sebagai ruang terkunci pada kegiatan itu.
+6. Apakah ruang D.1 pada jadwal pengawas ASAS sama dengan D1 (RP Home Appliances TE)?

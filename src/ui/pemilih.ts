@@ -101,6 +101,25 @@ function isi(k: Konteks, pm: Pemilih): Isi | null {
         item: p.master.rombel.map((r) => ({ id: r.id, label: r.kode, grup: `Kelas ${r.tingkat} ${r.jurusan}`, kunci: r.kode })),
       };
     }
+    case 'kegiatanKunci': {
+      const [gid] = pm.id.split('|');
+      const g = p.kalender.find((x) => x.id === gid);
+      if (!g) return null;
+      return {
+        judul: `Ruang terkunci pada “${g.nama}”`,
+        petunjuk: 'Ruang yang dicentang dipesan kegiatan ini: pelajaran lain tidak boleh memakainya (diperiksa, dan dihindari saat menyeret jadwal dan Susun Otomatis). Pilih per kategori dengan tombol di bawah.',
+        item: itemRuang(p),
+      };
+    }
+    case 'kegiatanTanpaRuang': {
+      const g = p.kalender.find((x) => x.id === pm.id);
+      if (!g) return null;
+      return {
+        judul: `Rombel belajar tanpa ruang pada “${g.nama}”`,
+        petunjuk: 'Rombel yang dicentang (mis. PJJ, belajar dari rumah) tetap punya jadwal, tetapi tidak dilaporkan “belum punya ruang”.',
+        item: p.master.rombel.map((r) => ({ id: r.id, label: r.kode, grup: `Kelas ${r.tingkat} ${r.jurusan}`, kunci: r.kode })),
+      };
+    }
   }
 }
 
@@ -118,6 +137,11 @@ function awal(p: Proyek, sasaran: Pemilih['sasaran'], id: string): string[] {
     case 'bebanTim': return p.beban.find((x) => x.id === id)?.timGuruIds ?? [];
     case 'guruMapel': return p.master.guru.find((x) => x.id === id)?.mapelIds ?? [];
     case 'kegiatanRombel': return p.kalender.find((x) => x.id === id)?.rombelTidakAktif ?? [];
+    case 'kegiatanKunci': {
+      const [gid, kid] = id.split('|');
+      return p.kalender.find((x) => x.id === gid)?.ruangKunci?.find((x) => x.id === kid)?.ruangIds ?? [];
+    }
+    case 'kegiatanTanpaRuang': return p.kalender.find((x) => x.id === id)?.rombelTanpaRuang ?? [];
   }
 }
 
@@ -336,6 +360,23 @@ function terapkanPemilih(p: Proyek, sasaran: Pemilih['sasaran'], id: string, ids
     case 'kegiatanRombel': {
       const g = p.kalender.find((x) => x.id === id);
       if (g) g.rombelTidakAktif = ids;
+      return;
+    }
+    case 'kegiatanKunci': {
+      const [gid, kid] = id.split('|');
+      const g = p.kalender.find((x) => x.id === gid);
+      if (!g) return;
+      const daftar = g.ruangKunci ?? [];
+      const ada = daftar.find((x) => x.id === kid);
+      if (ada) ada.ruangIds = ids;
+      else if (ids.length) daftar.push({ id: `kr${Date.now().toString(36)}`, ruangIds: ids });
+      g.ruangKunci = daftar.filter((x) => x.ruangIds.length);
+      if (!g.ruangKunci.length) delete g.ruangKunci;
+      return;
+    }
+    case 'kegiatanTanpaRuang': {
+      const g = p.kalender.find((x) => x.id === id);
+      if (g) isiAtauHapus(g, 'rombelTanpaRuang');
       return;
     }
   }

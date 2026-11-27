@@ -4,6 +4,7 @@
 import type { Kegiatan, PolaMinggu, Proyek, Semester, Skema } from './tipe';
 import { bebanDariAsc, type SumberAscKelas } from '../io/imporAsc';
 import { jadikanWarisan } from './simpul';
+import { hariPekan } from './kalender';
 
 export interface SumberTahun {
   reguler: SumberAscKelas;
@@ -11,7 +12,14 @@ export interface SumberTahun {
   pkl?: { id: string; nama: string; mulai: string; selesai: string; semesterId: string; tingkatTidakAktif: string[]; catatan: string }[];
   /** agenda kalender akademik: [mulai, selesai, jenis, judul, tingkat, semester] */
   agenda?: [string, string, string, string, string, string][];
-  kegiatan: { id: string; nama: string; jenis: Kegiatan['jenis']; mulai: string; selesai: string; sumber: SumberAscKelas; catatan?: string }[];
+  kegiatan: { id: string; nama: string; jenis: Kegiatan['jenis']; mulai: string; selesai: string; sumber: SumberAscKelas; catatan?: string; pengawas?: SumberPengawas }[];
+}
+
+/** Jadwal pengawas ujian: kolom ruang (kode) dan, per sesi, guru (kode) pengawas tiap ruang menurut urutan kolom. */
+export interface SumberPengawas {
+  sumber: string;
+  ruang: string[];
+  sesi: { tanggal: string; mulai: string; selesai: string; mapel: string; pengawas: string[] }[];
 }
 
 export interface LaporanTahun {
@@ -62,6 +70,40 @@ function polaDari(p: Proyek, src: SumberAscKelas, nama: string): string | undefi
   const id = `pola-${(p.polaLain ?? []).length + 1}`;
   p.polaLain = [...(p.polaLain ?? []), { id, nama: `Pola ${nama}`, pola }];
   return id;
+}
+
+/**
+ * Memasang aturan ujian dari jadwal pengawas: ruang yang dipakai ujian terkunci pada jendela waktu tiap sesi, dan tiap pengawas
+ * tercatat pada tanggal, waktu, dan ruangnya. Mengembalikan peringatan untuk kode yang tidak ditemukan.
+ */
+function aturanPengawas(p: Proyek, g: Kegiatan, src: SumberPengawas): string[] {
+  const peringatan: string[] = [];
+  const ruangId = new Map(p.master.ruang.map((r) => [r.kode, r.id]));
+  const guruId = new Map(p.master.guru.map((x) => [x.kode, x.id]));
+  const ruang = src.ruang.map((kode) => ({ kode, id: ruangId.get(kode) }));
+  for (const r of ruang) if (!r.id) peringatan.push(`ruang ${r.kode} di jadwal pengawas tidak ada di master`);
+  const jendela = new Map<string, { mulai: string; selesai: string; hari: Set<number> }>();
+  const tugas: NonNullable<Kegiatan['pengawas']> = [];
+  for (const s of src.sesi) {
+    const kunci = `${s.mulai}|${s.selesai}`;
+    const j = jendela.get(kunci) ?? { mulai: s.mulai, selesai: s.selesai, hari: new Set<number>() };
+    j.hari.add(hariPekan(s.tanggal));
+    jendela.set(kunci, j);
+    s.pengawas.forEach((kode, i) => {
+      const gid = guruId.get(kode);
+      if (!gid) {
+        peringatan.push(`guru ${kode} di jadwal pengawas tidak ada di master`);
+        return;
+      }
+      tugas.push({ id: `pw-${tugas.length + 1}`, guruId: gid, tanggal: s.tanggal, mulai: s.mulai, selesai: s.selesai, ...(ruang[i]?.id ? { ruangId: ruang[i]?.id } : {}) });
+    });
+  }
+  const ids = ruang.map((r) => r.id).filter((x): x is string => !!x);
+  g.ruangKunci = [...jendela.values()].map((j, i) => ({
+    id: `kr-${i + 1}`, ruangIds: ids, hari: [...j.hari].sort((a, b) => a - b), mulai: j.mulai, selesai: j.selesai, catatan: `Ruang ujian menurut jadwal pengawas (${src.sumber}).`,
+  }));
+  g.pengawas = tugas;
+  return [...new Set(peringatan)];
 }
 
 /**
@@ -131,6 +173,10 @@ export function bangunTahun(dasar: Proyek, genap: Proyek, src: SumberTahun, seme
       id: k.id, nama: k.nama, jenis: k.jenis, mulai: k.mulai, selesai: k.selesai, rombelTidakAktif: tidakAktif(k.sumber), versiId: vid, semesterId: 'gasal',
       ...(polaId ? { polaId } : {}), catatan: ket,
     };
+    // rombel PJJ pada kartu aSc belajar tanpa ruang
+    const pjj = k.sumber.pjj.map((kode) => p.master.rombel.find((r) => r.kode === kode)?.id).filter((x): x is string => !!x);
+    if (pjj.length) g.rombelTanpaRuang = pjj;
+    if (k.pengawas) peringatan.push(...aturanPengawas(p, g, k.pengawas).map((x) => `${k.nama}: ${x}`));
     p.kalender.push(g);
     const w = jadikanWarisan(p, g);
     laporan.push({ id: k.id, jp: h.slots.length, rombelAktif: kodeAktif(k.sumber).size, terdampak: w.terdampak.length, ikut: w.ikut.length, pola: polaId ? (p.polaLain ?? []).find((x) => x.id === polaId)!.pola.join(',') : 'default' });

@@ -64,6 +64,37 @@ export interface Kegiatan {
   untuk?: string;
   /** Hari dalam pekan (0 = Senin) tempat kegiatan berlaku di dalam rentang tanggal. Kosong = setiap hari kerja. */
   hariBerlaku?: number[];
+  /** Ruang yang dipesan kegiatan (mis. lab komputer untuk TKA, ruang teori untuk ujian, bengkel untuk UKK): tidak boleh dipakai pelajaran lain selama kegiatan. */
+  ruangKunci?: KunciRuang[];
+  /** Tugas mengawas: guru yang bertugas pada tanggal dan jam tertentu tidak boleh mengajar pada jam itu. */
+  pengawas?: TugasPengawas[];
+  /** Rombel yang belajar tanpa ruang selama kegiatan (mis. PJJ): slotnya tidak dilaporkan "belum punya ruang". */
+  rombelTanpaRuang?: string[];
+  catatan?: string;
+}
+
+/** Sekelompok ruang yang terkunci selama kegiatan. */
+export interface KunciRuang {
+  id: string;
+  ruangIds: string[];
+  /** Hari (0 = Senin) tempat ruang terkunci, di dalam hari kegiatan berlaku. Kosong = semua hari kegiatan. */
+  hari?: number[];
+  /** Jendela waktu jam dinding "HH:MM"; JP yang beririsan dianggap terkunci. Kosong (keduanya) = sepanjang hari. */
+  mulai?: string;
+  selesai?: string;
+  catatan?: string;
+}
+
+/** Satu tugas mengawas. Jam memakai waktu jam dinding "HH:MM"; JP yang beririsan dengan rentang itu dianggap sibuk. */
+export interface TugasPengawas {
+  id: string;
+  guruId: string;
+  /** "YYYY-MM-DD" */
+  tanggal: string;
+  mulai: string;
+  selesai: string;
+  /** Ruang yang diawasi (keterangan saja). */
+  ruangId?: string;
   catatan?: string;
 }
 
@@ -178,6 +209,12 @@ export interface VersiJadwal {
   slots: Slot[];
 }
 
+/** Pelanggaran yang diterima admin sebagai keputusan lapangan (tidak dihitung sebagai bentrok). Dikenali dari pesannya, yang memuat guru, rombel, dan waktu. */
+export interface PenerimaanMasalah {
+  pesan: string;
+  catatan?: string;
+}
+
 export interface Proyek {
   versiSkemaData: number;
   nama: string;
@@ -201,6 +238,8 @@ export interface Proyek {
   semester?: Omit<Semester, 'id'> & { id?: string };
   /** Periode (kegiatan kalender) yang sedang dikerjakan; tanggal acuan awal aplikasi mengikuti periode ini. */
   periodeAktifId?: string;
+  /** Pelanggaran yang sudah diputuskan diterima (mis. guru memberi tugas di kelas saat mengawas). */
+  diterima?: PenerimaanMasalah[];
 }
 
 export const VERSI_DATA_SAAT_INI = 2;

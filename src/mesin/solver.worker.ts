@@ -1,11 +1,13 @@
 import { susun } from './solver';
 import type { Proyek, Slot } from '../model/tipe';
+import type { AturanPekan } from '../model/aturanKegiatan';
 
 /** Pekerja latar untuk solver: tidak membekukan tampilan selama menyusun. */
 interface Masuk {
   p: Proyek;
   skemaPerHari: (string | null)[];
   tetap?: Slot[];
+  aturan?: AturanPekan;
   batasMs: number;
   benih?: number;
 }

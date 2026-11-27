@@ -20,7 +20,11 @@ const IKON: Record<Kategori, string> = { bentrok: '⛔', aturan: '🚫', gap: '�
 
 export function hitungKategori(masalah: Masalah[]): Record<Kategori | 'semua', number> {
   const h: Record<Kategori | 'semua', number> = { semua: masalah.length, bentrok: 0, aturan: 0, gap: 0, kapasitas: 0 };
-  for (const m of masalah) h[m.kategori] += 1;
+  for (const m of masalah) {
+    if (m.diterima) continue;
+    h[m.kategori] += 1;
+  }
+  h.semua = masalah.filter((m) => !m.diterima).length;
   return h;
 }
 
@@ -29,7 +33,7 @@ export function renderInspektur(k: Konteks): string {
   const hitung = hitungKategori(semua);
   const tampil = semua.filter((m) => k.ui.saring === 'semua' || m.kategori === k.ui.saring);
   const urut: Kategori[] = ['bentrok', 'aturan', 'kapasitas', 'gap'];
-  tampil.sort((a, b) => urut.indexOf(a.kategori) - urut.indexOf(b.kategori));
+  tampil.sort((a, b) => Number(!!a.diterima) - Number(!!b.diterima) || urut.indexOf(a.kategori) - urut.indexOf(b.kategori));
 
   const chip = KATEGORI.map(
     (c) => `<button class="lencana ${k.ui.saring === c.id ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'}" data-aksi="saring" data-kat="${c.id}" title="${esc(c.ket)}">${c.label} <b>${hitung[c.id]}</b></button>`,
@@ -39,8 +43,16 @@ export function renderInspektur(k: Konteks): string {
     .map((m) => {
       const rombelId = m.rombelId ?? k.p.beban.find((b) => b.id === m.bebanId)?.rombelId ?? '';
       const lihat = rombelId ? `<button class="tombol shrink-0" data-aksi="lihatMasalah" data-rombel="${esc(rombelId)}" data-slot="${esc(m.slotIds[0] ?? '')}">Lihat di grid</button>` : '';
+      const wajib = m.kategori === 'bentrok' || m.kategori === 'aturan';
+      const terima = m.diterima
+        ? `<button class="tombol shrink-0" data-aksi="batalTerima" data-pesan="${esc(m.pesan)}">Batalkan</button>`
+        : wajib ? `<button class="tombol shrink-0" data-aksi="terimaMasalah" data-pesan="${esc(m.pesan)}" title="Tandai sebagai keputusan lapangan: tidak dihitung sebagai bentrok">Terima…</button>` : '';
+      if (m.diterima) {
+        return `<div class="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-500">
+          <div class="text-sm"><div class="flex gap-2"><span>✔</span><span>${esc(m.pesan)}</span></div><div class="mt-1 pl-6 text-xs"><b>Diterima:</b> ${esc(m.diterima)}</div></div><div class="flex gap-2">${lihat}${terima}</div></div>`;
+      }
       return `<div class="flex items-start justify-between gap-3 rounded-xl border ${WARNA[m.kategori]} p-3">
-        <div class="flex gap-2 text-sm"><span>${IKON[m.kategori]}</span><span>${esc(m.pesan)}</span></div>${lihat}</div>`;
+        <div class="flex gap-2 text-sm"><span>${IKON[m.kategori]}</span><span>${esc(m.pesan)}</span></div><div class="flex gap-2">${lihat}${terima}</div></div>`;
     })
     .join('');
 
@@ -61,6 +73,22 @@ export function klikInspektur(k: Konteks, el: HTMLElement): boolean {
   if (d.aksi === 'saring') {
     k.ui.saring = d.kat as Kategori | 'semua';
     k.gambar();
+    return true;
+  }
+  if (d.aksi === 'terimaMasalah') {
+    const pesan = d.pesan ?? '';
+    const catatan = window.prompt('Catatan keputusan (mis. guru memberi tugas di kelas saat mengawas):', '');
+    if (catatan === null) return true;
+    k.ubah((x) => {
+      x.diterima = [...(x.diterima ?? []).filter((y) => y.pesan !== pesan), { pesan, ...(catatan.trim() ? { catatan: catatan.trim() } : {}) }];
+    });
+    return true;
+  }
+  if (d.aksi === 'batalTerima') {
+    k.ubah((x) => {
+      x.diterima = (x.diterima ?? []).filter((y) => y.pesan !== d.pesan);
+      if (!x.diterima.length) delete x.diterima;
+    });
     return true;
   }
   if (d.aksi === 'lihatMasalah') {

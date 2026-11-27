@@ -525,7 +525,7 @@ export function siapkanSeret(k: Konteks, seret: Seret): PetaSel {
         sel.set(`${hari}:${jam}`, { ok: false, alasan: [`Tidak muat: ${n} JP berurutan dari pelajaran ke-${jam} melewati jam terakhir hari itu.`] });
         continue;
       }
-      const r = rencanaPindah(k.p, k.turunan.slots, seret, hari, jam);
+      const r = rencanaPindah(k.p, k.turunan.slots, seret, hari, jam, k.turunan.aturan);
       sel.set(`${hari}:${jam}`, { ok: r.ok, alasan: r.alasan });
     }
   });
@@ -551,7 +551,7 @@ export function hasilSel(ps: PetaSel, el: HTMLElement): HasilSel | undefined {
 }
 
 export function lepas(k: Konteks, seret: Seret, hari: number, jam: number): boolean {
-  const r = rencanaPindah(k.p, k.turunan.slots, seret, hari, jam);
+  const r = rencanaPindah(k.p, k.turunan.slots, seret, hari, jam, k.turunan.aturan);
   if (!r.ok) {
     k.lapor(r.alasan[0] ?? 'Penempatan ditolak.');
     return false;
@@ -579,7 +579,7 @@ export function renderModal(k: Konteks): string {
     const bebanR = k.turunan.beban.filter((b) => b.rombelId === k.ui.entitasId && !b.nonTatapMuka && sisaJp(k.turunan.slots, b) > 0);
     const baris = bebanR
       .map((b) => {
-        const r = rencanaPindah(k.p, k.turunan.slots, { bebanId: b.id }, m.hari, m.jam);
+        const r = rencanaPindah(k.p, k.turunan.slots, { bebanId: b.id }, m.hari, m.jam, k.turunan.aturan);
         const mapel = k.p.master.mapel.find((x) => x.id === b.mapelId)?.nama ?? '?';
         const guru = [b.guruId, ...b.timGuruIds].map((g) => pk.guru.get(g) ?? '?').join('+');
         const kiri = `<div class="min-w-0"><div class="truncate text-sm font-medium">${esc(mapel)}</div><div class="text-xs text-slate-500">Guru ${esc(guru)} · sisa ${sisaJp(k.turunan.slots, b)} JP</div></div>`;
@@ -681,7 +681,7 @@ export function ubahGrid(k: Konteks, el: HTMLInputElement & HTMLSelectElement): 
     const s = k.turunan.slots.find((x) => x.id === el.dataset.slot);
     if (!s) return true;
     const baru: Slot = { ...s, ruangId: el.value };
-    const alasan = cekPenempatan(k.p, k.turunan.slots, [baru]);
+    const alasan = cekPenempatan(k.p, k.turunan.slots, [baru], k.turunan.aturan);
     if (alasan.length) {
       k.lapor(alasan[0] ?? 'Ruang ditolak.');
       k.gambar();

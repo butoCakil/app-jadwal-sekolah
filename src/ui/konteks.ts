@@ -2,6 +2,7 @@ import type { Beban, JenisKegiatan, Kegiatan, Proyek, Semester, Slot, VersiJadwa
 import type { Kategori, Masalah } from '../mesin/validator';
 import type { SkemaHari } from '../model/kalender';
 import type { Fokus, JadwalPekan } from '../model/simpul';
+import type { AturanPekan } from '../model/aturanKegiatan';
 
 export type SubMaster = 'guru' | 'mapel' | 'rombel' | 'ruang' | 'aturan' | 'data';
 export type Tab = 'langsung' | 'grid' | 'info' | 'kelas' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor' | 'susun';
@@ -13,7 +14,7 @@ export type ModeLihat = 'rombel' | 'guru' | 'ruang';
 /** Modal daftar centang untuk memilih banyak ruang/mapel sekaligus. */
 export interface Pemilih {
   /** Siapa yang diatur: tabel master + id barisnya, atau aturan (a) / beban (b) */
-  sasaran: 'mapelRuang' | 'rombelRuang' | 'guruMapel' | 'aturanRuang' | 'bebanPrio' | 'bebanLarang' | 'bebanTim' | 'kegiatanRombel';
+  sasaran: 'mapelRuang' | 'rombelRuang' | 'guruMapel' | 'aturanRuang' | 'bebanPrio' | 'bebanLarang' | 'bebanTim' | 'kegiatanRombel' | 'kegiatanKunci' | 'kegiatanTanpaRuang';
   id: string;
   /** pilihan sementara selama modal terbuka */
   pilih: Set<string>;
@@ -95,6 +96,8 @@ export interface Turunan {
   /** slot tampil per hari beserta asal versinya (untuk mengalihkan perubahan) */
   pekan: JadwalPekan;
   fokus: Fokus;
+  /** aturan kegiatan pekan ini: ruang terkunci, tugas mengawas, rombel tanpa ruang */
+  aturan: AturanPekan;
 }
 
 export interface Konteks {

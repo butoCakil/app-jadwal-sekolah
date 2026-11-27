@@ -1,6 +1,7 @@
 import type { Aturan, Beban, Proyek, Slot } from '../model/tipe';
 import { NAMA_HARI } from '../model/tipe';
 import { petakanSlot } from '../model/jadwal';
+import { pengunciRuang, ruangTerkunciPada, tanpaRuangPada, type AturanPekan } from '../model/aturanKegiatan';
 
 export type Kategori = 'bentrok' | 'aturan' | 'gap' | 'kapasitas';
 export type JenisMasalah =
@@ -8,6 +9,8 @@ export type JenisMasalah =
   | 'bentrok-rombel'
   | 'bentrok-ruang'
   | 'ruang-terlarang'
+  | 'ruang-dikunci'
+  | 'pengawas-bentrok'
   | 'guru-tidak-tersedia'
   | 'ruang-tidak-ada'
   | 'beban-tidak-ada'
@@ -24,6 +27,8 @@ export interface Masalah {
   slotIds: string[];
   bebanId?: string;
   rombelId?: string;
+  /** Diisi (catatan keputusan) bila admin menerima pelanggaran ini; tidak dihitung sebagai bentrok. */
+  diterima?: string;
 }
 
 /** Pelanggaran wajib = bentrok + aturan. Itulah yang dihitung pada lencana "N bentrok". */
@@ -34,6 +39,8 @@ export interface OpsiPeriksa {
   skemaPerHari?: (string | null)[];
   /** rombel yang tidak aktif pada periode yang dilihat (mis. PKL): kekurangan JP-nya tidak dilaporkan */
   rombelTidakAktif?: ReadonlySet<string>;
+  /** aturan kegiatan pada pekan yang dilihat: ruang terkunci, tugas mengawas, rombel tanpa ruang */
+  aturan?: AturanPekan;
 }
 
 /**
@@ -135,7 +142,11 @@ export function periksa(p: Proyek, slots: Slot[], opsi: OpsiPeriksa = {}): Masal
       const ruang = ruangById.get(s.ruangId);
       if (!ruang) hasil.push({ id: `ruang-tidak-ada:${s.id}`, jenis: 'ruang-tidak-ada', kategori: 'aturan', pesan: `${ket} memakai ruang yang sudah tidak ada.`, slotIds: [s.id], bebanId: b.id, rombelId: b.rombelId });
       else if (ruangDilarang(p, b).has(s.ruangId)) hasil.push({ id: `ruang-terlarang:${s.id}`, jenis: 'ruang-terlarang', kategori: 'aturan', pesan: `${ket} memakai ruang ${ruang.kode} yang terlarang untuk beban ini.`, slotIds: [s.id], bebanId: b.id, rombelId: b.rombelId });
-    } else if (p.master.ruang.length > 0) {
+      else if (ruangTerkunciPada(opsi.aturan, s.hari, s.jam).has(s.ruangId)) {
+        const kg = pengunciRuang(opsi.aturan, s.hari, s.jam, s.ruangId) ?? 'kegiatan';
+        hasil.push({ id: `ruang-dikunci:${s.id}`, jenis: 'ruang-dikunci', kategori: 'aturan', pesan: `${ket} memakai ruang ${ruang.kode} yang terkunci untuk ${kg}.`, slotIds: [s.id], bebanId: b.id, rombelId: b.rombelId });
+      }
+    } else if (p.master.ruang.length > 0 && !tanpaRuangPada(opsi.aturan, s.hari, b.rombelId)) {
       hasil.push({ id: `ruang-belum:${s.id}`, jenis: 'ruang-belum', kategori: 'gap', pesan: `${ket} belum punya ruang.`, slotIds: [s.id], bebanId: b.id, rombelId: b.rombelId });
     }
     const gurus = [b.guruId, ...b.timGuruIds];
@@ -144,6 +155,10 @@ export function periksa(p: Proyek, slots: Slot[], opsi: OpsiPeriksa = {}): Masal
         const gid = (a as { guruId: string }).guruId;
         hasil.push({ id: `guru-tidak-tersedia:${a.id}:${s.id}`, jenis: 'guru-tidak-tersedia', kategori: 'aturan', pesan: `Guru ${gk(gid)} tidak tersedia pada ${waktu(s.hari, s.jam)}, tetapi dijadwalkan (${deskripsi(b)}).`, slotIds: [s.id], bebanId: b.id, rombelId: b.rombelId });
       }
+    }
+    for (const t of opsi.aturan?.pengawas ?? []) {
+      if (t.hari !== s.hari || !t.jam.includes(s.jam) || !gurus.includes(t.guruId)) continue;
+      hasil.push({ id: `pengawas-bentrok:${t.guruId}:${s.id}`, jenis: 'pengawas-bentrok', kategori: 'aturan', pesan: `Guru ${gk(t.guruId)} mengawas ${t.kegiatan} (${t.waktu}) pada ${waktu(s.hari, s.jam)}, tetapi dijadwalkan mengajar (${deskripsi(b)}).`, slotIds: [s.id], bebanId: b.id, rombelId: b.rombelId });
     }
   }
 

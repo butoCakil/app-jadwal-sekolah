@@ -149,7 +149,10 @@ describe('data Tahun 2026/2027: dua semester induk dan kegiatan dari PDF aSc', (
     expect(p.polaLain?.find((x) => x.id === ukk.polaId)?.pola).toEqual(['skema10', 'skema10', 'skema11', 'skema11', 'skema9']);
   });
   it('tanpa bentrok kecuali temuan data sumber Pemadatan', () => {
-    for (const t of ['2026-11-09', '2026-10-26', '2026-11-02', '2026-11-16', '2026-11-23', '2026-11-30']) expect(hitungTurunan(p, t).jumlahPelanggaran).toBe(0);
+    for (const t of ['2026-11-09', '2026-10-26', '2026-11-02', '2026-11-16', '2026-11-23']) expect(hitungTurunan(p, t).jumlahPelanggaran).toBe(0);
+    // ASAS: bentrok PSRT dengan pengawas sudah diterima (keputusan lapangan); sisanya temuan data sumber: PSRT XI TE 2 memakai D1 yang juga ruang ujian
+    const asas = hitungTurunan(p, '2026-11-30');
+    expect(asas.masalah.filter((m) => adalahPelanggaran(m) && !m.diterima).map((m) => m.jenis)).toEqual(Array(4).fill('ruang-dikunci'));
     const pem = hitungTurunan(p, '2026-10-05').masalah.filter(adalahPelanggaran);
     expect(new Set(pem.map((m) => m.jenis))).toEqual(new Set(['bentrok-guru', 'ruang-terlarang']));
   });

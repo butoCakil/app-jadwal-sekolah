@@ -10,6 +10,7 @@ import { TAB_HUB } from './konteks';
 import { renderGrid, renderModal } from './grid';
 import { renderBeban } from './beban';
 import { bukaDlgKegiatan, tanggalUntukPeriode, WARNA_JENIS } from './kalenderTab';
+import { tombolPemilih, ringkasKode } from './pemilih';
 import { esc, isoLokal, tambahHari } from './util';
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -197,7 +198,7 @@ function infoKegiatan(k: Konteks, g: Kegiatan): string {
     ? `<div class="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900"><b>Data lama:</b> jadwal kegiatan ini berupa salinan lengkap untuk semua kelas. Ubah ke model “ikut induk”: kelas yang jadwal dan bebannya sama dengan induk akan mengikuti induk; sisanya menjadi kelas khusus.
         <div class="mt-2"><button class="tombol-utama !py-1 !text-xs" data-aksi="hubWarisan">Ubah ke model ikut induk</button></div></div>`
     : '';
-  return `<div class="grid gap-3 lg:grid-cols-[1fr_320px]"><div class="kartu p-4">
+  return `<div class="grid gap-3 lg:grid-cols-[1fr_320px]"><div class="grid content-start gap-3"><div class="kartu p-4">
       <div class="flex flex-wrap items-center gap-2"><span class="lencana ${WARNA_JENIS[g.jenis].chip}">${esc(g.jenis)}</span><b>${esc(g.nama)}</b></div>
       <dl class="mt-3 grid grid-cols-[120px_1fr] gap-y-1.5 text-sm">
         <dt class="text-slate-500">Tanggal</dt><dd>${esc(rentang(g.mulai, g.selesai))}</dd>
@@ -212,7 +213,62 @@ function infoKegiatan(k: Konteks, g: Kegiatan): string {
         <button class="rounded-lg bg-slate-50 p-2 text-left hover:bg-slate-100" data-tab="kelas"><div class="text-xs text-slate-500">Ikut induk</div><b>${aktif.length - khusus}</b></button>
         <button class="rounded-lg bg-slate-50 p-2 text-left hover:bg-slate-100" data-tab="kelas"><div class="text-xs text-slate-500">Tidak aktif</div><b>${g.rombelTidakAktif.length}</b></button></div>
       <div class="mt-3 flex flex-wrap gap-2 text-xs"><button class="tombol !text-xs" data-tab="susun">Susun Otomatis untuk kegiatan ini →</button></div></div>
-    ${caraKerja()}</div>`;
+    ${aturanKegiatan(k, g)}</div>${caraKerja()}</div>`;
+}
+
+const HARI_PENDEK = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+/** Kartu aturan kegiatan: ruang terkunci, rombel tanpa ruang, dan tugas mengawas. */
+function aturanKegiatan(k: Konteks, g: Kegiatan): string {
+  const p = k.p;
+  const n = jumlahHariKerja(p);
+  const kodeRuang = new Map(p.master.ruang.map((r) => [r.id, r.kode]));
+  const kodeRombel = new Map(p.master.rombel.map((r) => [r.id, r.kode]));
+  const guru = new Map(p.master.guru.map((x) => [x.id, x]));
+  const kunci = (g.ruangKunci ?? [])
+    .map((kr) => {
+      const hari = kr.hari ?? [];
+      const chip = Array.from({ length: n }, (_, i) => `<button class="rounded-md border px-1.5 py-0.5 text-[11px] font-semibold ${!hari.length || hari.includes(i) ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-100'}" data-aksi="kunciHari" data-keg="${esc(g.id)}" data-kunci="${esc(kr.id)}" data-hari="${i}">${HARI_PENDEK[i]}</button>`).join('');
+      return `<div class="rounded-lg border border-slate-200 p-2"><div class="flex flex-wrap items-center gap-2">
+          ${tombolPemilih('kegiatanKunci', `${g.id}|${kr.id}`, ringkasKode(kr.ruangIds.map((i) => kodeRuang.get(i) ?? '?'), 'ruang', 6), 'Pilih ruang…')}
+          <div class="flex flex-wrap gap-1" title="Hari ruang terkunci">${chip}</div>
+          <button class="tombol !px-2 !py-0.5 !text-xs !text-red-600" data-aksi="kunciHapus" data-keg="${esc(g.id)}" data-kunci="${esc(kr.id)}">Hapus</button></div>
+        <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-600">Jam
+          <input type="time" class="isian !w-28 !text-xs" value="${esc(kr.mulai ?? '')}" data-aksi="kunciWaktu" data-f="mulai" data-keg="${esc(g.id)}" data-kunci="${esc(kr.id)}">–
+          <input type="time" class="isian !w-28 !text-xs" value="${esc(kr.selesai ?? '')}" data-aksi="kunciWaktu" data-f="selesai" data-keg="${esc(g.id)}" data-kunci="${esc(kr.id)}">
+          ${!!kr.mulai !== !!kr.selesai ? '<span class="font-semibold text-red-600">isi kedua jam (belum berlaku)</span>' : '<span class="text-slate-400">(kosong = sepanjang hari)</span>'}</div>
+        <input class="isian mt-1.5 w-full !text-xs" placeholder="Catatan (mis. 5 lab komputer untuk TKA)" value="${esc(kr.catatan ?? '')}" data-aksi="kunciCatatan" data-keg="${esc(g.id)}" data-kunci="${esc(kr.id)}"></div>`;
+    })
+    .join('');
+  const tanpa = (g.rombelTanpaRuang ?? []).map((i) => kodeRombel.get(i) ?? '?');
+  const tugas = [...(g.pengawas ?? [])].sort((a, b) => a.tanggal.localeCompare(b.tanggal) || a.mulai.localeCompare(b.mulai));
+  const perTanggal = new Map<string, typeof tugas>();
+  for (const t of tugas) perTanggal.set(t.tanggal, [...(perTanggal.get(t.tanggal) ?? []), t]);
+  const daftarTugas = [...perTanggal]
+    .map(([t, l]) => `<details class="rounded-lg border border-slate-200"><summary class="cursor-pointer px-2 py-1 text-xs font-semibold">${esc(NAMA_HARI[hariPekan(t)] ?? '')}, ${esc(tgl(t))} · ${l.length} tugas</summary>
+        <div class="max-h-48 overflow-auto border-t border-slate-100 px-2 py-1 text-xs">${l
+          .map((x) => `<div class="flex items-center gap-2 py-0.5"><span class="w-24 shrink-0 font-mono text-slate-500">${esc(x.mulai)}–${esc(x.selesai)}</span><span class="min-w-0 flex-1 truncate">${esc(guru.get(x.guruId)?.kode ?? '?')} · ${esc(guru.get(x.guruId)?.nama ?? '')}${x.ruangId ? ` · ${esc(kodeRuang.get(x.ruangId) ?? '')}` : ''}</span><button class="text-red-600 hover:underline" data-aksi="pawasHapus" data-keg="${esc(g.id)}" data-id="${esc(x.id)}">hapus</button></div>`)
+          .join('')}</div></details>`)
+    .join('');
+  const guruOpsi = [...p.master.guru].sort((a, b) => a.nama.localeCompare(b.nama)).map((x) => `<option value="${esc(x.id)}">${esc(x.kode)} · ${esc(x.nama)}</option>`).join('');
+  return `<div class="kartu p-4"><div class="text-base font-bold">Aturan kegiatan</div>
+    <div class="mt-0.5 text-xs text-slate-500">Dipegang bersama oleh pemeriksa bentrok, seret jadwal, dan Susun Otomatis untuk kegiatan ini.</div>
+    <div class="mt-3 text-sm font-semibold">Ruang terkunci</div>
+    <div class="text-xs text-slate-500">Ruang yang dipesan kegiatan (lab komputer untuk TKA, ruang teori untuk ujian, bengkel untuk UKK). Pelajaran lain tidak boleh memakainya pada hari yang dipilih.</div>
+    <div class="mt-2 grid gap-2">${kunci || '<div class="text-xs text-slate-400">Belum ada ruang terkunci.</div>'}</div>
+    <div class="mt-2"><button class="tombol !text-xs" data-aksi="pmBuka" data-sasaran="kegiatanKunci" data-id="${esc(g.id)}|baru">+ Kunci ruang…</button></div>
+    <div class="mt-4 text-sm font-semibold">Rombel belajar tanpa ruang</div>
+    <div class="text-xs text-slate-500">Mis. PJJ: tetap punya jadwal, tidak dilaporkan “belum punya ruang”.</div>
+    <div class="mt-2">${tombolPemilih('kegiatanTanpaRuang', g.id, ringkasKode(tanpa, 'rombel', 8), 'Pilih rombel…')}</div>
+    <div class="mt-4 text-sm font-semibold">Tugas mengawas</div>
+    <div class="text-xs text-slate-500">Guru yang mengawas tidak boleh dijadwalkan mengajar pada JP yang beririsan dengan waktu tugasnya (menurut pola jam hari itu).</div>
+    <div class="mt-2 grid gap-1.5">${daftarTugas || '<div class="text-xs text-slate-400">Belum ada tugas mengawas.</div>'}</div>
+    <div class="mt-2 flex flex-wrap items-end gap-2 rounded-lg bg-slate-50 p-2 text-xs" id="formPawas">
+      <label>Guru<br><select id="pwGuru" class="isian !text-xs"><option value="">Pilih…</option>${guruOpsi}</select></label>
+      <label>Tanggal<br><input id="pwTgl" type="date" class="isian !text-xs" min="${esc(g.mulai)}" max="${esc(g.selesai)}" value="${esc(g.mulai)}"></label>
+      <label>Mulai<br><input id="pwMulai" type="time" class="isian !text-xs" value="07:30"></label>
+      <label>Selesai<br><input id="pwSelesai" type="time" class="isian !text-xs" value="09:30"></label>
+      <button class="tombol-utama !py-1 !text-xs" data-aksi="pawasTambah" data-keg="${esc(g.id)}">Tambah tugas</button></div></div>`;
 }
 
 // ------------------------------------------------------------------ sub-tab Kelas
@@ -446,6 +502,54 @@ export function klikHub(k: Konteks, el: HTMLElement): boolean {
       k.lapor(`Beban disalin dari ${dari.nama}.`);
       return true;
     }
+    case 'kunciHari': {
+      const hari = Number(d.hari);
+      const n = jumlahHariKerja(p);
+      k.ubah((x) => {
+        const kr = x.kalender.find((y) => y.id === d.keg)?.ruangKunci?.find((y) => y.id === d.kunci);
+        if (!kr) return;
+        const kini = kr.hari?.length ? new Set(kr.hari) : new Set(Array.from({ length: n }, (_, i) => i));
+        if (kini.has(hari)) kini.delete(hari);
+        else kini.add(hari);
+        if (kini.size === 0) return; // minimal satu hari
+        if (kini.size === n) delete kr.hari;
+        else kr.hari = [...kini].sort((a, b) => a - b);
+      });
+      return true;
+    }
+    case 'kunciHapus':
+      k.ubah((x) => {
+        const kg = x.kalender.find((y) => y.id === d.keg);
+        if (!kg) return;
+        kg.ruangKunci = (kg.ruangKunci ?? []).filter((y) => y.id !== d.kunci);
+        if (!kg.ruangKunci.length) delete kg.ruangKunci;
+      });
+      return true;
+    case 'pawasHapus':
+      k.ubah((x) => {
+        const kg = x.kalender.find((y) => y.id === d.keg);
+        if (!kg) return;
+        kg.pengawas = (kg.pengawas ?? []).filter((y) => y.id !== d.id);
+        if (!kg.pengawas.length) delete kg.pengawas;
+      });
+      return true;
+    case 'pawasTambah': {
+      const nilai = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null)?.value ?? '';
+      const t = { guruId: nilai('pwGuru'), tanggal: nilai('pwTgl'), mulai: nilai('pwMulai'), selesai: nilai('pwSelesai') };
+      if (!t.guruId || !t.tanggal || !t.mulai || !t.selesai) {
+        k.lapor('Lengkapi guru, tanggal, dan waktu mengawas.');
+        return true;
+      }
+      if (t.mulai >= t.selesai) {
+        k.lapor('Waktu selesai harus setelah waktu mulai.');
+        return true;
+      }
+      k.ubah((x) => {
+        const kg = x.kalender.find((y) => y.id === d.keg);
+        if (kg) kg.pengawas = [...(kg.pengawas ?? []), { id: `pw${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, ...t }];
+      });
+      return true;
+    }
     case 'hubDataset':
       k.ui.masterTab = 'data';
       k.ke('master');
@@ -532,6 +636,32 @@ function pastikanSemester(x: Proyek, id: string | undefined): Semester {
 }
 
 export function ubahHub(k: Konteks, el: HTMLInputElement): boolean {
+  if (el.dataset.aksi === 'kunciWaktu') {
+    const f = el.dataset.f as 'mulai' | 'selesai';
+    const kr0 = k.p.kalender.find((y) => y.id === el.dataset.keg)?.ruangKunci?.find((y) => y.id === el.dataset.kunci);
+    const lain = f === 'mulai' ? kr0?.selesai : kr0?.mulai;
+    if (el.value && lain && (f === 'mulai' ? el.value >= lain : lain >= el.value)) {
+      k.lapor('Waktu selesai harus setelah waktu mulai.');
+      k.gambar();
+      return true;
+    }
+    k.ubah((x) => {
+      const kr = x.kalender.find((y) => y.id === el.dataset.keg)?.ruangKunci?.find((y) => y.id === el.dataset.kunci);
+      if (!kr) return;
+      if (el.value) kr[f] = el.value;
+      else delete kr[f];
+    });
+    return true;
+  }
+  if (el.dataset.aksi === 'kunciCatatan') {
+    k.ubah((x) => {
+      const kr = x.kalender.find((y) => y.id === el.dataset.keg)?.ruangKunci?.find((y) => y.id === el.dataset.kunci);
+      if (!kr) return;
+      if (el.value.trim()) kr.catatan = el.value.trim();
+      else delete kr.catatan;
+    });
+    return true;
+  }
   if (el.dataset.aksi !== 'semF') return false;
   const f = el.dataset.f as 'nama' | 'mulai' | 'selesai';
   const nilai = el.value.trim();

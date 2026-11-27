@@ -1,5 +1,6 @@
 import type { Beban, Proyek, Slot } from '../model/tipe';
 import { adalahPelanggaran, periksa, ruangDilarang } from './validator';
+import { ruangTerkunciPada, type AturanPekan } from '../model/aturanKegiatan';
 
 /** Urutan jenis ruang bila mapel tidak punya pengaturan sendiri (lapangan hanya bila disebut). */
 export const JENIS_RUANG_BAWAAN: ('teori' | 'praktik' | 'lab' | 'lapangan')[] = ['teori', 'praktik', 'lab'];
@@ -16,11 +17,12 @@ export interface HasilRuang {
  *   yang tidak terlarang dicoba berurutan sesuai master.
  * - Bila daftar prioritas ada tetapi semuanya terpakai, hasilnya kosong dengan alasan (ruang kurang).
  */
-export function tentukanRuang(p: Proyek, slotsLain: Slot[], beban: Beban, hari: number, jam: number, pilihan?: string): HasilRuang {
+export function tentukanRuang(p: Proyek, slotsLain: Slot[], beban: Beban, hari: number, jam: number, pilihan?: string, aturan?: AturanPekan): HasilRuang {
   if (p.master.ruang.length === 0) return { ruangId: '' };
   const terpakai = new Set<string>();
   for (const s of slotsLain) if (s.hari === hari && s.jam === jam) terpakai.add(s.ruangId);
   const dilarang = ruangDilarang(p, beban);
+  for (const id of ruangTerkunciPada(aturan, hari, jam)) dilarang.add(id);
   const bersama = new Set(p.master.ruang.filter((r) => r.bersama).map((r) => r.id));
   const ada = new Set(p.master.ruang.map((r) => r.id));
   const bebas = (id: string) => ada.has(id) && !dilarang.has(id) && (!terpakai.has(id) || bersama.has(id));
@@ -39,11 +41,11 @@ export function tentukanRuang(p: Proyek, slotsLain: Slot[], beban: Beban, hari: 
  * Pratinjau perubahan: menaruh `ubahan` (slot baru atau yang berpindah, dikenali dari id) lalu mengembalikan
  * pelanggaran wajib yang melibatkan slot-slot itu. Kosong = penempatan aman.
  */
-export function cekPenempatan(p: Proyek, slots: Slot[], ubahan: Slot[]): string[] {
+export function cekPenempatan(p: Proyek, slots: Slot[], ubahan: Slot[], aturan?: AturanPekan): string[] {
   const ids = new Set(ubahan.map((s) => s.id));
   const hipotesis = slots.filter((s) => !ids.has(s.id)).concat(ubahan);
   const pesan = new Set<string>();
-  for (const m of periksa(p, hipotesis)) {
+  for (const m of periksa(p, hipotesis, aturan ? { aturan } : {})) {
     if (adalahPelanggaran(m) && m.slotIds.some((id) => ids.has(id))) pesan.add(m.pesan);
   }
   return [...pesan];
@@ -68,7 +70,7 @@ export function idSlotBaru(): string {
  * Bila memindah slot ke sel yang hanya berisi satu slot lain dan perpindahan biasa gagal, dicoba tukar posisi.
  */
 /** Memindah satu blok (beberapa JP berurutan) agar jam pertamanya jatuh di `jamAwal` pada `hari`; semua JP ikut dan harus muat. */
-export function rencanaPindahBlok(p: Proyek, slots: Slot[], blok: Slot[], hari: number, jamAwal: number): RencanaPindah {
+export function rencanaPindahBlok(p: Proyek, slots: Slot[], blok: Slot[], hari: number, jamAwal: number, aturan?: AturanPekan): RencanaPindah {
   const beban = p.beban.find((b) => b.id === blok[0]?.bebanId);
   if (!beban || blok.length === 0) return { ok: false, alasan: ['Beban tidak ditemukan.'], ubahan: [], tukar: false };
   const urut = [...blok].sort((a, b) => a.jam - b.jam);
@@ -78,21 +80,21 @@ export function rencanaPindahBlok(p: Proyek, slots: Slot[], blok: Slot[], hari: 
   const baru: Slot[] = [];
   const alasan: string[] = [];
   urut.forEach((s, i) => {
-    const r = tentukanRuang(p, kini, beban, hari, jamAwal + i, s.ruangId);
+    const r = tentukanRuang(p, kini, beban, hari, jamAwal + i, s.ruangId, aturan);
     if (r.alasan) alasan.push(`Jam ${jamAwal + i}: ${r.alasan}`);
     const b: Slot = { ...s, hari, jam: jamAwal + i, ruangId: r.ruangId };
     baru.push(b);
     kini = [...kini, b];
   });
-  alasan.push(...cekPenempatan(p, slots, baru));
+  alasan.push(...cekPenempatan(p, slots, baru, aturan));
   const unik = [...new Set(alasan)];
   return unik.length ? { ok: false, alasan: unik, ubahan: [], tukar: false } : { ok: true, alasan: [], ubahan: baru, tukar: false };
 }
 
-export function rencanaPindah(p: Proyek, slots: Slot[], dari: { bebanId?: string; slotId?: string; slotIds?: string[] }, hari: number, jam: number): RencanaPindah {
+export function rencanaPindah(p: Proyek, slots: Slot[], dari: { bebanId?: string; slotId?: string; slotIds?: string[] }, hari: number, jam: number, aturan?: AturanPekan): RencanaPindah {
   if (dari.slotIds && dari.slotIds.length > 1) {
     const blok = dari.slotIds.map((id) => slots.find((s) => s.id === id)).filter((s): s is Slot => !!s);
-    if (blok.length > 1) return rencanaPindahBlok(p, slots, blok, hari, jam);
+    if (blok.length > 1) return rencanaPindahBlok(p, slots, blok, hari, jam, aturan);
   }
   const bebanById = new Map(p.beban.map((b) => [b.id, b]));
   const asal = dari.slotId ? slots.find((s) => s.id === dari.slotId) : undefined;
@@ -102,9 +104,9 @@ export function rencanaPindah(p: Proyek, slots: Slot[], dari: { bebanId?: string
   if (asal && asal.hari === hari && asal.jam === jam) return { ok: false, alasan: ['Sudah berada di sel ini.'], ubahan: [], tukar: false };
 
   const lain = slots.filter((s) => s.id !== asal?.id);
-  const ruang = tentukanRuang(p, lain, beban, hari, jam, asal?.ruangId);
+  const ruang = tentukanRuang(p, lain, beban, hari, jam, asal?.ruangId, aturan);
   const baru: Slot = { id: asal?.id ?? idSlotBaru(), bebanId: beban.id, hari, jam, ruangId: ruang.ruangId };
-  const alasan = cekPenempatan(p, slots, [baru]);
+  const alasan = cekPenempatan(p, slots, [baru], aturan);
   if (ruang.alasan) alasan.unshift(ruang.alasan);
   if (alasan.length === 0) return { ok: true, alasan: [], ubahan: [baru], tukar: false };
 
@@ -114,11 +116,11 @@ export function rencanaPindah(p: Proyek, slots: Slot[], dari: { bebanId?: string
     const bT = t ? bebanById.get(t.bebanId) : undefined;
     if (t && bT && bT.rombelId === beban.rombelId && !bT.paralel) {
       const sisa = slots.filter((s) => s.id !== asal.id && s.id !== t.id);
-      const rA = tentukanRuang(p, sisa, beban, hari, jam, asal.ruangId);
+      const rA = tentukanRuang(p, sisa, beban, hari, jam, asal.ruangId, aturan);
       const a2: Slot = { ...asal, hari, jam, ruangId: rA.ruangId };
-      const rT = tentukanRuang(p, [...sisa, a2], bT, asal.hari, asal.jam, t.ruangId);
+      const rT = tentukanRuang(p, [...sisa, a2], bT, asal.hari, asal.jam, t.ruangId, aturan);
       const t2: Slot = { ...t, hari: asal.hari, jam: asal.jam, ruangId: rT.ruangId };
-      const alasanTukar = cekPenempatan(p, slots, [a2, t2]);
+      const alasanTukar = cekPenempatan(p, slots, [a2, t2], aturan);
       if (rA.alasan) alasanTukar.unshift(rA.alasan);
       if (rT.alasan) alasanTukar.unshift(rT.alasan);
       if (alasanTukar.length === 0) return { ok: true, alasan: [], ubahan: [a2, t2], tukar: true };

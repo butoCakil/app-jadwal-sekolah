@@ -1,7 +1,7 @@
 import type { Proyek } from './tipe';
 import { VERSI_DATA_SAAT_INI } from './tipe';
-import { cekKegiatan, cekPola, daftarPola } from './kalender';
-import { cekSkema } from './skema';
+import { cekKegiatan, cekPola, daftarPola, hariPekan } from './kalender';
+import { cekSkema, keMenit } from './skema';
 
 /** Memeriksa proyek hasil impor. Mengembalikan daftar masalah; kosong berarti aman dimuat. */
 export function validasiProyek(x: unknown): string[] {
@@ -64,6 +64,29 @@ export function validasiProyek(x: unknown): string[] {
   for (const kg of proyek.kalender) {
     if (kg.versiId && !idVersi.has(kg.versiId)) galat.push(`Kegiatan ${kg.nama}: versi jadwal tidak ada.`);
     if (kg.rombelTidakAktif.some((i) => !adaRombel.has(i))) galat.push(`Kegiatan ${kg.nama}: ada rombel yang tidak ada.`);
+    if (kg.rombelTanpaRuang?.some((i) => !adaRombel.has(i))) galat.push(`Kegiatan ${kg.nama}: ada rombel tanpa ruang yang tidak ada.`);
+    for (const kr of kg.ruangKunci ?? []) {
+      if (kr.ruangIds.some((i) => !adaRuang.has(i))) galat.push(`Kegiatan ${kg.nama}: ada ruang terkunci yang tidak ada.`);
+      if (kr.hari?.some((h) => !Number.isInteger(h) || h < 0 || h >= hari)) galat.push(`Kegiatan ${kg.nama}: hari kunci ruang di luar hari kerja.`);
+      if (!!kr.mulai !== !!kr.selesai) galat.push(`Kegiatan ${kg.nama}: kunci ruang harus punya waktu mulai dan selesai sekaligus, atau keduanya kosong.`);
+      else if (kr.mulai && kr.selesai) {
+        try {
+          if (keMenit(kr.mulai) >= keMenit(kr.selesai)) galat.push(`Kegiatan ${kg.nama}: waktu kunci ruang ${kr.mulai}–${kr.selesai} tidak berurutan.`);
+        } catch (e) {
+          galat.push(`Kegiatan ${kg.nama}: waktu kunci ruang tidak valid (${(e as Error).message}).`);
+        }
+      }
+    }
+    for (const t of kg.pengawas ?? []) {
+      if (!adaGuru.has(t.guruId)) galat.push(`Kegiatan ${kg.nama}: pengawas bukan guru yang ada.`);
+      if (t.ruangId && !adaRuang.has(t.ruangId)) galat.push(`Kegiatan ${kg.nama}: ruang pengawasan tidak ada.`);
+      try {
+        hariPekan(t.tanggal);
+        if (keMenit(t.mulai) >= keMenit(t.selesai)) galat.push(`Kegiatan ${kg.nama}: waktu mengawas ${t.mulai}–${t.selesai} tidak berurutan.`);
+      } catch (e) {
+        galat.push(`Kegiatan ${kg.nama}: tugas mengawas tidak valid (${(e as Error).message}).`);
+      }
+    }
   }
   if (proyek.periodeAktifId && !proyek.kalender.some((kg) => kg.id === proyek.periodeAktifId)) galat.push('Periode aktif tidak ada di kalender.');
   const idSkema = proyek.skema.map((s) => s.id);

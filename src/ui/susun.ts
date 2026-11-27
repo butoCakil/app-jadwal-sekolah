@@ -125,7 +125,7 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
         pekerja = null;
         k.gambar();
       };
-      w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, batasMs: st.detik * 1000 });
+      w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, aturan: k.turunan.aturan, batasMs: st.detik * 1000 });
       k.gambar();
       return true;
     }

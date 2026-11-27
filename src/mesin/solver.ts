@@ -3,6 +3,7 @@ import { kapasitasKbm } from '../model/skema';
 import { jpRombel } from '../model/jp';
 import { JENIS_RUANG_BAWAAN } from './penempatan';
 import { ruangDilarang } from './validator';
+import type { AturanPekan } from '../model/aturanKegiatan';
 
 /**
  * Penyusun jadwal otomatis (tahap 4).
@@ -24,6 +25,8 @@ export interface OpsiSusun {
   skemaPerHari: (string | null)[];
   /** Slot yang dipertahankan; sisa JP tiap beban dicarikan tempat di sekitarnya. */
   tetap?: Slot[];
+  /** Aturan kegiatan: ruang terkunci dianggap terpakai sepanjang hari itu, guru yang mengawas dianggap tidak tersedia pada JP-nya. */
+  aturan?: AturanPekan;
   /** Batas waktu total (milidetik). Bawaan 8000. */
   batasMs?: number;
   benih?: number;
@@ -170,6 +173,18 @@ class Mesin {
       if (g === undefined || a.hari < 0 || a.hari >= HARI) continue;
       const jams = a.jam.length ? a.jam : Array.from({ length: LEBAR }, (_, i) => i);
       for (const j of jams) if (j >= 0 && j < LEBAR) (this.guruTutup[g] as Uint8Array)[a.hari * LEBAR + j] = 1;
+    }
+
+    for (const k of opsi.aturan?.kunci ?? []) {
+      const u = ruangIdx.get(k.ruangId);
+      if (u === undefined || k.hari < 0 || k.hari >= HARI) continue;
+      const jams = k.jam ?? Array.from({ length: LEBAR }, (_, i) => i);
+      for (const j of jams) if (j >= 0 && j < LEBAR) (this.ruangOcc[u] as Int32Array)[k.hari * LEBAR + j] = -2;
+    }
+    for (const t of opsi.aturan?.pengawas ?? []) {
+      const g = guruIdx.get(t.guruId);
+      if (g === undefined || t.hari < 0 || t.hari >= HARI) continue;
+      for (const j of t.jam) if (j >= 0 && j < LEBAR) (this.guruTutup[g] as Uint8Array)[t.hari * LEBAR + j] = 1;
     }
 
     // slot tetap menempati sumber daya lebih dulu
