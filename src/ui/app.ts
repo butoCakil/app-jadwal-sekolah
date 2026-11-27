@@ -196,6 +196,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
             <div><div class="text-[11px] font-semibold tracking-widest text-amber-600">SMK NEGERI BANSARI</div><div class="text-base font-bold leading-tight">Jadwal Pelajaran <span class="text-xs font-normal text-slate-500">· ${esc(p.nama)}</span></div></div></div>
           <div class="ml-2">${status}</div>
           <div class="ml-auto flex flex-wrap items-center gap-2">
+            <a class="tombol" href="#/" title="Lihat halaman publik">Halaman publik</a>
             <button class="tombol disabled:opacity-40" data-aksi="undo" ${riwayat.bisaUndo() ? '' : 'disabled'} title="Urungkan (Ctrl+Z)">↶ Urungkan</button>
             <button class="tombol disabled:opacity-40" data-aksi="redo" ${riwayat.bisaRedo() ? '' : 'disabled'} title="Ulangi (Ctrl+Y)">↷ Ulangi</button>
             <button class="tombol" data-aksi="ekspor">Ekspor JSON</button>
