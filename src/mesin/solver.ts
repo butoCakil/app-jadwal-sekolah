@@ -19,6 +19,8 @@ import type { AturanPekan } from '../model/aturanKegiatan';
  */
 
 const LEBAR = 16;
+/** biaya memindahkan pertemuan dari posisi jadwal awalnya (agar hanya yang perlu yang bergeser) */
+const BIAYA_GESER_AWAL = 40;
 
 export interface OpsiSusun {
   /** id skema Senin..Jumat (null = tidak ada KBM). Menentukan kapasitas jam per hari. */
@@ -27,6 +29,19 @@ export interface OpsiSusun {
   tetap?: Slot[];
   /** Aturan kegiatan: ruang terkunci dianggap terpakai sepanjang hari itu, guru yang mengawas dianggap tidak tersedia pada JP-nya. */
   aturan?: AturanPekan;
+  /**
+   * Jadwal awal (mis. jadwal induk) yang dipakai sebagai titik mulai: tiap pertemuan ditempatkan di posisi semula bila masih sah
+   * menurut aturan; yang tidak sah diganti. Pertemuan yang menjauh dari posisi awal dikenai biaya, sehingga yang bergeser hanya
+   * yang perlu. Beda dengan `tetap`: semuanya boleh digeser.
+   */
+  awal?: Slot[];
+  /**
+   * true = ruang prioritas beban hanya pilihan utama: bila semuanya terpakai atau terkunci, boleh memakai ruang lain yang diizinkan
+   * (menurut jenis ruang mapel, tanpa ruang terlarang), dengan biaya. Bawaan false (ruang prioritas wajib).
+   */
+  prioritasLunak?: boolean;
+  /** Kedalaman rantai geser saat menempatkan pertemuan yang buntu (1 = menggeser penghalang langsung). Bawaan 1. */
+  kedalaman?: number;
   /** Batas waktu total (milidetik). Bawaan 8000. */
   batasMs?: number;
   benih?: number;
@@ -87,6 +102,8 @@ interface Anggota {
   beban: Beban;
   /** indeks ruang yang boleh dipakai, berurutan; [-1] bila master tidak punya ruang */
   calon: number[];
+  /** banyaknya ruang pertama di `calon` yang termasuk pilihan utama; ruang sesudahnya hanya cadangan (berbiaya) */
+  prio: number;
 }
 interface Unit {
   id: number;
@@ -104,6 +121,8 @@ interface Chunk {
   hari: number;
   mulai: number;
   ruang: number[];
+  /** posisi pada jadwal awal (bila ada) */
+  awal?: { h: number; m: number };
 }
 interface Potret {
   unit: number;
@@ -111,6 +130,7 @@ interface Potret {
   hari: number;
   mulai: number;
   ruang: number[];
+  awal?: { h: number; m: number };
 }
 
 class Mesin {
@@ -138,12 +158,14 @@ class Mesin {
   readonly peringatan: string[] = [];
   jpTetap = 0;
   total = 0;
+  readonly kedalaman: number;
 
   /** jumlah hari kerja per pekan (dari panjang skemaPerHari) */
   readonly hari: number;
 
   constructor(readonly p: Proyek, opsi: OpsiSusun) {
     this.hari = opsi.skemaPerHari.length || 5;
+    this.kedalaman = Math.max(1, Math.floor(opsi.kedalaman ?? 1));
     const HARI = this.hari;
     const skemaById = new Map(p.skema.map((s) => [s.id, s]));
     this.cap = opsi.skemaPerHari.map((id) => {
@@ -226,6 +248,29 @@ class Mesin {
     }
     this.jpTetap = this.tetap.length;
 
+    // jadwal awal: pertemuan berurutan per beban (hanya beban tanpa slot tetap)
+    const awalPerBeban = new Map<string, { h: number; m: number; size: number; r: string }[]>();
+    {
+      const per = new Map<string, Slot[]>();
+      for (const sl of opsi.awal ?? []) {
+        if (sl.hari < 0 || sl.hari >= HARI || sl.jam < 1 || sl.jam >= LEBAR) continue;
+        const l = per.get(sl.bebanId);
+        if (l) l.push(sl);
+        else per.set(sl.bebanId, [sl]);
+      }
+      for (const [bid, l] of per) {
+        const runs: { h: number; m: number; size: number; r: string }[] = [];
+        l.sort((a, b) => a.hari - b.hari || a.jam - b.jam);
+        for (const sl of l) {
+          const akhir = runs[runs.length - 1];
+          // pertemuan berurutan di ruang yang sama = satu pertemuan
+          if (akhir && akhir.h === sl.hari && akhir.m + akhir.size === sl.jam && akhir.r === sl.ruangId) akhir.size += 1;
+          else runs.push({ h: sl.hari, m: sl.jam, size: 1, r: sl.ruangId });
+        }
+        awalPerBeban.set(bid, runs);
+      }
+    }
+
     // unit: kelompok paralel di rombel yang sama dijadikan satu
     const kelompok = new Map<string, Beban[]>();
     for (const b of p.beban) {
@@ -249,9 +294,13 @@ class Mesin {
         const dilarang = ruangDilarang(p, beban);
         const mapel = p.master.mapel.find((m) => m.id === beban.mapelId);
         const urut = mapel?.jenisRuang?.length ? mapel.jenisRuang : JENIS_RUANG_BAWAAN;
-        const ids = beban.ruangPrioritas.length ? beban.ruangPrioritas : urut.flatMap((j) => aktif.filter((x) => x.r.jenis === j).map((x) => x.r.id));
-        const calon = [...new Set(ids)].filter((id) => ruangIdx.has(id) && !dilarang.has(id)).map((id) => ruangIdx.get(id) as number);
-        return { beban, calon: p.master.ruang.length === 0 ? [-1] : calon };
+        const jenisIds = urut.flatMap((j) => aktif.filter((x) => x.r.jenis === j).map((x) => x.r.id));
+        const utama = beban.ruangPrioritas.length ? beban.ruangPrioritas : jenisIds;
+        const lunak = !!opsi.prioritasLunak && beban.ruangPrioritas.length > 0;
+        const ambil = (ids: string[]) => [...new Set(ids)].filter((id) => ruangIdx.has(id) && !dilarang.has(id)).map((id) => ruangIdx.get(id) as number);
+        const calonUtama = ambil(utama);
+        const calon = lunak ? [...calonUtama, ...ambil(jenisIds).filter((r) => !calonUtama.includes(r))] : calonUtama;
+        return { beban, calon: p.master.ruang.length === 0 ? [-1] : calon, prio: p.master.ruang.length === 0 ? 1 : calonUtama.length };
       });
       const guru = [...new Set(anggotaB.flatMap((b) => [b.guruId, ...b.timGuruIds]).map((x) => guruIdx.get(x)).filter((x): x is number => x !== undefined))];
       const sisaJp = Math.max(0, Math.max(...anggotaB.map((b) => b.jp - (sudah.get(b.id) ?? 0))));
@@ -260,7 +309,15 @@ class Mesin {
       this.total += anggotaB.reduce((a, b) => a + b.jp, 0);
       if (sisaJp > 0) {
         const pola = anggotaB.length === 1 && !(sudah.get((anggotaB[0] as Beban).id)) ? (anggotaB[0] as Beban).pola : undefined;
-        for (const size of pecahJp(sisaJp, pola)) this.chunkBaru(unit, size);
+        const runs = anggotaB.some((b) => sudah.has(b.id)) ? [] : awalPerBeban.get((anggotaB[0] as Beban).id) ?? [];
+        let sisaPecah = sisaJp;
+        for (const r of runs) {
+          if (sisaPecah <= 0) break;
+          const size = Math.min(r.size, sisaPecah);
+          this.chunkBaru(unit, size).awal = { h: r.h, m: r.m };
+          sisaPecah -= size;
+        }
+        if (sisaPecah > 0) for (const size of pecahJp(sisaPecah, runs.length ? undefined : pola)) this.chunkBaru(unit, size);
       }
     }
     // peringatan kapasitas
@@ -274,6 +331,16 @@ class Mesin {
     for (const g of p.master.guru) {
       const n = guruJp.get(g.id) ?? 0;
       if (n > kapPekan) this.peringatan.push(`Guru ${g.kode} mengajar ${n} JP per pekan, melebihi kapasitas ${kapPekan} JP.`);
+    }
+    this.terapkanAwal();
+  }
+
+  /** Menempatkan tiap pertemuan di posisi jadwal awalnya bila masih sah; yang tidak sah dibiarkan belum tertempatkan. */
+  terapkanAwal(): void {
+    for (const c of this.chunks) {
+      if (!c.awal || c.hari >= 0) continue;
+      const r = this.muat(c, c.awal.h, c.awal.m);
+      if (r) this.pasang(c, c.awal.h, c.awal.m, r);
     }
   }
 
@@ -401,6 +468,7 @@ class Mesin {
   /** Biaya yang melekat pada chunk bila ditaruh di (hari, mulai): terpotong istirahat, sehari dengan pertemuan beban yang sama, jam akhir. */
   biayaChunk(c: Chunk, hari: number, mulai: number): number {
     let b = mulai * 0.15;
+    if (c.awal && (c.awal.h !== hari || c.awal.m !== mulai)) b += BIAYA_GESER_AWAL;
     const ist = this.istirahat[hari] as Set<number>;
     for (let j = mulai; j < mulai + c.size - 1; j++) if (ist.has(j)) b += 4;
     for (const o of this.chunks) if (o !== c && o.unit === c.unit && o.hari === hari) b += 20;
@@ -412,7 +480,16 @@ class Mesin {
     this.pasang(c, hari, mulai, ruang);
     const sesudah = this.biayaHari(c.unit, hari);
     this.lepas(c);
-    return sesudah - sebelum + this.biayaChunk(c, hari, mulai);
+    return sesudah - sebelum + this.biayaChunk(c, hari, mulai) + this.biayaRuang(c, ruang);
+  }
+  /** Biaya memakai ruang cadangan (di luar pilihan utama beban). */
+  biayaRuang(c: Chunk, ruang: number[]): number {
+    let b = 0;
+    c.unit.anggota.forEach((a, i) => {
+      const r = ruang[i];
+      if (r !== undefined && r >= 0 && a.calon.indexOf(r) >= a.prio) b += 8;
+    });
+    return b;
   }
 
   // ------------------------------------------------------------ penempatan
@@ -470,23 +547,40 @@ class Mesin {
     return hasil;
   }
 
-  /** Menempatkan chunk: langsung, lalu dengan menggeser satu atau dua penghalang. true bila berhasil. */
-  tempatkan(c: Chunk, acakFn: () => number, ejeksi: boolean): boolean {
+  /** Foto posisi semua chunk, untuk membatalkan rantai geser yang gagal. */
+  private foto(): { c: Chunk; h: number; m: number; r: number[] }[] {
+    return this.chunks.map((c) => ({ c, h: c.hari, m: c.mulai, r: c.ruang }));
+  }
+  private pulihkan(f: { c: Chunk; h: number; m: number; r: number[] }[]): void {
+    for (const x of f) this.lepas(x.c);
+    for (const x of f) if (x.h >= 0) this.pasang(x.c, x.h, x.m, x.r);
+  }
+
+  /**
+   * Menempatkan chunk: langsung, lalu dengan menggeser satu atau dua penghalang. Bila penghalang yang digeser juga buntu dan
+   * `kedalaman` > 1, penghalang itu ikut menggeser penghalangnya sendiri (rantai geser), tanpa menyentuh chunk yang sudah dalam rantai.
+   * true bila berhasil; bila gagal, semua posisi dipulihkan.
+   */
+  tempatkan(c: Chunk, acakFn: () => number, ejeksi: boolean, kedalaman = 1, larang: Set<number> = new Set()): boolean {
     const t = this.terbaik(c, acakFn);
     if (t) {
       this.pasang(c, t.hari, t.mulai, t.ruang);
       return true;
     }
     if (!ejeksi) return false;
+    const lar = new Set(larang);
+    lar.add(c.id);
     const calon: { h: number; m: number; hal: number[] }[] = [];
     for (let h = 0; h < this.hari; h++) {
       for (let m = 1; m + c.size - 1 <= (this.cap[h] as number); m++) {
         const hal = this.penghalang(c, h, m);
-        if (hal && hal.size > 0 && hal.size <= 2) calon.push({ h, m, hal: [...hal] });
+        if (hal && hal.size > 0 && hal.size <= 2 && ![...hal].some((id) => lar.has(id))) calon.push({ h, m, hal: [...hal] });
       }
     }
     calon.sort((a, b) => a.hal.length - b.hal.length || acakFn() - 0.5);
-    for (const k of calon.slice(0, 60)) {
+    const dalam = kedalaman > 1;
+    for (const k of calon.slice(0, dalam ? 40 : 60)) {
+      const foto = dalam ? this.foto() : null;
       const lawan = k.hal.map((id) => this.chunks.find((x) => x.id === id)).filter((x): x is Chunk => !!x);
       const asal = lawan.map((x) => ({ x, h: x.hari, m: x.mulai, r: x.ruang }));
       for (const x of lawan) this.lepas(x);
@@ -500,24 +594,31 @@ class Mesin {
       let ok = true;
       for (const x of lawan) {
         const tt = this.terbaik(x, acakFn);
-        if (!tt) {
+        if (tt) {
+          this.pasang(x, tt.hari, tt.mulai, tt.ruang);
+        } else if (dalam && this.tempatkan(x, acakFn, true, kedalaman - 1, lar)) {
+          // x sudah dipasang oleh rantai yang lebih dalam
+        } else {
           ok = false;
           break;
         }
-        this.pasang(x, tt.hari, tt.mulai, tt.ruang);
         ditempat.push(x);
       }
       if (ok) return true;
-      for (const x of ditempat) this.lepas(x);
-      this.lepas(c);
-      for (const a of asal) this.pasang(a.x, a.h, a.m, a.r);
+      if (foto) {
+        this.pulihkan(foto);
+      } else {
+        for (const x of ditempat) this.lepas(x);
+        this.lepas(c);
+        for (const a of asal) this.pasang(a.x, a.h, a.m, a.r);
+      }
     }
     return false;
   }
 
   /** Menempatkan chunk, dan bila tidak muat memecahnya menjadi dua. */
   usahakan(c: Chunk, acakFn: () => number): boolean {
-    if (this.tempatkan(c, acakFn, true)) return true;
+    if (this.tempatkan(c, acakFn, true, this.kedalaman)) return true;
     if (c.size <= 1) return false;
     const a = Math.ceil(c.size / 2);
     const idx = this.chunks.indexOf(c);
@@ -551,13 +652,14 @@ class Mesin {
     return b;
   }
   potret(): Potret[] {
-    return this.chunks.map((c) => ({ unit: c.unit.id, size: c.size, hari: c.hari, mulai: c.mulai, ruang: [...c.ruang] }));
+    return this.chunks.map((c) => ({ unit: c.unit.id, size: c.size, hari: c.hari, mulai: c.mulai, ruang: [...c.ruang], ...(c.awal ? { awal: c.awal } : {}) }));
   }
   muatPotret(ps: Potret[]): void {
     for (const c of [...this.chunks]) this.lepas(c);
     this.chunks = [];
     for (const q of ps) {
       const c = this.chunkBaru(this.units[q.unit] as Unit, q.size);
+      if (q.awal) c.awal = q.awal;
       if (q.hari >= 0) this.pasang(c, q.hari, q.mulai, q.ruang);
     }
   }
@@ -673,6 +775,7 @@ export function susun(p: Proyek, opsi: OpsiSusun): HasilSusun {
     const m = new Mesin(p, opsi);
     const daftar = [...m.chunks].sort((a, b) => sulit(b) - sulit(a) + (rnd() - 0.5) * (putaran === 1 ? 0 : 160));
     for (const c of daftar) {
+      if (c.hari >= 0) continue; // sudah tertempatkan dari jadwal awal
       if (!m.usahakan(c, rnd)) { /* tetap belum; dilaporkan di akhir */ }
     }
     const nilai = m.jpBelum() * 1000 + m.biayaTotal();

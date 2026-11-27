@@ -8,7 +8,7 @@ import { adalahPelanggaran, periksa } from '../src/mesin/validator';
 import { rencanaPindah, tentukanRuang } from '../src/mesin/penempatan';
 import { hitungTurunan } from '../src/ui/turunan';
 import { polaUntukTanggal } from '../src/model/kalender';
-import { kalenderFokus } from '../src/model/simpul';
+import { kalenderFokus, terdampak, versiSemester } from '../src/model/simpul';
 import type { Kegiatan, Proyek, Slot } from '../src/model/tipe';
 
 const HARI = ['2026-12-07', '2026-12-08', '2026-12-09', '2026-12-10', '2026-12-11'];
@@ -238,4 +238,71 @@ describe('alasan sisa solver menyebut penyebab sebenarnya', () => {
     expect(sisa[0]!.alasan).toMatch(/EDW sedang mengawas pada \d+/);
     expect(periksa({ ...kloning }, h.slots, { skemaPerHari: pola, rombelTidakAktif: t.rombelTidakAktif, aturan: t.aturan }).filter(adalahPelanggaran)).toEqual([]);
   });
+});
+
+describe('solver: prioritas lunak, jadwal awal, rantai geser', () => {
+  it('ruang prioritas yang terkunci: wajib = tidak muat; lunak = pindah ke ruang lain yang diizinkan', () => {
+    const p = kosong(proyekContoh());
+    const b = p.beban.find((x) => !x.nonTatapMuka && x.jp > 0)!;
+    const ruang = p.master.ruang.find((r) => r.dijadwalkan !== false)!.id;
+    b.ruangPrioritas = [ruang];
+    const hari = [0, 1, 2, 3, 4];
+    const a: AturanPekan = { kunci: hari.map((h) => ({ hari: h, ruangId: ruang, kegiatan: 'ASAS' })), pengawas: [], tanpaRuang: [] };
+    const ketat = susun(p, { skemaPerHari: p.polaReguler, aturan: a, batasMs: 800 });
+    expect(ketat.sisa.some((x) => x.bebanId === b.id)).toBe(true);
+    const lunak = susun(p, { skemaPerHari: p.polaReguler, aturan: a, prioritasLunak: true, batasMs: 800 });
+    expect(lunak.sisa.some((x) => x.bebanId === b.id)).toBe(false);
+    const sl = lunak.slots.filter((x) => x.bebanId === b.id);
+    expect(sl.length).toBe(b.jp);
+    expect(sl.every((x) => x.ruangId !== ruang)).toBe(true);
+    expect(periksa(p, lunak.slots, { aturan: a }).filter(adalahPelanggaran)).toEqual([]);
+  });
+
+  it('jadwal awal yang sudah sah hampir seluruhnya dipertahankan (hanya perbaikan kerapian yang jelas untung)', () => {
+    const p = kosong(proyekContoh());
+    const dasar = susun(p, { skemaPerHari: p.polaReguler, batasMs: 800 });
+    const lagi = susun(p, { skemaPerHari: p.polaReguler, awal: dasar.slots, batasMs: 800 });
+    expect(lagi.terjadwal).toBe(dasar.terjadwal);
+    const kunci = (x: Slot) => `${x.bebanId}|${x.hari}|${x.jam}`;
+    const awal = new Set(dasar.slots.map(kunci));
+    expect(lagi.slots.filter((x) => !awal.has(kunci(x))).length).toBeLessThanOrEqual(Math.ceil(dasar.slots.length * 0.1));
+  });
+
+  it('jadwal awal yang melanggar aturan baru: hanya yang melanggar bergeser, hasil tetap sah', () => {
+    const p = kosong(proyekContoh());
+    const dasar = susun(p, { skemaPerHari: p.polaReguler, batasMs: 800 });
+    const s0 = dasar.slots.find((x) => x.ruangId)!;
+    const a: AturanPekan = { kunci: [{ hari: s0.hari, ruangId: s0.ruangId, kegiatan: 'ASAS' }], pengawas: [], tanpaRuang: [] };
+    const baru = susun(p, { skemaPerHari: p.polaReguler, awal: dasar.slots, aturan: a, prioritasLunak: true, kedalaman: 3, batasMs: 1500 });
+    expect(baru.terjadwal).toBe(dasar.terjadwal);
+    expect(periksa(p, baru.slots, { aturan: a }).filter(adalahPelanggaran)).toEqual([]);
+    const kunci = (x: Slot) => `${x.bebanId}|${x.hari}|${x.jam}|${x.ruangId}`; // pindah ruang juga dihitung bergeser
+    const lama = new Set(dasar.slots.map(kunci));
+    const bergeser = baru.slots.filter((x) => !lama.has(kunci(x))).length;
+    const terkunci = dasar.slots.filter((x) => x.hari === s0.hari && x.ruangId === s0.ruangId).length;
+    expect(bergeser).toBeGreaterThan(0);
+    expect(bergeser).toBeLessThan(dasar.slots.length / 2); // bukan susun ulang total
+    expect(terkunci).toBeGreaterThan(0);
+  });
+
+  it('data Tahun 2026: ASAS tersusun penuh tanpa pelanggaran (ruang prioritas lunak + rantai geser), dari nol maupun dari jadwal induk', () => {
+    const p = proyekSekolah('tahun');
+    const g = p.kalender.find((x) => x.id === 'k-asas')!;
+    const t = hitungTurunan(p, g.mulai, g.id);
+    const dampak = new Set(p.master.rombel.filter((r) => terdampak(g, r.id) && !t.rombelTidakAktif.has(r.id)).map((r) => r.id));
+    const rb = new Map(t.beban.map((b) => [b.id, b.rombelId]));
+    const aktif = t.beban.filter((b) => !t.rombelTidakAktif.has(b.rombelId));
+    const kloning = structuredClone(p);
+    kloning.beban = structuredClone(aktif);
+    for (const v of kloning.versi) v.slots = [];
+    const tetap = t.slots.filter((s) => !dampak.has(rb.get(s.bebanId) ?? ''));
+    const pola = polaUntukTanggal(g.mulai, { ...p, kalender: kalenderFokus(p, g.id) }).pola;
+    const peta = new Map(aktif.map((b) => [b.asal ?? b.id, b.id]));
+    const awal = (versiSemester(p, t.semester)?.slots ?? []).flatMap((s) => { const id = peta.get(s.bebanId); return id && dampak.has(rb.get(id) ?? '') ? [{ ...s, bebanId: id }] : []; });
+    for (const a of [undefined, awal]) {
+      const h = susun(kloning, { skemaPerHari: pola, tetap, awal: a, aturan: t.aturan, prioritasLunak: true, kedalaman: 3, batasMs: 4000 });
+      expect(h.sisa.filter((x) => dampak.has(rb.get(x.bebanId) ?? ''))).toEqual([]);
+      expect(periksa(kloning, h.slots, { skemaPerHari: pola, rombelTidakAktif: t.rombelTidakAktif, aturan: t.aturan }).filter(adalahPelanggaran)).toEqual([]);
+    }
+  }, 30000);
 });

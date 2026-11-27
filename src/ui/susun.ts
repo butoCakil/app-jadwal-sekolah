@@ -2,19 +2,21 @@ import type { HasilSusun, Kemajuan } from '../mesin/solver';
 import type { Slot } from '../model/tipe';
 import { esc } from './util';
 import { polaUntukTanggal } from '../model/kalender';
-import { kalenderFokus, modelWarisan, terdampak } from '../model/simpul';
+import { kalenderFokus, modelWarisan, terdampak, versiSemester } from '../model/simpul';
 import type { Konteks } from './konteks';
 
-type Mode = 'nol' | 'lengkapi';
+type Mode = 'nol' | 'lengkapi' | 'induk';
 interface Status {
   mode: Mode;
   detik: number;
+  /** ruang prioritas beban boleh diganti ruang lain yang diizinkan bila penuh atau terkunci */
+  lunak: boolean;
   jalan: boolean;
   kemajuan: Kemajuan | null;
   hasil: HasilSusun | null;
   galat: string;
 }
-const st: Status = { mode: 'nol', detik: 10, jalan: false, kemajuan: null, hasil: null, galat: '' };
+const st: Status = { mode: 'nol', detik: 10, lunak: true, jalan: false, kemajuan: null, hasil: null, galat: '' };
 let pekerja: Worker | null = null;
 
 const bar = (m: Kemajuan | null) => {
@@ -30,13 +32,16 @@ export function renderSusun(k: Konteks): string {
   const tdkAktif = k.turunan.rombelTidakAktif;
   const polaAktif = polaUntukTanggal(k.ui.tanggal, { ...p, kalender: kalenderFokus(p, k.ui.fokus) }).pola;
   const pola = polaAktif.map((id) => p.skema.find((s) => s.id === id)?.nama.replace(/ Jam\/Hari/, '') ?? '?').join(' · ');
+  const kegiatanAktif = !!k.turunan.periode && modelWarisan(k.turunan.periode);
   const opsi = `<div class="mt-3 grid gap-3 sm:grid-cols-2">
       <fieldset class="rounded-lg border border-slate-200 p-3 text-sm"><legend class="px-1 text-xs font-semibold text-slate-500">Cara</legend>
         <label class="flex items-start gap-2"><input type="radio" name="modeSusun" value="nol" ${st.mode === 'nol' ? 'checked' : ''}><span><b>Susun dari nol</b><br><span class="text-xs text-slate-500">Mengganti seluruh jadwal versi “${esc(versi?.nama ?? '—')}” (${kini} slot sekarang).</span></span></label>
-        <label class="mt-2 flex items-start gap-2"><input type="radio" name="modeSusun" value="lengkapi" ${st.mode === 'lengkapi' ? 'checked' : ''}><span><b>Lengkapi</b><br><span class="text-xs text-slate-500">Mempertahankan slot yang sudah ada, hanya mengisi sisa JP.</span></span></label></fieldset>
+        <label class="mt-2 flex items-start gap-2"><input type="radio" name="modeSusun" value="lengkapi" ${st.mode === 'lengkapi' ? 'checked' : ''}><span><b>Lengkapi</b><br><span class="text-xs text-slate-500">Mempertahankan slot yang sudah ada, hanya mengisi sisa JP.</span></span></label>
+        ${kegiatanAktif ? `<label class="mt-2 flex items-start gap-2"><input type="radio" name="modeSusun" value="induk" ${st.mode === 'induk' ? 'checked' : ''}><span><b>Mulai dari jadwal induk</b><br><span class="text-xs text-slate-500">Kelas terdampak mulai dari jadwal induknya; hanya pertemuan yang melanggar aturan kegiatan (ruang terkunci, pengawas) yang digeser, sisanya diusahakan tetap.</span></span></label>` : ''}</fieldset>
       <fieldset class="rounded-lg border border-slate-200 p-3 text-sm"><legend class="px-1 text-xs font-semibold text-slate-500">Waktu menyusun</legend>
         <select id="detikSusun" class="isian">${[5, 10, 20, 40].map((d) => `<option value="${d}" ${st.detik === d ? 'selected' : ''}>${d} detik</option>`).join('')}</select>
-        <div class="mt-2 text-xs text-slate-500">Lebih lama = jadwal lebih rapi (lebih sedikit jam kosong di tengah hari). Jumlah JP yang muat biasanya sudah tercapai di detik pertama.</div></fieldset></div>`;
+        <div class="mt-2 text-xs text-slate-500">Lebih lama = jadwal lebih rapi (lebih sedikit jam kosong di tengah hari). Jumlah JP yang muat biasanya sudah tercapai di detik pertama.</div>
+        <label class="mt-3 flex items-start gap-2"><input type="checkbox" id="lunakSusun" ${st.lunak ? 'checked' : ''}><span><b>Ruang prioritas boleh diganti</b><br><span class="text-xs text-slate-500">Bila ruang prioritas sebuah beban penuh atau terkunci kegiatan, boleh memakai ruang lain yang diizinkan (ruang terlarang tetap tidak dipakai). Matikan agar ruang prioritas wajib.</span></span></label></fieldset></div>`;
   let bagian = '';
   if (st.jalan) {
     bagian = `<div class="mt-4 rounded-lg bg-slate-50 p-3" id="kemajuanSusun">${bar(st.kemajuan)}</div>
@@ -92,6 +97,15 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
       // rombel tidak aktif (PKL) tidak ikut disusun
       kloning.beban = structuredClone(k.turunan.beban).filter((b) => !tdk.has(b.rombelId));
       const tetap: Slot[] = st.mode === 'lengkapi' ? k.turunan.slots : k.turunan.slots.filter(ikutInduk);
+      // mulai dari jadwal induk: beban kegiatan yang menggantikan beban induk memakai slot induknya; hanya kelas terdampak
+      let awal: Slot[] | undefined;
+      if (st.mode === 'induk' && g && modelWarisan(g)) {
+        const peta = new Map(kloning.beban.map((b) => [b.asal ?? b.id, b.id]));
+        awal = (versiSemester(k.p, k.turunan.semester)?.slots ?? []).flatMap((sl) => {
+          const id = peta.get(sl.bebanId);
+          return id && terdampak(g, rombelBeban.get(id) ?? '') ? [{ ...sl, bebanId: id }] : [];
+        });
+      }
       for (const v of kloning.versi) v.slots = [];
       const polaSusun = polaUntukTanggal(k.ui.tanggal, { ...k.p, kalender: kalenderFokus(k.p, k.ui.fokus) }).pola;
       try {
@@ -125,7 +139,7 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
         pekerja = null;
         k.gambar();
       };
-      w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, aturan: k.turunan.aturan, batasMs: st.detik * 1000 });
+      w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, awal, aturan: k.turunan.aturan, kedalaman: 3, prioritasLunak: st.lunak, batasMs: st.detik * 1000 });
       k.gambar();
       return true;
     }
@@ -161,6 +175,10 @@ export function ubahSusun(k: Konteks, el: HTMLInputElement & HTMLSelectElement):
   }
   if (el.id === 'detikSusun') {
     st.detik = Number(el.value);
+    return true;
+  }
+  if (el.id === 'lunakSusun') {
+    st.lunak = el.checked;
     return true;
   }
   return false;

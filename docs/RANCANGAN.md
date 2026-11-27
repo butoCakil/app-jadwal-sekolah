@@ -377,7 +377,29 @@ app-jadwal-sekolah/
 
 - **Bacaan:** pada Pemadatan solver menempatkan lebih banyak JP daripada aSc dan tanpa pelanggaran (aSc meninggalkan 47 JP tak terjadwal dan 9 pelanggaran). Pada TKA dan UKK hasilnya setara. Satu-satunya yang kalah dari aSc adalah ASAS: solver menyisakan 8 JP, padahal aSc menempatkan semuanya (hanya 4 JP PSRT XI TE 2 yang bentrok dengan pengawas dan sudah diterima). PSRT XI TE 2 sendiri tidak termasuk sisa solver. Sisanya: 3 JP XI TE 2 dan 3 JP XI TE 3 (beban yang dibatasi ke ruang I1, terkunci saat ujian, dan guru AZZ yang banyak mengawas) serta 2 JP XI AT 2 (guru YDH mengawas). Hasil tidak berubah dengan waktu 30 dtk dan tiga benih berbeda, jadi ini macet pada optimum lokal, bukan kekurangan waktu.
 - **Belum diukur:** kerapian (jam kosong guru, sebaran mapel), karena belum ada preferensi berbobot.
-- **Langkah berikutnya untuk solver:** mulai dari jadwal induk atau jadwal sebelumnya lalu menggeser hanya yang terdampak (bukan dari nol), dan rantai geser lebih dalam untuk kasus macet seperti ASAS.
+- **Langkah berikutnya untuk solver:** dikerjakan pada 11.5i (jadwal awal, rantai geser, ruang prioritas lunak).
+
+### 11.5i Solver langkah 2b: jadwal awal, rantai geser, ruang prioritas lunak (27 Nov 2026, malam)
+
+- **Temuan penyebab sisa ASAS:** jadwal aSc ASAS menempatkan P4E, PMM, dan lainnya di B3 padahal ruang prioritas beban itu hanya I1 atau D1 (ruang ujian, terkunci). Jadi di lapangan ruang prioritas adalah pilihan utama, bukan syarat mutlak, sedangkan solver memperlakukannya wajib (aturan 11.4 #1, usulan awal saya). Itu penyebab 8 JP sisa, bukan keterbatasan pencarian.
+- **Opsi baru solver (`OpsiSusun`):**
+  - `prioritasLunak`: ruang prioritas = pilihan utama; bila penuh atau terkunci, boleh ruang lain yang diizinkan (jenis ruang mapel, tanpa ruang terlarang) dengan biaya 8 per pemakaian. Bawaan solver tetap wajib; di UI Susun Otomatis kotak centang "Ruang prioritas boleh diganti" aktif secara bawaan (mengikuti keputusan Benny soal B3 dan kenyataan jadwal aSc), bisa dimatikan.
+  - `awal`: jadwal awal (jadwal induk). Tiap pertemuan ditempatkan di posisi semula bila sah menurut aturan kegiatan; yang tidak sah diganti. Memindahkan pertemuan dari posisi awal berbiaya 40, sehingga yang bergeser hanya yang perlu atau yang jelas lebih rapi. Berbeda dari `tetap` (tidak boleh digeser). UI: cara "Mulai dari jadwal induk" (hanya muncul pada kegiatan).
+  - `kedalaman`: rantai geser. Penghalang yang ikut buntu menggeser penghalangnya sendiri sampai kedalaman tertentu (UI memakai 3), dengan pemulihan penuh bila gagal.
+- **Hasil tolok ukur ulang (prioritas lunak, kedalaman 3, 0 pelanggaran, semua kegiatan sisa 0):**
+
+| Kegiatan | Kebutuhan JP | Dari nol | Dari jadwal induk | Slot induk bergeser |
+|---|---|---|---|---|
+| Pemadatan TKA | 1056 | 1056 | 1056 | 151 dari 976 |
+| TKA Gel. 1 | 595 | 595 | 595 | 80 dari 670 |
+| TKA Gel. 2 | 1000 | 1000 | 1000 | 37 dari 1036 |
+| ASAJ Praktik XII | 96 | 96 | 96 | 0 dari 92 |
+| UKK XII | 720 | 720 | 720 | 65 dari 591 |
+| ASAS | 239 | 239 | 239 | 134 dari 240 |
+
+- **Kontribusi tiap perubahan (tanpa lunak, dari nol):** rantai geser (kedalaman 3) saja menutup sisa Pemadatan dan TKA Gel. 2 (2 dan 1 JP). Sisa ASAS 8 JP hanya tertutup oleh prioritas lunak. ASAS kini lebih baik daripada aSc: 239 JP tanpa bentrok pengawas (aSc 4 JP bentrok).
+- **Angka "bergeser"** menghitung slot induk yang tidak muncul pada waktu yang sama; sebagian besar wajar karena beban dan pola jam kegiatan memang berbeda dari induk (ASAS: hanya 5 kelas dengan beban ujian khusus).
+- **Belum:** kerapian belum diukur (preferensi berbobot belum ada); ruang cadangan yang dipakai belum ditandai di hasil (perlu agar admin tahu beban mana yang pindah ruang).
 
 ### 11.6 Pertanyaan terbuka
 

@@ -7,6 +7,9 @@ interface Masuk {
   p: Proyek;
   skemaPerHari: (string | null)[];
   tetap?: Slot[];
+  awal?: Slot[];
+  kedalaman?: number;
+  prioritasLunak?: boolean;
   aturan?: AturanPekan;
   batasMs: number;
   benih?: number;
