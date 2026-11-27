@@ -319,6 +319,14 @@ app-jadwal-sekolah/
 - **Modal kegiatan:** isian sementara (`ui.dlg`), validasi saat Simpan; memilih kelas tidak aktif (centang per tingkat/jurusan), pola, versi jadwal (atau buat versi baru), catatan, jadikan periode aktif.
 - **Dataset tersimpan:** IndexedDB store `dataset` (basis data versi 2). Master Data > Data: simpan draf sebagai dataset, muat, timpa, ganti nama, hapus, dan buat semester baru (master, beban, aturan, skema, pola dipertahankan; jadwal dan kalender dikosongkan). Data bawaan Genap/Gasal/contoh tetap ada.
 
+### 11.5d Revisi 27 Nov 2026 (grid, beban per periode, kategori mapel)
+
+- **Grid:** tab "Per kelas/guru/ruang" dan "Semua". Pada "Semua" pemilih fokus hilang dan daftar "Belum terjadwal" memuat semua beban aktif yang belum penuh, dikelompokkan per kelas (atau guru); kartu hanya sah dilepas pada baris pemiliknya. Pada tampilan per entitas ada panah ◀ ▶ untuk berpindah kelas/guru/ruang. Kolom jam dirapatkan (34 px, huruf 8 px).
+- **Beban per versi jadwal:** `Beban.versiId` opsional. Kosong = berlaku di semua versi (data lama tidak berubah); terisi = hanya untuk versi itu. `Turunan.beban` = beban yang berlaku pada tanggal acuan; grid, tab Beban, Susun Otomatis, dan pemeriksa memakainya (`bebanUntukVersi`, `proyekUntukVersi`). `tambahVersi` menyalin beban khusus versi bersama slotnya.
+- **Impor jadwal-te:** `dariJadwalTe` mengubah berkas jadwal-te (v1) menjadi `Proyek`: tiap periode menjadi kegiatan kalender; periode dengan isi identik berbagi satu versi; rombel tanpa tugas pada periode itu atau berstatus PKL dinyatakan tidak aktif. Nomor jam periode yang menghitung baris Pembiasaan sebagai jam ke-1 digeser −1 (dilaporkan). Gasal bawaan dibangun dari `data/sekolah/sumber/jadwal-te-gasal-2026.json`.
+- **Kategori mapel:** `Mapel.kategori` opsional; bila kosong diturunkan dari kode (Normatif, Adaptif, Jurusan AT/DKV/TE, selain itu "Belum dikategorikan"); elemen mengikuti induknya. Pemilih "Mapel yang diampu" dikelompokkan menurut kategori dengan sub-kelompok elemen.
+- **Kalender:** kotak tanggal memakai titik warna per jenis kegiatan; penanda "grid" = tanggal acuan Grid, dan acuan awal periode maju ke hari kerja pertama.
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?

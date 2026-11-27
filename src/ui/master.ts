@@ -1,5 +1,6 @@
 import { terapkanRuangSekolah } from '../model/ruangSekolah';
 import { KATEGORI_BAWAAN, kategoriRuang } from '../model/ruang';
+import { KATEGORI_MAPEL_BAWAAN, kategoriMapel } from '../model/kategoriMapel';
 import type { Aturan, Mapel, Proyek } from '../model/tipe';
 import { NAMA_HARI } from '../model/tipe';
 import { kodeGuruBerikut, usulKodeMapel } from '../model/kode';
@@ -38,6 +39,7 @@ const KOLOM: Record<Tabel, Kolom[]> = {
     { f: 'kode', judul: 'Kode', tipe: 'teks', lebar: 'w-20' },
     { f: 'nama', judul: 'Nama mapel / elemen', tipe: 'teks', lebar: 'min-w-64 flex-1' },
     { f: 'induk', judul: 'Induk (untuk elemen)', tipe: 'pilih', lebar: 'w-52', pilihan: (p, b) => p.master.mapel.filter((m) => !m.induk && m.id !== b.id).map((m) => [m.id, `${m.kode} · ${m.nama}`]) },
+    { f: 'kategori', judul: 'Kategori', tipe: 'kategori', lebar: 'w-36' },
     { f: 'jenisRuang', judul: 'Jenis ruang (berurutan)', tipe: 'teks', lebar: 'w-44' },
     { f: 'ruangIds', judul: 'Hanya ruang…', tipe: 'banyak', lebar: 'w-44', sasaran: 'mapelRuang', ringkas: (p, b) => ringkasKode(kodeRuang(p, b.ruangIds), 'ruang') },
   ],
@@ -62,7 +64,7 @@ const KOLOM: Record<Tabel, Kolom[]> = {
 const JUDUL: Record<Tabel, string> = { guru: 'Guru', mapel: 'Mapel & elemen', rombel: 'Rombel', ruang: 'Ruang' };
 const KETERANGAN: Record<Tabel, string> = {
   guru: 'Kode otomatis A–Z, lalu AA–ZZ; bisa diubah. “Mapel yang diampu” dipakai menyaring pilihan mapel saat menambah beban.',
-  mapel: 'Kode idealnya 3 karakter (kode resmi sekolah seperti PSRT dan PISAV boleh lebih). Elemen (mis. DLE, DRE, TKB di bawah DTE) memilih mapel induknya. Jenis ruang berurutan, mis. “teori, praktik”: dicoba dari yang pertama; kosong = teori, praktik, lab. Tambahkan “lapangan” untuk PJOK. “Hanya ruang…” membatasi mapel ke ruang tertentu (kosong = tidak dibatasi).',
+  mapel: 'Kode idealnya 3 karakter (kode resmi sekolah seperti PSRT dan PISAV boleh lebih). Elemen (mis. DLE, DRE, TKB di bawah DTE) memilih mapel induknya. Kategori (Normatif, Adaptif, Jurusan TE, …) mengelompokkan mapel di pemilih “Mapel yang diampu”; kosong = ditebak dari kode, dan elemen mengikuti induknya. Jenis ruang berurutan, mis. “teori, praktik”: dicoba dari yang pertama; kosong = teori, praktik, lab. Tambahkan “lapangan” untuk PJOK. “Hanya ruang…” membatasi mapel ke ruang tertentu (kosong = tidak dibatasi).',
   rombel: 'JP data sumber hanya penanda untuk membandingkan dengan kapasitas dan beban. “Hanya ruang…” membatasi rombel ke ruang tertentu (kosong = tidak dibatasi).',
   ruang: 'Kategori mengelompokkan ruang untuk pemilihan massal (Ruang teori, Lab TE, Lab DKV, Lab AT, …). Hilangkan centang “ikut dijadwalkan” untuk ruang yang bukan ruang belajar (mis. ruang guru). Centang “dipakai bersama” untuk ruang yang boleh dipakai beberapa rombel sekaligus (mis. lapangan).',
 };
@@ -102,7 +104,7 @@ function sel(p: Proyek, t: Tabel, baris: Baris, c: Kolom): string {
     const pil = (c.pilihan?.(p, baris) ?? []).map(([id, label]) => ({ id, label }));
     return `<select class="isian w-full" ${attr}>${opsi(pil, String(nilai ?? ''), (x) => x.id, (x) => x.label, c.f === 'induk' ? '— bukan elemen —' : undefined)}</select>`;
   }
-  if (c.tipe === 'kategori') return `<input class="isian w-full" list="daftarKategori" placeholder="${esc(kategoriRuang(baris as never))}" value="${esc(nilai === undefined ? '' : String(nilai))}" ${attr}>`;
+  if (c.tipe === 'kategori') return `<input class="isian w-full" list="daftarKategori${t === 'mapel' ? 'Mapel' : ''}" placeholder="${esc(t === 'mapel' ? kategoriMapel(baris as never, p.master.mapel) : kategoriRuang(baris as never))}" value="${esc(nilai === undefined ? '' : String(nilai))}" ${attr}>`;
   if (c.f === 'jenisRuang') return `<input class="isian w-full" placeholder="bawaan" value="${esc(Array.isArray(nilai) ? nilai.join(', ') : '')}" ${attr}>`;
   const indukTebal = t === 'mapel' && c.f === 'nama' && (baris as unknown as Mapel).induk ? 'ml-4 w-[calc(100%-1rem)]' : 'w-full';
   return `<input class="isian ${indukTebal}" ${c.tipe === 'angka' ? 'type="number" min="0"' : ''} value="${esc(nilai === undefined ? '' : String(nilai))}" ${attr}>`;
@@ -113,8 +115,9 @@ function kartuTabel(k: Konteks, t: Tabel): string {
   const kol = KOLOM[t];
   const rows = urutTampil(p, t);
   const kategori = t === 'ruang' ? `<datalist id="daftarKategori">${[...new Set([...KATEGORI_BAWAAN, ...p.master.ruang.map(kategoriRuang)])].map((x) => `<option value="${esc(x)}">`).join('')}</datalist>` : '';
+  const kategoriM = t === 'mapel' ? `<datalist id="daftarKategoriMapel">${[...new Set([...KATEGORI_MAPEL_BAWAAN, ...p.master.rombel.map((r) => `Jurusan ${r.jurusan}`), ...p.master.mapel.map((m) => kategoriMapel(m, p.master.mapel))])].map((x) => `<option value="${esc(x)}">`).join('')}</datalist>` : '';
   return `<div class="kartu p-3"><div class="mb-1 flex items-baseline gap-2"><h3 class="text-base font-semibold">${JUDUL[t]}</h3><span class="text-xs text-slate-500">${rows.length} data</span></div>
-    <div class="mb-2 text-xs text-slate-500">${KETERANGAN[t]}</div>${kategori}
+    <div class="mb-2 text-xs text-slate-500">${KETERANGAN[t]}</div>${kategori}${kategoriM}
     <div class="space-y-1.5 overflow-x-auto pb-1">
       <div class="flex gap-2 text-[11px] font-medium text-slate-500">${kol.map((c) => `<div class="${c.lebar}">${c.judul}</div>`).join('')}<div class="w-8"></div></div>
       ${rows.map((b) => `<div class="flex items-center gap-2">${kol.map((c) => `<div class="${c.lebar}">${sel(p, t, b, c)}</div>`).join('')}<button class="w-8 text-red-600" data-aksi="mhapus" data-t="${t}" data-id="${esc(b.id)}" title="Hapus">✕</button></div>`).join('')}

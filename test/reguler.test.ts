@@ -7,7 +7,7 @@ import { tentukanRuang } from '../src/mesin/penempatan';
 const SEMUA_ROMBEL_DI_ASC = 25;
 
 describe('jadwal reguler Gasal 2026 (aSc) pada data sekolah', () => {
-  const p = proyekSekolah('gasal');
+  const p = proyekSekolah('gasalAsc');
   const reguler = p.versi[0]!;
   const rombel = (id: string) => p.master.rombel.find((r) => r.id === id)?.kode ?? '?';
   const masalah = periksa(p, reguler.slots, { skemaPerHari: p.polaReguler });

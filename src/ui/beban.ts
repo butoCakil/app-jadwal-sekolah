@@ -48,25 +48,31 @@ function barisBeban(k: Konteks, b: Beban): string {
       <button class="tombol !px-2 !text-red-600" data-aksi="bebanHapus" data-id="${esc(b.id)}" title="Hapus beban">✕</button></div>${lanjut}</div>`;
 }
 
-/** Tab rombel dikelompokkan per tingkat dan jurusan; tiap tab memuat total JP bebannya. */
+/** Pilihan rombel berupa kartu per tingkat lalu jurusan (X di atas, lalu XI, XII); tombol selalu berjarak dan berlebar sama. */
 function tabRombel(k: Konteks, aktif: string): string {
   const p = k.p;
-  const kelompok = new Map<string, typeof p.master.rombel>();
-  for (const r of p.master.rombel) {
-    const nama = `${r.tingkat} ${r.jurusan}`;
-    const l = kelompok.get(nama);
-    if (l) l.push(r);
-    else kelompok.set(nama, [r]);
-  }
-  return `<div class="mb-3 flex flex-wrap gap-x-4 gap-y-2 rounded-xl border border-slate-200 bg-white p-2">${[...kelompok]
-    .map(([nama, daftar]) => `<div><div class="mb-0.5 px-1 text-[10px] font-semibold tracking-wide text-slate-400">KELAS ${esc(nama)}</div><div class="flex gap-1">${daftar
-      .map((r) => {
-        const total = jpRombel(p.beban.filter((b) => b.rombelId === r.id));
-        const tdkAktif = k.turunan.rombelTidakAktif.has(r.id);
-        return `<button data-aksi="bebanTab" data-id="${esc(r.id)}" class="rounded-lg border px-2.5 py-1 text-sm font-medium ${r.id === aktif ? 'border-[#2347b8] bg-[#2347b8] text-white' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'}" title="${esc(r.kode)} · ${total} JP${tdkAktif ? ' · tidak aktif pada tanggal acuan (mis. PKL)' : ''}">${esc(`${r.jurusan} ${r.nomor}`)} <span class="text-[10px] opacity-70">${total}${tdkAktif ? ' · off' : ''}</span></button>`;
-      })
-      .join('')}</div></div>`)
-    .join('')}</div>`;
+  const urutJurusan = [...new Set(p.master.rombel.map((r) => r.jurusan))];
+  const tombol = (r: (typeof p.master.rombel)[number]) => {
+    const total = jpRombel(k.turunan.beban.filter((b) => b.rombelId === r.id));
+    const tdkAktif = k.turunan.rombelTidakAktif.has(r.id);
+    const pilih = r.id === aktif;
+    return `<button data-aksi="bebanTab" data-id="${esc(r.id)}" class="flex flex-col items-center rounded-lg border px-1 py-1.5 leading-tight ${pilih ? 'border-[#2347b8] bg-[#2347b8] text-white' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'}" title="${esc(r.kode)} · ${total} JP${tdkAktif ? ' · tidak aktif pada tanggal acuan (mis. PKL)' : ''}">
+      <span class="text-sm font-semibold">${esc(`${r.jurusan} ${r.nomor}`)}</span>
+      <span class="text-[10px] ${pilih ? 'text-white/80' : 'text-slate-500'}">${total} JP${tdkAktif ? ' · off' : ''}</span></button>`;
+  };
+  const bagian = (['X', 'XI', 'XII'] as const)
+    .map((tingkat) => {
+      const kartu = urutJurusan
+        .map((j) => ({ j, daftar: p.master.rombel.filter((r) => r.tingkat === tingkat && r.jurusan === j) }))
+        .filter((x) => x.daftar.length)
+        .map(({ j, daftar }) => `<div class="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+          <div class="mb-1.5 flex items-baseline justify-between"><span class="text-xs font-bold text-slate-700">Kelas ${tingkat} ${esc(j)}</span><span class="text-[10px] text-slate-400">${daftar.length} rombel</span></div>
+          <div class="grid grid-cols-4 gap-1.5">${daftar.map(tombol).join('')}</div></div>`)
+        .join('');
+      return kartu ? `<div class="mb-3"><div class="mb-1.5 text-[11px] font-semibold tracking-wide text-slate-400">TINGKAT ${tingkat}</div><div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">${kartu}</div></div>` : '';
+    })
+    .join('');
+  return `<div class="mb-1">${bagian}</div>`;
 }
 
 export function renderBeban(k: Konteks): string {
@@ -76,7 +82,7 @@ export function renderBeban(k: Konteks): string {
   const kartu = !r
     ? ''
     : (() => {
-        const daftar = p.beban.filter((b) => b.rombelId === r.id);
+        const daftar = k.turunan.beban.filter((b) => b.rombelId === r.id);
         const total = jpRombel(daftar);
         const jadi = daftar.filter((b) => !b.nonTatapMuka).reduce((a, b) => a + Math.min(b.jp, k.turunan.slots.filter((s) => s.bebanId === b.id).length), 0);
         const ket = r.jpButuh !== undefined ? ` · data sumber: ${r.jpButuh} JP${r.jpButuh !== total ? ` <span class="text-red-600">(selisih ${total - r.jpButuh >= 0 ? '+' : ''}${total - r.jpButuh})</span>` : ''}` : '';
@@ -93,14 +99,16 @@ export function renderBeban(k: Konteks): string {
 
   const guruRekap = p.master.guru
     .map((g) => {
-      const milik = p.beban.filter((b) => b.guruId === g.id || b.timGuruIds.includes(g.id));
+      const milik = k.turunan.beban.filter((b) => b.guruId === g.id || b.timGuruIds.includes(g.id));
       const tatap = milik.filter((b) => !b.nonTatapMuka).reduce((a, b) => a + b.jp, 0);
       const non = milik.filter((b) => b.nonTatapMuka).reduce((a, b) => a + b.jp, 0);
       return { g, tatap, non, rombel: new Set(milik.map((b) => b.rombelId)).size };
     })
     .filter((x) => x.tatap + x.non > 0);
 
-  return `<div class="mb-3 text-lg font-semibold">Beban mengajar</div>${tabRombel(k, aktif)}
+  const khusus = p.beban.some((b) => b.versiId);
+  const infoVersi = khusus ? `<div class="mb-3 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-900">Beban untuk jadwal <b>${esc(k.turunan.versi?.nama ?? '—')}</b>${k.turunan.periode ? ` (periode ${esc(k.turunan.periode.nama)})` : ''}. Tiap versi jadwal punya beban sendiri; ganti periode di Grid Jadwal atau Skema &amp; Kalender untuk melihat beban versi lain.</div>` : '';
+  return `<div class="mb-2 text-lg font-semibold">Beban mengajar</div>${infoVersi}${tabRombel(k, aktif)}
     <div class="grid gap-3 xl:grid-cols-[1fr_300px]"><div class="space-y-3">${kartu || '<div class="kartu p-6 text-center text-sm text-slate-500">Belum ada rombel. Tambahkan di Master Data.</div>'}</div>
     <aside class="kartu h-fit p-3"><div class="mb-2 text-sm font-semibold">Rekap JP per guru</div>
       <table class="w-full text-sm"><thead class="text-left text-xs text-slate-500"><tr><th>Guru</th><th class="text-right">JP</th><th class="text-right">Non-tatap</th><th class="text-right">Rombel</th></tr></thead>
@@ -145,7 +153,8 @@ export function klikBeban(k: Konteks, el: HTMLElement): boolean {
       k.lapor('JP harus bilangan bulat 0 atau lebih.');
       return true;
     }
-    k.ubah((p) => p.beban.push({ id: `b${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, rombelId: d.rombel ?? '', mapelId, guruId, jp, timGuruIds: [], ruangPrioritas: [], ruangTerlarang: [] }));
+    const versiId = k.p.beban.some((b) => b.versiId) ? k.turunan.versi?.id : undefined;
+    k.ubah((p) => p.beban.push({ id: `b${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, rombelId: d.rombel ?? '', mapelId, guruId, jp, timGuruIds: [], ruangPrioritas: [], ruangTerlarang: [], ...(versiId ? { versiId } : {}) }));
     return true;
   }
   return false;

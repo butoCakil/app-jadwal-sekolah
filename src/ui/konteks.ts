@@ -1,4 +1,4 @@
-import type { JenisKegiatan, Kegiatan, Proyek, Slot, VersiJadwal } from '../model/tipe';
+import type { Beban, JenisKegiatan, Kegiatan, Proyek, Slot, VersiJadwal } from '../model/tipe';
 import type { Kategori, Masalah } from '../mesin/validator';
 import type { SkemaHari } from '../model/kalender';
 
@@ -67,6 +67,8 @@ export interface Turunan {
   hari: { tgl: string; info: SkemaHari }[];
   skemaPerHari: (string | null)[];
   slots: Slot[];
+  /** beban yang berlaku pada versi jadwal tanggal acuan */
+  beban: Beban[];
   masalah: Masalah[];
   peta: Map<string, Masalah[]>;
   jumlahPelanggaran: number;

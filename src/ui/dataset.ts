@@ -42,6 +42,9 @@ function semesterBaru(p: Proyek, nama: string): Proyek {
   x.penggantiManual = null;
   const reg = versiReguler(x);
   x.versi = [{ id: reg?.id ?? 'reguler', nama: reg?.nama ?? 'Reguler', jenis: 'reguler', slots: [] }];
+  // beban khusus versi lain ikut hilang bersama versinya; beban khusus versi reguler menjadi berlaku di semua versi
+  x.beban = x.beban.filter((b) => !b.versiId || b.versiId === reg?.id);
+  for (const b of x.beban) delete b.versiId;
   return x;
 }
 

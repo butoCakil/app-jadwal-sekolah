@@ -75,6 +75,8 @@ export interface Mapel {
   jenisRuang?: Ruang['jenis'][];
   /** Ruang yang boleh dipakai mapel ini (daftar putih). Kosong = tidak dibatasi. */
   ruangIds?: string[];
+  /** Pengelompokan di pemilih mapel (Normatif, Adaptif, Jurusan TE, …); kosong = diturunkan dari kode. */
+  kategori?: string;
 }
 export interface Rombel {
   id: string;
@@ -118,6 +120,8 @@ export interface Beban {
   ruangTerlarang: string[];
   /** Beban yang tidak menempati slot (mis. pembimbing PKL); dihitung di beban guru saja */
   nonTatapMuka?: boolean;
+  /** Bila diisi, beban hanya berlaku pada versi jadwal itu (mis. beban periode ASAS yang berbeda dari reguler). Kosong = berlaku di semua versi. */
+  versiId?: string;
 }
 
 export type Aturan =

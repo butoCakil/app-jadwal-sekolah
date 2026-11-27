@@ -95,7 +95,7 @@ describe('hari kerja 5 atau 6', () => {
 
 describe('dataset tersimpan', () => {
   it('simpan, daftar (terbaru dulu), dan hapus', async () => {
-    const a = proyekSekolah('gasal');
+    const a = proyekSekolah('gasalAsc');
     const b = proyekContoh();
     await simpanDataset({ id: 'a', nama: 'Gasal', disimpan: '2026-11-01T00:00:00.000Z', proyek: a });
     await simpanDataset({ id: 'b', nama: 'Contoh', disimpan: '2026-11-02T00:00:00.000Z', proyek: b });

@@ -35,7 +35,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
   let p: Proyek = (await muatDraf().catch(() => null)) ?? proyekSekolah();
   const awalTanggal = (x: Proyek): string => {
     const aktif = x.kalender.find((g) => g.id === x.periodeAktifId);
-    return aktif ? tanggalUntukPeriode(aktif, isoLokal(new Date())) : isoLokal(new Date());
+    return aktif ? tanggalUntukPeriode(aktif, isoLokal(new Date()), x.polaReguler.length) : isoLokal(new Date());
   };
   const ui: StatusUI = {
     tab: 'grid',

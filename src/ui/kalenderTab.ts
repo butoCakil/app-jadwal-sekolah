@@ -1,5 +1,5 @@
 import { bacaBerkasKalender } from '../io/imporKalender';
-import { dalamRentang, daftarPola, hariPekan, jumlahHariKerja, kapasitasPola, periodeUntukTanggal, rombelTidakAktifIds, skemaUntukTanggal, versiReguler, versiUntukTanggal } from '../model/kalender';
+import { dalamRentang, daftarPola, hariPekan, jumlahHariKerja, kapasitasPola, periodeUntukTanggal, rombelTidakAktifIds, skemaUntukTanggal, tambahVersi, versiReguler, versiUntukTanggal } from '../model/kalender';
 import type { JenisKegiatan, Kegiatan, PolaMinggu, Proyek } from '../model/tipe';
 import { NAMA_HARI } from '../model/tipe';
 import type { DlgKegiatan, Konteks } from './konteks';
@@ -56,7 +56,7 @@ function kotakBulan(k: Konteks, bulan: string): string {
   const geser = hariPekan(awal);
   const jumlah = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const sel: string[] = [];
-  for (let i = 0; i < geser; i++) sel.push('<div class="min-h-[74px] rounded-lg bg-slate-50/50"></div>');
+  for (let i = 0; i < geser; i++) sel.push('<div class="min-h-[58px] rounded-lg bg-slate-50/50"></div>');
   for (let d = 1; d <= jumlah; d++) {
     const tgl = `${bulan}-${String(d).padStart(2, '0')}`;
     const wk = hariPekan(tgl);
@@ -67,12 +67,12 @@ function kotakBulan(k: Konteks, bulan: string): string {
     const pilih = tgl === k.ui.kalTanggal;
     const acuan = tgl === k.ui.tanggal;
     const bg = libur ? 'bg-red-50' : !kerja ? 'bg-slate-100' : 'bg-white';
-    const chip = keg
-      .slice(0, 2)
-      .map((g) => `<div class="truncate rounded px-1 text-[10px] leading-4 ${WARNA[g.jenis].chip}" title="${esc(g.nama)}">${esc(g.nama)}</div>`)
+    const titik = keg
+      .slice(0, 6)
+      .map((g) => `<i class="inline-block h-2.5 w-2.5 rounded-full" style="background:${WARNA[g.jenis].titik}" title="${esc(`${g.jenis}: ${g.nama}`)}"></i>`)
       .join('');
-    sel.push(`<button data-aksi="kalPilih" data-tgl="${tgl}" class="relative flex min-h-[74px] flex-col items-stretch gap-0.5 rounded-lg border p-1 text-left ${bg} ${pilih ? 'border-[#2347b8] ring-2 ring-[#2347b8]/40' : 'border-slate-200 hover:border-slate-400'}">
-      <div class="flex items-center justify-between"><span class="text-xs font-semibold ${tgl === hariIni ? 'rounded-full bg-[#2347b8] px-1.5 text-white' : !kerja || libur ? 'text-red-600' : 'text-slate-700'}">${d}</span>${acuan ? '<span class="text-[9px] font-bold text-sky-700" title="Tanggal acuan grid">●grid</span>' : ''}</div>${chip}${keg.length > 2 ? `<div class="text-[10px] text-slate-500">+${keg.length - 2} lagi</div>` : ''}</button>`);
+    sel.push(`<button data-aksi="kalPilih" data-tgl="${tgl}" class="relative flex min-h-[58px] flex-col items-stretch gap-0.5 rounded-lg border p-1 text-left ${bg} ${pilih ? 'border-[#2347b8] ring-2 ring-[#2347b8]/40' : 'border-slate-200 hover:border-slate-400'}">
+      <div class="flex items-center justify-between"><span class="text-xs font-semibold ${tgl === hariIni ? 'rounded-full bg-[#2347b8] px-1.5 text-white' : !kerja || libur ? 'text-red-600' : 'text-slate-700'}">${d}</span>${acuan ? '<span class="rounded bg-sky-100 px-1 text-[9px] font-bold text-sky-700" title="Tanggal acuan: Grid Jadwal menampilkan pekan yang memuat tanggal ini">grid</span>' : ''}</div><div class="flex flex-wrap items-center gap-1">${titik}${keg.length > 6 ? `<span class="text-[10px] text-slate-500">+${keg.length - 6}</span>` : ''}</div></button>`);
   }
   return `<div class="mb-2 flex items-center gap-2"><button class="tombol !px-2" data-aksi="kalBulan" data-bulan="${geserBulan(bulan, -1)}">‹</button>
       <div class="min-w-36 text-center text-base font-bold">${NAMA_BULAN_PANJANG[m - 1]} ${y}</div>
@@ -80,7 +80,7 @@ function kotakBulan(k: Konteks, bulan: string): string {
       <button class="tombol ml-2" data-aksi="kalBulan" data-bulan="${bulanDari(hariIni)}" data-tgl="${hariIni}">Hari ini</button></div>
     <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-slate-500">${HARI_SINGKAT.map((h, i) => `<div class="${i >= hariKerja ? 'text-red-500' : ''}">${h}</div>`).join('')}</div>
     <div class="mt-1 grid grid-cols-7 gap-1">${sel.join('')}</div>
-    <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-600">${JENIS.map((j) => `<span class="inline-flex items-center gap-1"><i class="inline-block h-2 w-2 rounded-full" style="background:${WARNA[j].titik}"></i>${j}</span>`).join('')}</div>`;
+    <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-600">${JENIS.map((j) => `<span class="inline-flex items-center gap-1"><i class="inline-block h-2 w-2 rounded-full" style="background:${WARNA[j].titik}"></i>${j}</span>`).join('')}<span class="inline-flex items-center gap-1"><b class="rounded bg-sky-100 px-1 text-[9px] text-sky-700">grid</b>tanggal acuan Grid Jadwal</span></div>`;
 }
 
 function infoTanggal(k: Konteks, tgl: string): string {
@@ -207,9 +207,16 @@ export function renderKalender(k: Konteks): string {
     <div class="mt-2 text-xs text-slate-500">Kalender akademik dari berkas dibaca dari kolom “Kegiatan” dan “Tanggal” (atau “Mulai” dan “Selesai”); jenis ditebak dari namanya dan bisa diubah. Kegiatan yang sama persis (nama dan tanggal) tidak ditambahkan dua kali.</div>`;
 }
 
-/** Tanggal acuan grid yang sesuai untuk periode: hari ini bila masih di dalam periode, selain itu awal periode. */
-export function tanggalUntukPeriode(g: Kegiatan, hariIni: string): string {
-  return dalamRentang(hariIni, g.mulai, g.selesai) ? hariIni : g.mulai;
+/** Tanggal acuan grid yang sesuai untuk periode: hari ini bila masih di dalam periode, selain itu awal periode; bila jatuh pada hari non-kerja, maju ke hari kerja pertama berikutnya (selama masih di dalam periode). */
+export function tanggalUntukPeriode(g: Kegiatan, hariIni: string, hariKerja = 5): string {
+  let t = dalamRentang(hariIni, g.mulai, g.selesai) ? hariIni : g.mulai;
+  for (let i = 0; i < 7 && hariPekan(t) >= hariKerja; i++) {
+    const [y, m, d] = t.split('-').map(Number) as [number, number, number];
+    const n = new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+    if (!dalamRentang(n, g.mulai, g.selesai)) break;
+    t = n;
+  }
+  return t;
 }
 
 const idKeg = () => `k${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
@@ -231,7 +238,7 @@ export function bukaDlgKegiatan(k: Konteks, opsi: { id?: string; tgl?: string; j
 }
 
 function aturPeriodeAktifUI(k: Konteks, g: { mulai: string; selesai: string }): void {
-  k.ui.tanggal = tanggalUntukPeriode(g as Kegiatan, isoLokal(new Date()));
+  k.ui.tanggal = tanggalUntukPeriode(g as Kegiatan, isoLokal(new Date()), jumlahHariKerja(k.p));
   k.ui.kalTanggal = k.ui.tanggal;
   k.ui.kalBulan = bulanDari(k.ui.tanggal);
 }
@@ -266,7 +273,7 @@ function simpanDlg(k: Konteks): void {
     if (!libur && (d.versi === '__salin' || d.versi === '__kosong')) {
       versiId = `v${Date.now().toString(36)}`;
       const sumber = versiReguler(x);
-      x.versi.push({ id: versiId, nama: nama, jenis: 'varian', slots: d.versi === '__salin' && sumber ? structuredClone(sumber.slots) : [] });
+      tambahVersi(x, sumber, versiId, nama, d.versi === '__salin');
     }
     const g: Kegiatan = x.kalender.find((y) => y.id === id) ?? { id, nama, jenis: d.jenis, mulai: d.mulai, selesai: d.selesai, rombelTidakAktif: [] };
     if (!x.kalender.includes(g)) x.kalender.push(g);

@@ -156,7 +156,7 @@ describe('centang master', () => {
 
 describe('periode: versi, rombel tidak aktif, aktif', () => {
   it('versi dan rombel tidak aktif mengikuti tanggal; periode terspesifik menang', () => {
-    const p = proyekSekolah('gasal');
+    const p = proyekSekolah('gasalAsc');
     expect(p.periodeAktifId).toBe('k-asas');
     expect(periodeUntukTanggal('2026-12-01', p.kalender)?.id).toBe('k-asas'); // menimpa pemadatan TKA lanjutan
     expect(periodeUntukTanggal('2026-12-08', p.kalender)?.id).toBe('k-tka2');
@@ -165,7 +165,7 @@ describe('periode: versi, rombel tidak aktif, aktif', () => {
     expect(versiUntukTanggal('2026-12-01', p)?.nama).toContain('Reguler');
   });
   it('versi khusus dipakai pada tanggal periodenya', () => {
-    const p = proyekSekolah('gasal');
+    const p = proyekSekolah('gasalAsc');
     p.versi.push({ id: 'vx', nama: 'Jadwal ASAS', jenis: 'varian', slots: [] });
     p.kalender.find((g) => g.id === 'k-asas')!.versiId = 'vx';
     expect(versiUntukTanggal('2026-12-01', p)?.id).toBe('vx');
@@ -174,7 +174,7 @@ describe('periode: versi, rombel tidak aktif, aktif', () => {
     expect(validasiProyek(p)).toEqual([]);
   });
   it('turunan: slot milik rombel tidak aktif disembunyikan dan tidak diperiksa', () => {
-    const p = proyekSekolah('gasal');
+    const p = proyekSekolah('gasalAsc');
     const penuh = hitungTurunan(p, '2026-12-08'); // pemadatan TKA: semua aktif
     const asas = hitungTurunan(p, '2026-12-01'); // X dan XII tidak aktif
     expect(penuh.slots).toHaveLength(1200);

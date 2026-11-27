@@ -1,5 +1,6 @@
 import type { Konteks } from './konteks';
 import { bulanDari, tanggalUntukPeriode } from './kalenderTab';
+import { jumlahHariKerja } from '../model/kalender';
 import { esc, isoLokal, tanggalPendek } from './util';
 
 /** Bilah periode di atas grid: memilih periode yang dikerjakan, menampilkan versi jadwal dan rombel yang tidak aktif (mis. PKL). */
@@ -28,7 +29,7 @@ export function ubahPeriode(k: Konteks, el: HTMLInputElement & HTMLSelectElement
     k.ubah((p) => void delete p.periodeAktifId);
     return true;
   }
-  k.ui.tanggal = tanggalUntukPeriode(g, isoLokal(new Date()));
+  k.ui.tanggal = tanggalUntukPeriode(g, isoLokal(new Date()), jumlahHariKerja(k.p));
   k.ui.kalTanggal = k.ui.tanggal;
   k.ui.kalBulan = bulanDari(k.ui.tanggal);
   k.ubah((p) => void (p.periodeAktifId = g.id));

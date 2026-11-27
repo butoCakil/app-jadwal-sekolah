@@ -13,6 +13,11 @@ import { barPeriode } from './periode';
 import type { Konteks, ModeLihat } from './konteks';
 
 const LABEL_SUMBER = { manual: 'manual', kegiatan: 'kalender', reguler: 'reguler' } as const;
+const NAMA_ENTITAS: Record<ModeLihat, { per: string; judul: string }> = {
+  rombel: { per: 'kelas', judul: 'Kelas' },
+  guru: { per: 'guru', judul: 'Guru' },
+  ruang: { per: 'ruang', judul: 'Ruang' },
+};
 const MODE: { id: ModeLihat; label: string }[] = [
   { id: 'rombel', label: 'Rombel' },
   { id: 'guru', label: 'Guru' },
@@ -314,7 +319,7 @@ function tabelSemua(k: Konteks, pk: Peta, entitas: { id: string; label: string }
             .map((c, j) =>
               c.jenis === 'jam'
                 ? `<th class="sticky top-[26px] z-20 bg-slate-100 text-[10px] font-semibold text-slate-600 ${j === 0 ? 'border-l-2 border-white' : ''}">${c.n}</th>`
-                : `<th class="sticky top-[26px] z-20 w-[14px] min-w-[14px] bg-amber-200 text-[8px] font-medium text-amber-800" title="Istirahat">☕</th>`,
+                : `<th class="sticky top-[26px] z-20 w-[8px] min-w-[8px] bg-amber-200 text-[8px] font-medium text-amber-800" title="Istirahat"></th>`,
             )
             .join(''),
     )
@@ -322,7 +327,7 @@ function tabelSemua(k: Konteks, pk: Peta, entitas: { id: string; label: string }
 
   const barisHtml = entitas
     .map((e) => {
-      const fokus = e.id === k.ui.entitasId;
+      const fokus = false;
       const sel = ih
         .map((x, i) => {
           if (x.kap === 0) return `<td class="border-l-2 border-white bg-slate-100"></td>`;
@@ -337,7 +342,7 @@ function tabelSemua(k: Konteks, pk: Peta, entitas: { id: string; label: string }
             if (!c) continue;
             const pertama = j === 0 ? 'border-l-2 border-slate-300' : 'border-l border-slate-100';
             if (c.jenis === 'ist') {
-              out.push(`<td class="w-[14px] min-w-[14px] max-w-[14px] bg-amber-100"></td>`);
+              out.push(`<td class="w-[8px] min-w-[8px] max-w-[8px] bg-amber-100"></td>`);
               continue;
             }
             const isi = perJam(c.n);
@@ -369,7 +374,7 @@ function tabelSemua(k: Konteks, pk: Peta, entitas: { id: string; label: string }
           return out.join('');
         })
         .join('');
-      return `<tr class="border-t border-slate-200 ${fokus ? 'bg-sky-50' : ''}"><th class="label-baris ${fokus ? '!bg-sky-100' : ''}" data-aksi="fokus" data-id="${esc(e.id)}" title="Klik untuk memilih sebagai fokus">${esc(e.label)}</th>${sel}</tr>`;
+      return `<tr class="border-t border-slate-200 ${fokus ? 'bg-sky-50' : ''}"><th class="label-baris ${fokus ? '!bg-sky-100' : ''}" data-aksi="fokus" data-id="${esc(e.id)}" title="Klik untuk membuka tampilan per ${NAMA_ENTITAS[k.ui.mode].per} ini" data-buka="1">${esc(e.label)}</th>${sel}</tr>`;
     })
     .join('');
   return `<div class="kartu max-h-[72vh] overflow-auto"><table class="border-collapse">
@@ -386,13 +391,17 @@ export function renderGrid(k: Konteks): string {
   const milik = slotMilik(k, pk);
   const rombelMode = k.ui.mode === 'rombel';
   const semua = k.ui.tata === 'semua';
+  const idxEntitas = entitas.findIndex((e) => e.id === k.ui.entitasId);
 
   const kontrol = `${barPeriode(k)}<div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
     <div class="inline-flex rounded-lg border border-slate-300 bg-white p-0.5">${MODE.map((m) => `<button class="rounded-md px-3 py-1 text-sm font-medium ${m.id === k.ui.mode ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}" data-aksi="mode" data-mode="${m.id}">${m.label}</button>`).join('')}</div>
     <div class="inline-flex rounded-lg border border-slate-300 bg-white p-0.5" title="Pilih cara melihat jadwal">${(
-      [['hari', 'Satu per satu'], ['semua', 'Semua sekaligus']] as const
+      [['hari', `Per ${NAMA_ENTITAS[k.ui.mode].per}`], ['semua', 'Semua']] as const
     ).map(([id, label]) => `<button class="rounded-md px-3 py-1 text-sm font-medium ${id === k.ui.tata ? 'bg-sky-600 text-white' : 'text-slate-600 hover:bg-slate-100'}" data-aksi="tata" data-tata="${id}">${label}</button>`).join('')}</div>
-    <label class="flex items-center gap-1 text-sm text-slate-600">${semua ? 'Fokus' : 'Pilih'} <select id="entitas" class="isian min-w-44">${opsi(entitas, k.ui.entitasId, (e) => e.id, (e) => e.label)}</select></label>
+    ${semua ? '' : `<div class="flex items-center gap-1"><span class="text-sm text-slate-600">${NAMA_ENTITAS[k.ui.mode].judul}</span>
+      <button class="tombol !px-2" data-aksi="geserEntitas" data-arah="-1" ${idxEntitas <= 0 ? 'disabled' : ''} title="${NAMA_ENTITAS[k.ui.mode].judul} sebelumnya">◀</button>
+      <select id="entitas" class="isian min-w-44">${opsi(entitas, k.ui.entitasId, (e) => e.id, (e) => e.label)}</select>
+      <button class="tombol !px-2" data-aksi="geserEntitas" data-arah="1" ${idxEntitas < 0 || idxEntitas >= entitas.length - 1 ? 'disabled' : ''} title="${NAMA_ENTITAS[k.ui.mode].judul} berikutnya">▶</button></div>`}
     <div class="ml-auto flex items-center gap-1">
       <button class="tombol" data-aksi="pekan" data-tgl="${tambahHari(t.senin, -7)}" title="Pekan sebelumnya">◀</button>
       <label class="text-sm text-slate-600">Pekan <input type="date" id="tanggal" class="isian" value="${k.ui.tanggal}"></label>
@@ -404,10 +413,10 @@ export function renderGrid(k: Konteks): string {
 
   // daftar beban yang masih perlu ditempatkan (rombel atau guru yang sedang dipilih)
   const bebanFokus =
-    k.ui.mode === 'rombel' ? p.beban.filter((b) => b.rombelId === k.ui.entitasId)
-    : k.ui.mode === 'guru' ? p.beban.filter((b) => b.guruId === k.ui.entitasId)
+    k.ui.mode === 'rombel' ? t.beban.filter((b) => b.rombelId === k.ui.entitasId)
+    : k.ui.mode === 'guru' ? t.beban.filter((b) => b.guruId === k.ui.entitasId)
     : [];
-  if (rombelMode) {
+  if (rombelMode && !semua) {
     const rombel = p.master.rombel.find((r) => r.id === k.ui.entitasId);
     const butuh = jpRombel(bebanFokus);
     const jadi = new Set(milik.map((s) => { const par = pk.beban.get(s.bebanId)?.paralel; return par ? `${par}|${s.hari}|${s.jam}` : s.id; })).size;
@@ -419,18 +428,40 @@ export function renderGrid(k: Konteks): string {
 
   let aside = '';
   if (k.ui.mode !== 'ruang') {
-    const belum = bebanFokus.filter((b) => sisaJp(t.slots, b) > 0 || b.nonTatapMuka);
+    const kartuGrup = (daftar: Beban[]) => daftar.map((b) => kartuBeban(pk, b, sisaJp(t.slots, b))).join('');
+    let isiBelum: string;
+    if (semua) {
+      // semua beban aktif yang belum penuh, dikelompokkan per rombel (atau per guru)
+      const perlu = t.beban.filter((b) => !b.nonTatapMuka && !t.rombelTidakAktif.has(b.rombelId) && sisaJp(t.slots, b) > 0);
+      const grup = new Map<string, Beban[]>();
+      for (const b of perlu) {
+        const kunci = rombelMode ? b.rombelId : b.guruId;
+        const l = grup.get(kunci);
+        if (l) l.push(b);
+        else grup.set(kunci, [b]);
+      }
+      const nama = (id: string) => (rombelMode ? pk.rombel.get(id) : pk.guru.get(id)) ?? '?';
+      const totalSisa = perlu.reduce((a, b) => a + sisaJp(t.slots, b), 0);
+      isiBelum = perlu.length
+        ? `<div class="mb-2 text-xs text-slate-500">${totalSisa} JP belum terjadwal di ${grup.size} ${rombelMode ? 'kelas' : 'guru'}. Seret ke baris pemiliknya di grid: hijau = aman, merah = bentrok.</div>
+          <div class="max-h-[40vh] space-y-2 overflow-auto pr-1">${[...grup]
+            .map(([id, daftar]) => `<div><div class="mb-1 text-[11px] font-semibold text-slate-600">${esc(nama(id))} <span class="font-normal text-slate-400">· sisa ${daftar.reduce((a, b) => a + sisaJp(t.slots, b), 0)} JP</span></div><div class="grid gap-x-2 sm:grid-cols-2 lg:grid-cols-3">${kartuGrup(daftar)}</div></div>`)
+            .join('')}</div>`
+        : '<div class="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800">Semua beban sudah terjadwal penuh.</div>';
+    } else {
+      const belum = bebanFokus.filter((b) => sisaJp(t.slots, b) > 0 || b.nonTatapMuka);
+      isiBelum = `<div class="mb-2 text-xs text-slate-500">Seret ke sel di grid: hijau = aman, merah = bentrok (arahkan kursor untuk alasan).${rombelMode ? ' Bisa juga klik sel kosong.' : ''}</div>
+        ${belum.length ? kartuGrup(belum) : '<div class="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800">Semua beban sudah terjadwal penuh.</div>'}`;
+    }
     const tamp = rombelMode
-      ? milik.filter((s) => {
+      ? (semua ? t.slots : milik).filter((s) => {
           const id = t.skemaPerHari[s.hari];
           const sk = id ? skemaById.get(id) : undefined;
           return !(sk && s.jam >= 1 && s.jam <= kapasitasKbm(sk));
         })
       : [];
-    aside = `<aside class="${semua ? 'mt-3 grid gap-3 md:grid-cols-2' : 'space-y-3'}">
-      <div class="kartu p-3"><div class="mb-1 text-sm font-semibold">Belum terjadwal</div>
-        <div class="mb-2 text-xs text-slate-500">Seret ke sel di grid: hijau = aman, merah = bentrok (arahkan kursor untuk alasan).${rombelMode ? ' Bisa juga klik sel kosong.' : ''}</div>
-        ${belum.length ? belum.map((b) => kartuBeban(pk, b, sisaJp(t.slots, b))).join('') : '<div class="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800">Semua beban sudah terjadwal penuh.</div>'}</div>
+    aside = `<aside class="${semua ? 'mt-3 grid gap-3 lg:grid-cols-[2fr_1fr]' : 'space-y-3'}">
+      <div class="kartu p-3"><div class="mb-1 text-sm font-semibold">Belum terjadwal</div>${isiBelum}</div>
       ${tamp.length ? `<div class="kartu border-amber-300 bg-amber-50 p-3"><div class="mb-1 text-sm font-semibold">Tampungan (${tamp.length})</div>
         <div class="mb-2 text-xs text-slate-600">Tidak muat pada skema pekan ini. Seret ke sel yang tersedia, atau ganti pola pekan.</div>
         ${tamp.map((s) => `<div class="mb-1 text-[11px] text-slate-500">${NAMA_HARI[s.hari]}, pelajaran ke-${s.jam}</div>${chipSederhana(k, pk, s)}`).join('')}</div>` : ''}
@@ -528,7 +559,7 @@ export function renderModal(k: Konteks): string {
   const pk = petaKode(k.p);
   const tutup = `<button class="tombol" data-aksi="tutupModal">Tutup</button>`;
   if (m.jenis === 'sel') {
-    const bebanR = k.p.beban.filter((b) => b.rombelId === k.ui.entitasId && !b.nonTatapMuka && sisaJp(k.turunan.slots, b) > 0);
+    const bebanR = k.turunan.beban.filter((b) => b.rombelId === k.ui.entitasId && !b.nonTatapMuka && sisaJp(k.turunan.slots, b) > 0);
     const baris = bebanR
       .map((b) => {
         const r = rencanaPindah(k.p, k.turunan.slots, { bebanId: b.id }, m.hari, m.jam);
@@ -579,8 +610,17 @@ export function klikGrid(k: Konteks, el: HTMLElement): boolean {
       return true;
     case 'fokus':
       k.ui.entitasId = d.id ?? k.ui.entitasId;
+      if (d.buka) k.ui.tata = 'hari';
       k.gambar();
       return true;
+    case 'geserEntitas': {
+      const daftar = daftarEntitas(k.p, k.ui.mode);
+      const i = daftar.findIndex((e) => e.id === k.ui.entitasId);
+      const baru = daftar[i + Number(d.arah)];
+      if (baru) k.ui.entitasId = baru.id;
+      k.gambar();
+      return true;
+    }
     case 'pekan':
       k.ui.tanggal = d.tgl ?? k.ui.tanggal;
       k.gambar();

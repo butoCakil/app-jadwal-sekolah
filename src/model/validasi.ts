@@ -47,6 +47,7 @@ export function validasiProyek(x: unknown): string[] {
     if (!adaMapel.has(b.mapelId)) galat.push(`Beban ${b.id}: mapel tidak ada.`);
     if (!adaRombel.has(b.rombelId)) galat.push(`Beban ${b.id}: rombel tidak ada.`);
     if (!Number.isInteger(b.jp) || b.jp < 0) galat.push(`Beban ${b.id}: JP harus bilangan bulat >= 0.`);
+    if (b.versiId && !proyek.versi.some((v) => v.id === b.versiId)) galat.push(`Beban ${b.id}: versi jadwal tidak ada.`);
   });
   proyek.versi.forEach((v) => v.slots.forEach((sl) => {
     if (!idBeban.has(sl.bebanId)) galat.push(`Versi ${v.nama}: slot ${sl.id} mengacu ke beban yang tidak ada.`);

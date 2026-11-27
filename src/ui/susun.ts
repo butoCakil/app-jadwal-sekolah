@@ -1,7 +1,7 @@
 import type { HasilSusun, Kemajuan } from '../mesin/solver';
 import type { Slot } from '../model/tipe';
 import { esc } from './util';
-import { polaUntukTanggal, rombelTidakAktifIds, versiUntukTanggal } from '../model/kalender';
+import { bebanUntukVersi, polaUntukTanggal, rombelTidakAktifIds, versiUntukTanggal } from '../model/kalender';
 import type { Konteks } from './konteks';
 
 type Mode = 'nol' | 'lengkapi';
@@ -41,7 +41,7 @@ export function renderSusun(k: Konteks): string {
     bagian = `<div class="mt-4 rounded-lg bg-slate-50 p-3" id="kemajuanSusun">${bar(st.kemajuan)}</div>
       <div class="mt-3"><button class="tombol" data-aksi="susunBatal">Batalkan</button></div>`;
   } else {
-    bagian = `<div class="mt-4"><button class="tombol !bg-[#2347b8] !text-white" data-aksi="susunMulai" ${p.beban.length === 0 ? 'disabled' : ''}>Mulai menyusun</button></div>`;
+    bagian = `<div class="mt-4"><button class="tombol !bg-[#2347b8] !text-white" data-aksi="susunMulai" ${k.turunan.beban.length === 0 ? 'disabled' : ''}>Mulai menyusun</button></div>`;
   }
   if (st.galat) bagian += `<div class="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800">${esc(st.galat)}</div>`;
   const h = st.hasil;
@@ -70,7 +70,7 @@ export function renderSusun(k: Konteks): string {
       <div class="mt-2 text-xs text-slate-500">Menerapkan dapat dibatalkan dengan Urungkan. Hasil dilihat dulu di tab Grid Jadwal setelah diterapkan.</div></div>`;
   }
   return `<h2 class="mb-3 text-lg font-bold">Susun Otomatis</h2>
-    <div class="kartu p-4"><div class="text-sm text-slate-600">Menempatkan JP semua beban (${p.beban.filter((b) => !b.nonTatapMuka).length} beban tatap muka) ke versi “${esc(versi?.nama ?? '—')}” tanpa bentrok guru, rombel, atau ruang, dengan memperhatikan guru tidak tersedia, ruang terlarang, jenis ruang per mapel, pola pertemuan, dan kelompok paralel. Yang tidak muat <b>tidak dipaksakan</b>: dilaporkan beserta alasannya.</div>
+    <div class="kartu p-4"><div class="text-sm text-slate-600">Menempatkan JP semua beban (${k.turunan.beban.filter((b) => !b.nonTatapMuka).length} beban tatap muka) ke versi “${esc(versi?.nama ?? '—')}” tanpa bentrok guru, rombel, atau ruang, dengan memperhatikan guru tidak tersedia, ruang terlarang, jenis ruang per mapel, pola pertemuan, dan kelompok paralel. Yang tidak muat <b>tidak dipaksakan</b>: dilaporkan beserta alasannya.</div>
       <div class="mt-2 text-xs text-slate-500">Kapasitas jam mengikuti pola pada tanggal acuan (${esc(k.ui.tanggal)}): ${esc(pola)} (Senin–Jum'at). Versi dan periode diganti lewat bilah Periode di Grid Jadwal.${tdkAktif.size ? ` ${tdkAktif.size} rombel tidak aktif (PKL) dilewati.` : ''}</div>
       ${opsi}${bagian}</div>`;
 }
@@ -88,7 +88,7 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
       const rombelBeban = new Map(k.p.beban.map((b) => [b.id, b.rombelId]));
       const aktifSaja = (sl: Slot) => !tdk.has(rombelBeban.get(sl.bebanId) ?? '');
       // rombel tidak aktif (PKL) tidak ikut disusun; slot miliknya (bila ada) dibiarkan apa adanya
-      kloning.beban = kloning.beban.filter((b) => !tdk.has(b.rombelId));
+      kloning.beban = bebanUntukVersi(kloning.beban, versiIni?.id).filter((b) => !tdk.has(b.rombelId));
       const tetap = st.mode === 'lengkapi' ? (versiIni?.slots ?? []).filter(aktifSaja) : [];
       if (st.mode === 'nol') for (const v of kloning.versi) v.slots = [];
       const polaSusun = polaUntukTanggal(k.ui.tanggal, k.p).pola;

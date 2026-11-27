@@ -259,3 +259,34 @@ export function versiUntukTanggal(tanggal: string, p: Pick<Proyek, 'versi' | 'ka
   }
   return (terpilih && p.versi.find((v) => v.id === terpilih.versiId)) ?? versiReguler(p);
 }
+
+// ------------------------------------------------------------------ beban per versi jadwal
+
+/** Beban yang berlaku pada satu versi jadwal: yang tanpa `versiId` (berlaku di semua versi) dan yang khusus versi itu. */
+export function bebanUntukVersi<T extends { versiId?: string }>(beban: T[], versiId: string | undefined): T[] {
+  return beban.filter((b) => !b.versiId || b.versiId === versiId);
+}
+
+/** Proyek sebagaimana dilihat pada satu versi: beban dipersempit; bila tak ada beban khusus versi, proyek apa adanya. */
+export function proyekUntukVersi(p: Proyek, versiId: string | undefined): Proyek {
+  return p.beban.some((b) => b.versiId) ? { ...p, beban: bebanUntukVersi(p.beban, versiId) } : p;
+}
+
+/**
+ * Menambah versi baru dari versi sumber. Beban khusus versi sumber ikut disalin (id baru, `versiId` baru) bersama slotnya
+ * (denganSlot) atau tanpa slot. Beban yang berlaku di semua versi tidak digandakan.
+ */
+export function tambahVersi(p: Proyek, sumber: VersiJadwal | undefined, id: string, nama: string, denganSlot: boolean): VersiJadwal {
+  const peta = new Map<string, string>();
+  if (sumber) {
+    for (const b of p.beban.filter((x) => x.versiId === sumber.id)) {
+      const baru = `${b.id}~${id}`;
+      peta.set(b.id, baru);
+      p.beban.push({ ...structuredClone(b), id: baru, versiId: id });
+    }
+  }
+  const slots = denganSlot && sumber ? sumber.slots.map((s) => ({ ...structuredClone(s), id: peta.has(s.bebanId) ? `${s.id}~${id}` : s.id, bebanId: peta.get(s.bebanId) ?? s.bebanId })) : [];
+  const v: VersiJadwal = { id, nama, jenis: 'varian', slots };
+  p.versi.push(v);
+  return v;
+}

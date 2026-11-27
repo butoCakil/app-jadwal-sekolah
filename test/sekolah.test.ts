@@ -6,7 +6,7 @@ import { validasiProyek } from '../src/model/validasi';
 import { ruangDilarang } from '../src/mesin/validator';
 
 describe('data sekolah (Gasal 2026/2027)', () => {
-  const p = proyekSekolah('gasal');
+  const p = proyekSekolah('gasalAsc');
   it('valid dan lengkap', () => {
     expect(validasiProyek(p)).toEqual([]);
     expect(p.master.guru).toHaveLength(62);
