@@ -81,3 +81,15 @@ describe('impor jadwal-te → Gasal 2026/2027', () => {
     expect(kategoriMapel({ kode: 'MTK', kategori: 'Jurusan TE' }, [])).toBe('Jurusan TE');
   });
 });
+
+describe('periode bersarang', () => {
+  it('ASAS di dalam TKA lanjutan: kelas PKL milik TKA lanjutan aktif kembali saat ASAS', () => {
+    const p = proyekSekolah('gasal');
+    const id = (kode: string) => p.master.rombel.find((r) => r.kode === kode)!.id;
+    const tdk = rombelTidakAktifIds('2026-11-30', p.kalender);
+    expect(tdk.has(id('XI AT 1'))).toBe(false);
+    expect(tdk.has(id('XI DKV 3'))).toBe(false);
+    expect(tdk.has(id('X TE 1'))).toBe(true);
+    expect(rombelTidakAktifIds('2026-12-08', p.kalender).has(id('XI AT 1'))).toBe(true);
+  });
+});

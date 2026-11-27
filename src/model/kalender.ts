@@ -158,12 +158,9 @@ export function skemaUntukTanggal(tanggal: string, p: DataPola): SkemaHari {
   return { skemaId: id ?? null, alasan: 'normal', sumber: pt.sumber };
 }
 
-/** Rombel yang aktif pada tanggal tertentu (tidak masuk `rombelTidakAktif` pada kegiatan yang berlaku). */
+/** Rombel yang aktif pada tanggal tertentu (tidak masuk `rombelTidakAktif` pada periode yang berlaku). */
 export function rombelAktif(tanggal: string, kalender: Kegiatan[], semua: Rombel[]): Rombel[] {
-  const tidakAktif = new Set<string>();
-  for (const k of kalender) {
-    if (dalamRentang(tanggal, k.mulai, k.selesai)) k.rombelTidakAktif.forEach((r) => tidakAktif.add(r));
-  }
+  const tidakAktif = rombelTidakAktifIds(tanggal, kalender);
   return semua.filter((r) => !tidakAktif.has(r.id));
 }
 
@@ -225,11 +222,14 @@ export function selisihKapasitas(rombel: Rombel[], kapasitas: KapasitasPekan): S
     .filter((s) => s.selisih !== 0);
 }
 
-/** Id rombel yang tidak aktif pada tanggal (gabungan semua kegiatan yang mencakup tanggal itu, mis. PKL). */
+/**
+ * Id rombel yang tidak aktif pada tanggal. Mengikuti periode terspesifik yang mencakup tanggal itu (sama seperti pola dan versi jadwal):
+ * periode yang berada di dalam periode lain menggantikan daftarnya, bukan menggabungkannya. Contoh: ASAS (30 Nov-4 Des) di dalam
+ * "TKA lanjutan" (21 Nov-18 Des), kelas PKL milik TKA lanjutan kembali aktif selama ASAS.
+ * Kegiatan libur tidak ikut dihitung (tidak punya daftar rombel).
+ */
 export function rombelTidakAktifIds(tanggal: string, kalender: Kegiatan[]): Set<string> {
-  const hasil = new Set<string>();
-  for (const k of kalender) if (dalamRentang(tanggal, k.mulai, k.selesai)) k.rombelTidakAktif.forEach((r) => hasil.add(r));
-  return hasil;
+  return new Set(periodeUntukTanggal(tanggal, kalender)?.rombelTidakAktif ?? []);
 }
 
 /**
