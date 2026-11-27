@@ -127,6 +127,8 @@ class Mesin {
   readonly guruMengawas: Uint8Array[];
   /** sel ruang yang dikunci kegiatan (untuk alasan sisa) */
   readonly ruangKunci: Uint8Array[];
+  /** [rombel][hari] = 1 bila rombel belajar tanpa ruang pada hari itu (PJJ) */
+  readonly tanpaRuang: Uint8Array[];
   readonly bersama: boolean[];
   readonly kodeRuang: string[];
   readonly ruangIds: string[];
@@ -173,6 +175,11 @@ class Mesin {
     this.guruTutup = p.master.guru.map(() => new Uint8Array(HARI * LEBAR));
     this.guruMengawas = p.master.guru.map(() => new Uint8Array(HARI * LEBAR));
     this.ruangKunci = p.master.ruang.map(() => new Uint8Array(HARI * LEBAR));
+    this.tanpaRuang = p.master.rombel.map(() => new Uint8Array(HARI));
+    for (const t of opsi.aturan?.tanpaRuang ?? []) {
+      const r = rombelIdx.get(t.rombelId);
+      if (r !== undefined && t.hari >= 0 && t.hari < HARI) (this.tanpaRuang[r] as Uint8Array)[t.hari] = 1;
+    }
     for (const a of p.aturan) {
       if (a.jenis !== 'guruTidakTersedia') continue;
       const g = guruIdx.get(a.guruId);
@@ -306,6 +313,7 @@ class Mesin {
         }
       }
     }
+    if ((this.tanpaRuang[u.rombel] as Uint8Array)[hari]) return u.anggota.map(() => -1);
     const dipakai = new Set<number>();
     const hasil: number[] = [];
     for (const a of u.anggota) {
@@ -442,6 +450,7 @@ class Mesin {
         if (!catat((this.guruOcc[g] as Int32Array)[k0 + j] as number)) return null;
       }
     }
+    if ((this.tanpaRuang[c.unit.rombel] as Uint8Array)[hari]) return hasil;
     for (const a of c.unit.anggota) {
       let sedikit: Set<number> | null = null;
       for (const r of a.calon) {
@@ -583,6 +592,7 @@ class Mesin {
         if (ada.guru) n.guru += 1;
         if (ada.tutup) n.tutup += 1;
         if (ada.mengawas) n.mengawas += 1;
+        if ((this.tanpaRuang[u.rombel] as Uint8Array)[h]) continue;
         // ruang: terhalang bila ada anggota yang semua calon ruangnya terisi; 'kunci' bila setiap calon yang terisi itu terkunci kegiatan
         for (const a of u.anggota) {
           if (a.calon.includes(-1)) continue;

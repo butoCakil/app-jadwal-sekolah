@@ -361,6 +361,24 @@ app-jadwal-sekolah/
 - **Pola pemakaian ruang di PDF aSc (belum dimuat sebagai kunci; ditunda oleh Benny):** TKA gel. 1: G1, G2, G3, I3, Q hanya terpakai hari Jumat; UKK: B3, C1, D1, G3, I3, Q kosong sepanjang pekan.
 - **Ditunda:** target beban (pemadatan) tidak ada aturan khusus: beban per kegiatan sudah bisa diubah di tab Beban, dan permintaan seperti "gandakan jam mapel TKA" masuk lapisan AI (langkah 4).
 
+### 11.5h Tolok ukur solver pada kegiatan nyata (27 Nov 2026, malam; langkah 3)
+
+- **Cara:** `test/benchmark-kegiatan.test.ts` (jalan dengan `BENCH=1 npx vitest run test/benchmark-kegiatan.test.ts`; laporan ke `/tmp/bench.json`). Tiap kegiatan nyata disusun ulang dari nol oleh solver untuk kelas terdampak, dengan aturan kegiatan (ruang terkunci, pengawas, PJJ); kelas yang ikut induk dipertahankan; jadwal aSc menjadi pembanding. Solver kini juga menghormati rombel tanpa ruang (PJJ).
+- **Hasil (batas 8 dtk, 0 pelanggaran aturan wajib pada semua kegiatan):**
+
+| Kegiatan | Kelas | Kebutuhan JP | Jadwal aSc | Solver | Sisa solver |
+|---|---|---|---|---|---|
+| Pemadatan TKA | 22 | 1056 | 1009 (9 pelanggaran) | 1054 | 2 |
+| TKA Gel. 1 | 25 | 595 | 595 | 595 | 0 |
+| TKA Gel. 2 | 25 | 1000 | 1000 | 999 | 1 |
+| ASAJ Praktik XII | 2 | 96 | 96 | 96 | 0 |
+| UKK XII | 15 | 720 | 720 | 720 | 0 |
+| ASAS | 5 | 239 | 239 (4 JP bentrok pengawas, diterima) | 231 | 8 |
+
+- **Bacaan:** pada Pemadatan solver menempatkan lebih banyak JP daripada aSc dan tanpa pelanggaran (aSc meninggalkan 47 JP tak terjadwal dan 9 pelanggaran). Pada TKA dan UKK hasilnya setara. Satu-satunya yang kalah dari aSc adalah ASAS: selisih sekitar 4 JP di luar 4 JP PSRT yang memang mustahil tanpa melanggar (guru EDW mengawas). Sisa ASAS ada pada XI TE 2 dan XI TE 3 (beban yang dibatasi ke ruang I1, yang terkunci ujian, dan guru AZZ yang banyak mengawas) serta XI AT 2 (guru YDH mengawas). Hasil tidak berubah dengan waktu 30 dtk dan tiga benih berbeda, jadi ini macet pada optimum lokal, bukan kekurangan waktu.
+- **Belum diukur:** kerapian (jam kosong guru, sebaran mapel), karena belum ada preferensi berbobot.
+- **Langkah berikutnya untuk solver:** mulai dari jadwal induk atau jadwal sebelumnya lalu menggeser hanya yang terdampak (bukan dari nol), dan rantai geser lebih dalam untuk kasus macet seperti ASAS.
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?
