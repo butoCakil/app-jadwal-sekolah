@@ -327,6 +327,16 @@ app-jadwal-sekolah/
 - **Kategori mapel:** `Mapel.kategori` opsional; bila kosong diturunkan dari kode (Normatif, Adaptif, Jurusan AT/DKV/TE, selain itu "Belum dikategorikan"); elemen mengikuti induknya. Pemilih "Mapel yang diampu" dikelompokkan menurut kategori dengan sub-kelompok elemen.
 - **Kalender:** kotak tanggal memakai titik warna per jenis kegiatan; penanda "grid" = tanggal acuan Grid, dan acuan awal periode maju ke hari kerja pertama.
 
+### 11.5e Induk dan kegiatan (27 Nov 2026, siang)
+
+- **Keputusan Benny:** satu semester = periode induk dengan jadwal reguler; kegiatan (TKA, ASAS, ASAJ, UKK, TOEFL, ...) berada di dalamnya dan berlaku otomatis sesuai tanggal; selesai kegiatan kembali ke induk. Beban kegiatan mewarisi induk lalu diubah khusus (induk tidak terdampak). Kelas yang tidak terdampak mengikuti induk langsung (minim gubahan). Kegiatan bisa satu rentang atau hanya hari tertentu.
+- **Model** (`src/model/simpul.ts`): `Proyek.semester` (nama, mulai, selesai, kelas tidak aktif di luar kegiatan); `Kegiatan.rombelTerdampak` (kosong = data lama, semua kelas dari versi kegiatan) dan `Kegiatan.hariBerlaku`; `Beban.asal` (beban induk yang digantikan) dan `Beban.dihapus`.
+- **Jadwal per hari:** kelas terdampak dari versi kegiatan hari itu, kelas aktif lain dari induk, kelas tidak aktif disembunyikan. Pemeriksa bentrok memeriksa gabungannya. Kelas tidak aktif mengikuti kegiatan terspesifik (menggantikan, bukan menggabungkan).
+- **Salin-saat-ubah:** mengubah jadwal atau beban kelas yang ikut induk dari dalam kegiatan menyalin jadwal induk kelas itu ke kegiatan lalu menerapkan perubahan; induk tidak berubah. "Ikut induk" mengembalikannya. Pada fokus kegiatan, perubahan di hari yang tidak diatur kegiatan ditolak.
+- **UI:** tab pertama "Periode & Jadwal" = pohon (Menurut tanggal, Induk, kegiatan) + sub-tab Info, Kelas (ikut induk / khusus / tidak aktif), Beban (tanda induk/diubah/tambahan, tombol kembalikan), Grid. Modal kegiatan: nama, jenis, tanggal, hari berlaku, pola jam, catatan. Bagian PKL di Master Data dihapus. Kalender menautkan ke halaman inti. Inspector dan Susun menampilkan sasaran; Susun pada kegiatan mempertahankan kelas yang ikut induk.
+- **Data Gasal** disusun ulang (`strukturGasalJadwalTe`): induk 12 Jul–18 Des 2026 dari periode p_tka/p_tka2; kegiatan ASAJ (9 kelas khusus, 4 tidak aktif) dan ASAS (5 kelas XI khusus, 8 tidak aktif, 240 JP, 0 bentrok). Periode Genap dibuang dari data Gasal. Temuan data sumber: reguler X TE 1 IPAS Selasa jam 6–10 di N2 (ruang terlarang untuk TE); ASAJ XI TE 2 PMM lebih 1 JP.
+- **Tahap berikut:** aturan per kegiatan (ruang terkunci: lab untuk TKA/TOEFL, ruang teori untuk ujian, bengkel untuk UKK; guru pengawas tidak boleh mengajar), lalu Susun/AI per kegiatan dengan prompt (mis. menggandakan JP mapel TKA dan mengurangi kejuruan).
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?
