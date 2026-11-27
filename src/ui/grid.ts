@@ -266,8 +266,8 @@ function tabelPekan(k: Konteks, pk: Peta, milik: Slot[]): string {
     .join('');
 
   return `<div class="kartu overflow-x-auto"><div class="min-w-[820px]">
-    <div class="grid grid-cols-[64px_repeat(${k.turunan.hari.length},minmax(0,1fr))]"><div class="bg-slate-800 px-2 py-2 text-xs font-semibold text-white">Jam ke-</div>${kepala}</div>
-    <div class="grid grid-cols-[64px_repeat(${k.turunan.hari.length},minmax(0,1fr))]"><div class="relative bg-slate-50" style="height:${total}px">${labelBaris.join('')}</div>${kolom}</div></div></div>`;
+    <div class="grid" style="grid-template-columns:64px repeat(${k.turunan.hari.length},minmax(0,1fr))"><div class="bg-slate-800 px-2 py-2 text-xs font-semibold text-white">Jam ke-</div>${kepala}</div>
+    <div class="grid" style="grid-template-columns:64px repeat(${k.turunan.hari.length},minmax(0,1fr))"><div class="relative bg-slate-50" style="height:${total}px">${labelBaris.join('')}</div>${kolom}</div></div></div>`;
 }
 
 /** Tampilan semua sekaligus: baris = semua rombel/guru/ruang, kolom = hari × pelajaran (istirahat punya kolom sendiri). */
