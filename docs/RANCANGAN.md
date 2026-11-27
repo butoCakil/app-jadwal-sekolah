@@ -312,6 +312,13 @@ app-jadwal-sekolah/
 - **Format berkas kalender ditebak** (kolom Kegiatan + Tanggal atau Mulai/Selesai; rentang dalam satu sel); perlu contoh berkas asli Benny untuk memastikan.
 - **Hasil uji Genap:** Susun Otomatis tanpa XII: 0 pelanggaran; 978 dari 1018 JP tertempatkan, 40 JP sisanya tepat sama dengan kelebihan kapasitas (beban kelas X dan XI di atas 48 JP/pekan).
 
+### 11.5c Revisi 27 Nov 2026 (modal, pola bernama, hari kerja, dataset)
+
+- **Hari kerja** = panjang `polaReguler` (5 atau 6); semua pola ikut. Hari baru memakai skema pertama. Solver, grid, validasi, dan kalender mengikuti. Hari non-kerja: rentang kegiatan tidak digambar; acara satu hari tetap tampil.
+- **Pola bernama:** `polaReguler` tetap pola default (isi), dengan `polaRegulerId` dan `polaRegulerNama`; pola lain di `polaLain`. Menjadikan pola default menukar identitas dan isi sehingga rujukan `Kegiatan.polaId` tetap benar. Pola tertanam format lama (`Kegiatan.pola`) dipindah otomatis saat data dimuat (`migrasiPola`). Penggantian manual hanya tampil bila sudah ada (sebaiknya dilepas dan diganti pola pada kegiatan).
+- **Modal kegiatan:** isian sementara (`ui.dlg`), validasi saat Simpan; memilih kelas tidak aktif (centang per tingkat/jurusan), pola, versi jadwal (atau buat versi baru), catatan, jadikan periode aktif.
+- **Dataset tersimpan:** IndexedDB store `dataset` (basis data versi 2). Master Data > Data: simpan draf sebagai dataset, muat, timpa, ganti nama, hapus, dan buat semester baru (master, beban, aturan, skema, pola dipertahankan; jadwal dan kalender dikosongkan). Data bawaan Genap/Gasal/contoh tetap ada.
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?

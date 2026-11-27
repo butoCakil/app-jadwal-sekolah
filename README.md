@@ -26,6 +26,8 @@ Data awal aplikasi = **data sekolah** (`data/sekolah/genap-2027.json` bawaan, `d
 - **Periode** (seperti jadwal-te): setiap kegiatan bisa membawa pola mingguan, versi jadwal sendiri, dan daftar rombel tidak aktif (PKL); satu periode ditandai **aktif** dan dipilih dari bilah di tab Jadwal. Slot rombel PKL disembunyikan, tidak diperiksa, dan dilewati Susun Otomatis.
 - **Template skema jam** bisa ditambah, disalin, diubah, dan dihapus (tidak bisa jika masih dipakai), misalnya untuk bulan puasa.
 
+- **Revisi 27 Nov:** Ubah dan + Kegiatan di kalender membuka **modal** (tersimpan setelah klik Simpan); daftar kegiatan ringkas; hari non-kerja tidak menampilkan kegiatan berentang. **Hari kerja** 5 atau 6 (Senin–Sabtu) diatur di Pola mingguan. **Pola mingguan bernama**: tambah dari kosong, salin, ganti nama, hapus, dan pilih default; periode memilih pola lewat modal. Master Data > Data: **kelas PKL**, **dataset tersimpan** di peramban (simpan, muat, ganti nama, hapus), dan **semester baru** dari draf.
+
 ## Yang sudah ada (tahap 4)
 
 - **Susun Otomatis** (tab baru, berjalan di Web Worker): menempatkan JP semua beban tanpa bentrok guru/rombel/ruang, memperhatikan guru tidak tersedia, ruang terlarang, jenis ruang per mapel, pola pertemuan, dan kelompok paralel. Mode "dari nol" atau "lengkapi" (mempertahankan slot yang ada). Yang tidak muat tidak dipaksakan: dilaporkan beserta alasannya. Hasil diterapkan dengan satu klik dan bisa diurungkan.
