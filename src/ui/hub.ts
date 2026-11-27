@@ -1,9 +1,9 @@
 // Halaman inti "Periode & Jadwal": pohon semester (induk) dan kegiatan di dalamnya, dengan sub-tab Info, Kelas, Beban, Grid.
 
-import type { Kegiatan, Proyek, Rombel } from '../model/tipe';
+import type { Kegiatan, Proyek, Rombel, Semester } from '../model/tipe';
 import { NAMA_HARI } from '../model/tipe';
 import { berlakuPada, daftarPola, dalamRentang, hariPekan, jumlahHariKerja, periodeUntukTanggal } from '../model/kalender';
-import { ikutInduk, jadikanTerdampak, jadikanWarisan, kegiatanFokus, modelWarisan, terdampak, versiDari, type Fokus } from '../model/simpul';
+import { bebanInduk, daftarSemester, fokusInduk, fokusSemester, ikutInduk, jadikanTerdampak, jadikanWarisan, kegiatanFokus, modelWarisan, semesterFokus, semesterKegiatan, semesterPada, terdampak, versiDari, versiSemester, type Fokus } from '../model/simpul';
 import { jpRombel } from '../model/jp';
 import type { Konteks, Tab } from './konteks';
 import { TAB_HUB } from './konteks';
@@ -49,8 +49,8 @@ function tanggalUntukFokus(p: Proyek, fokus: Fokus, sekarang: string): string {
     }
     return t;
   }
-  if (fokus === 'induk' && p.semester?.mulai && p.semester.selesai) {
-    const s = p.semester;
+  const s = semesterFokus(p, fokus);
+  if (s?.mulai && s.selesai) {
     const cocok = (t: string) => hariPekan(t) < n && !periodeUntukTanggal(t, p.kalender);
     if (dalamRentang(sekarang, s.mulai, s.selesai) && cocok(sekarang)) return sekarang;
     for (let t = s.mulai, i = 0; t <= s.selesai && i < 400; t = tambahHari(t, 1), i++) if (cocok(t)) return t;
@@ -62,17 +62,25 @@ function tanggalUntukFokus(p: Proyek, fokus: Fokus, sekarang: string): string {
 /** Membatasi tanggal acuan agar tetap di dalam kegiatan atau semester yang sedang dikerjakan. */
 export function jepitTanggal(k: Konteks, t: string): string {
   const g = kegiatanFokus(k.p, k.ui.fokus);
-  const [a, b] = g ? [g.mulai, g.selesai] : k.ui.fokus === 'induk' && k.p.semester?.mulai ? [k.p.semester.mulai, k.p.semester.selesai] : ['', ''];
+  const s = semesterFokus(k.p, k.ui.fokus);
+  const [a, b] = g ? [g.mulai, g.selesai] : s?.mulai && s.selesai ? [s.mulai, s.selesai] : ['', ''];
   if (!a || !b) return t;
   if (t < a) return a;
   if (t > b) return b;
   return t;
 }
 
-/** Membuka sasaran (induk/kegiatan/menurut tanggal) di halaman Periode & Jadwal. */
+/** Fokus bawaan halaman Periode & Jadwal: semester yang berlangsung hari ini, selain itu semester pertama. */
+export function fokusBawaan(p: Proyek): Fokus {
+  const s = semesterPada(p, isoLokal(new Date())) ?? daftarSemester(p)[0];
+  return s ? fokusSemester(s.id) : 'induk';
+}
+
+/** Membuka sasaran (induk semester atau kegiatan) di halaman Periode & Jadwal. */
 export function bukaSimpul(k: Konteks, fokus: Fokus, tab?: Tab): void {
   k.ui.fokus = fokus;
-  if (fokus !== 'auto') k.ui.tanggal = tanggalUntukFokus(k.p, fokus, isoLokal(new Date()));
+  k.ui.fokusHub = fokus;
+  k.ui.tanggal = tanggalUntukFokus(k.p, fokus, isoLokal(new Date()));
   k.ui.modal = null;
   k.ke(tab ?? (TAB_HUB.includes(k.ui.tab) ? k.ui.tab : 'grid'));
 }
@@ -80,8 +88,8 @@ export function bukaSimpul(k: Konteks, fokus: Fokus, tab?: Tab): void {
 export const namaFokus = (k: Konteks): string => {
   const g = kegiatanFokus(k.p, k.ui.fokus);
   if (g) return g.nama;
-  if (k.ui.fokus === 'induk') return `${k.p.semester?.nama ?? 'Jadwal induk'} (jadwal reguler)`;
-  return 'Menurut tanggal';
+  if (fokusInduk(k.ui.fokus)) return `${semesterFokus(k.p, k.ui.fokus)?.nama ?? 'Jadwal induk'} (jadwal reguler)`;
+  return 'Jadwal berlangsung (menurut tanggal)';
 };
 
 /** Bilah kecil di tab lain (Inspector, Susun) yang menunjukkan sasaran yang sedang dikerjakan. */
@@ -97,67 +105,81 @@ function pohon(k: Konteks): string {
   const hariIni = isoLokal(new Date());
   const f = k.ui.fokus;
   const item = (aktif: boolean, isi: string, fokus: string, judul = '') =>
-    `<button class="block w-full rounded-lg border px-2 py-1.5 text-left ${aktif ? 'border-[#2347b8] bg-[#2347b8]/5 ring-1 ring-[#2347b8]/40' : 'border-transparent hover:bg-slate-100'}" data-aksi="simpul" data-fokus="${esc(fokus)}" title="${esc(judul)}">${isi}</button>`;
-  const s = p.semester;
-  const hariIniKeg = periodeUntukTanggal(hariIni, p.kalender);
-  const stInduk = s ? statusWaktu(s.mulai, s.selesai, hariIni) : { teks: 'belum bertanggal', cls: 'bg-slate-100 text-slate-500' };
-  const induk = item(
-    f === 'induk',
-    `<div class="flex items-center gap-1.5"><span class="text-[10px] font-bold tracking-wide text-slate-400">INDUK</span><span class="lencana !px-1.5 !py-0 !text-[10px] ${stInduk.cls}">${stInduk.teks}</span></div>
-     <div class="text-sm font-semibold leading-tight">${esc(s?.nama ?? 'Jadwal induk')}</div>
-     <div class="text-[11px] text-slate-500">${esc(s ? rentang(s.mulai, s.selesai) : 'rentang semester belum diatur')} · reguler</div>`,
-    'induk',
-    'Jadwal reguler semester: berlaku di luar kegiatan',
-  );
-  const keg = daftarKegiatan(p)
-    .map((g) => {
-      const st = statusWaktu(g.mulai, g.selesai, hariIni);
-      const khusus = modelWarisan(g) ? `${g.rombelTerdampak?.length ?? 0} kelas khusus` : 'data lama';
-      return item(
-        f === g.id,
-        `<div class="flex items-center gap-1.5"><i class="inline-block h-2 w-2 shrink-0 rounded-full" style="background:${WARNA_JENIS[g.jenis].titik}"></i><span class="text-[10px] font-bold text-slate-500">${esc(g.jenis)}</span><span class="lencana !px-1.5 !py-0 !text-[10px] ${st.cls}">${st.teks}</span></div>
-         <div class="truncate text-[13px] font-medium leading-tight">${esc(g.nama)}</div>
-         <div class="text-[11px] text-slate-500">${esc(rentang(g.mulai, g.selesai))}${g.hariBerlaku?.length ? ` · ${esc(hariTeks(g))}` : ''} · ${khusus}</div>`,
-        g.id,
-        g.nama,
-      );
-    })
-    .join('');
+    `<button class="block w-full min-w-0 rounded-lg border px-2 py-1.5 text-left ${aktif ? 'border-[#2347b8] bg-[#2347b8]/5 ring-1 ring-[#2347b8]/40' : 'border-transparent hover:bg-slate-100'}" data-aksi="simpul" data-fokus="${esc(fokus)}" title="${esc(judul)}">${isi}</button>`;
+  const kartuKeg = (g: Kegiatan) => {
+    const st = statusWaktu(g.mulai, g.selesai, hariIni);
+    const khusus = modelWarisan(g) ? `${g.rombelTerdampak?.length ?? 0} kelas khusus` : 'data lama';
+    return item(
+      f === g.id,
+      `<div class="flex items-center gap-1.5"><i class="inline-block h-2 w-2 shrink-0 rounded-full" style="background:${WARNA_JENIS[g.jenis].titik}"></i><span class="text-[10px] font-bold text-slate-500">${esc(g.jenis)}</span><span class="lencana !px-1.5 !py-0 !text-[10px] ${st.cls}">${st.teks}</span></div>
+       <div class="truncate text-[13px] font-medium leading-tight">${esc(g.nama)}</div>
+       <div class="text-[11px] text-slate-500">${esc(rentang(g.mulai, g.selesai))}${g.hariBerlaku?.length ? ` · ${esc(hariTeks(g))}` : ''} · ${khusus}</div>`,
+      g.id,
+      g.nama,
+    );
+  };
+  const semua = daftarKegiatan(p);
+  const sems = daftarSemester(p);
+  const blokSemester = (s: Semester | undefined) => {
+    const fokus = s ? fokusSemester(s.id) : 'induk';
+    const keg = semua.filter((g) => (s ? semesterKegiatan(p, g) === s : true));
+    const st = s ? statusWaktu(s.mulai, s.selesai, hariIni) : { teks: 'belum bertanggal', cls: 'bg-slate-100 text-slate-500' };
+    const tutup = k.ui.tutup.has(s?.id ?? '_');
+    const aktifKini = keg.filter((g) => berlakuPada(g, hariIni));
+    const ringkas = tutup
+      ? `<div class="ml-6 text-[11px] text-slate-500">${keg.length} kegiatan${aktifKini.length ? ` · <b class="text-emerald-700">berlangsung: ${esc(aktifKini.map((g) => g.nama).join(', '))}</b>` : ''}</div>`
+      : `<div class="ml-3 space-y-1 border-l-2 border-slate-200 pl-2">${keg.map(kartuKeg).join('') || '<div class="px-2 py-1 text-xs text-slate-400">Belum ada kegiatan.</div>'}
+          <button class="tombol mt-1 w-full justify-center !py-1 !text-xs" data-aksi="hubKegBaru" data-sem="${esc(s?.id ?? '')}">+ Kegiatan</button></div>`;
+    return `<div class="space-y-1"><div class="flex items-start gap-1"><button class="mt-1.5 w-5 shrink-0 text-xs text-slate-500 hover:text-slate-900" data-aksi="semTutup" data-id="${esc(s?.id ?? '_')}" title="${tutup ? 'Tampilkan kegiatan' : 'Ciutkan'}">${tutup ? '▶' : '▼'}</button>
+      <div class="min-w-0 flex-1">${item(
+        f === fokus || (!s && f === 'induk'),
+        `<div class="flex items-center gap-1.5"><span class="text-[10px] font-bold tracking-wide text-slate-400">INDUK</span><span class="lencana !px-1.5 !py-0 !text-[10px] ${st.cls}">${st.teks}</span></div>
+         <div class="text-sm font-semibold leading-tight">${esc(s?.nama ?? 'Jadwal induk')}</div>
+         <div class="text-[11px] text-slate-500">${esc(s ? rentang(s.mulai, s.selesai) : 'rentang semester belum diatur')} · reguler</div>`,
+        fokus,
+        'Jadwal reguler semester: berlaku di luar kegiatan',
+      )}</div></div>${ringkas}</div>`;
+  };
   const libur = p.kalender.filter((g) => g.jenis === 'libur').length;
-  return `<div class="space-y-1">
-    ${item(f === 'auto', `<div class="text-sm font-semibold">📅 Menurut tanggal</div><div class="text-[11px] text-slate-500">yang berlaku pada pekan dipilih${hariIniKeg ? ` · hari ini: ${esc(hariIniKeg.jenis)}` : ''}</div>`, 'auto', 'Gabungan induk dan kegiatan sesuai tanggal: yang dilihat guru dan siswa')}
-    <div class="pt-1">${induk}</div>
-    <div class="ml-3 space-y-1 border-l-2 border-slate-200 pl-2">${keg || '<div class="px-2 py-1 text-xs text-slate-400">Belum ada kegiatan.</div>'}
-      <button class="tombol mt-1 w-full justify-center !py-1 !text-xs" data-aksi="hubKegBaru">+ Kegiatan</button></div>
-    <div class="mt-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">${libur ? `${libur} hari libur di ` : 'Libur diatur di '}<button class="underline" data-tab="skema">Skema &amp; Kalender</button>.<br>Semester lain: <button class="underline" data-aksi="hubDataset">Master Data › Data</button>.</div></div>`;
+  return `<div class="mb-2 flex items-center justify-between"><span class="text-xs font-bold tracking-wide text-slate-500">PERIODE</span><button class="tombol !px-2 !py-0 !text-xs" data-aksi="pohonTutup" title="Sembunyikan daftar periode agar grid selebar layar">◀ Sembunyikan</button></div>
+    <div class="space-y-3">${(sems.length ? sems : [undefined]).map(blokSemester).join('')}</div>
+    <button class="tombol mt-3 w-full justify-center !py-1 !text-xs" data-aksi="semBaru">+ Semester</button>
+    <div class="mt-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">${libur ? `${libur} hari libur di ` : 'Libur diatur di '}<button class="underline" data-tab="skema">Skema &amp; Kalender</button>.</div>`;
 }
 
 // ------------------------------------------------------------------ sub-tab Info
 
-function infoInduk(k: Konteks): string {
+function infoInduk(k: Konteks, s: Semester | undefined): string {
   const p = k.p;
-  const s = p.semester;
-  const reg = p.versi.find((v) => v.jenis === 'reguler') ?? p.versi[0];
+  const reg = versiSemester(p, s);
   const tdk = s?.rombelTidakAktif.length ?? 0;
   const pola = daftarPola(p)[0];
+  const beban = bebanInduk(p, s);
+  const sumberLain = daftarSemester(p).filter((x) => x !== s && bebanInduk(p, x).length);
+  const salin = s && !beban.length && sumberLain.length
+    ? `<div class="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-sky-50 p-2 text-xs text-sky-900">Semester ini belum punya beban. <select class="isian !py-0.5 !text-xs" id="semSalinDari">${sumberLain.map((x) => `<option value="${esc(x.id)}">${esc(x.nama)}</option>`).join('')}</select><button class="tombol !py-0.5 !text-xs" data-aksi="semSalinBeban" data-sem="${esc(s.id)}">Salin bebannya</button><span>(jadwal tidak ikut disalin)</span></div>`
+    : '';
+  const id = esc(s?.id ?? '');
   return `<div class="grid gap-3 lg:grid-cols-[1fr_320px]"><div class="kartu p-4">
       <div class="text-sm font-semibold">Periode induk (semester)</div>
       <div class="mt-2 grid gap-3 sm:grid-cols-3">
-        <label class="block text-xs font-semibold text-slate-600 sm:col-span-3">Nama semester<input class="isian mt-1 w-full font-normal" value="${esc(s?.nama ?? '')}" placeholder="mis. Gasal 2026/2027" data-aksi="semF" data-f="nama"></label>
-        <label class="block text-xs font-semibold text-slate-600">Mulai<input type="date" class="isian mt-1 w-full font-normal" value="${esc(s?.mulai ?? '')}" data-aksi="semF" data-f="mulai"></label>
-        <label class="block text-xs font-semibold text-slate-600">Selesai<input type="date" class="isian mt-1 w-full font-normal" value="${esc(s?.selesai ?? '')}" data-aksi="semF" data-f="selesai"></label>
+        <label class="block text-xs font-semibold text-slate-600 sm:col-span-3">Nama semester<input class="isian mt-1 w-full font-normal" value="${esc(s?.nama ?? '')}" placeholder="mis. Gasal 2026/2027" data-aksi="semF" data-f="nama" data-sem="${id}"></label>
+        <label class="block text-xs font-semibold text-slate-600">Mulai<input type="date" class="isian mt-1 w-full font-normal" value="${esc(s?.mulai ?? '')}" data-aksi="semF" data-f="mulai" data-sem="${id}"></label>
+        <label class="block text-xs font-semibold text-slate-600">Selesai<input type="date" class="isian mt-1 w-full font-normal" value="${esc(s?.selesai ?? '')}" data-aksi="semF" data-f="selesai" data-sem="${id}"></label>
         <div class="self-end pb-1 text-xs text-slate-500">Pola jam: <b>${esc(pola?.nama ?? '—')}</b> <button class="underline" data-aksi="hubPola">ubah</button></div></div>
+      ${salin}
       <div class="mt-4 grid gap-2 text-sm sm:grid-cols-3">
-        <button class="rounded-lg bg-slate-50 p-2 text-left hover:bg-slate-100" data-tab="beban"><div class="text-xs text-slate-500">Beban</div><b>${jpRombel(p.beban.filter((b) => !b.versiId || b.versiId === reg?.id))} JP</b></button>
+        <button class="rounded-lg bg-slate-50 p-2 text-left hover:bg-slate-100" data-tab="beban"><div class="text-xs text-slate-500">Beban</div><b>${jpRombel(beban)} JP</b></button>
         <button class="rounded-lg bg-slate-50 p-2 text-left hover:bg-slate-100" data-tab="grid"><div class="text-xs text-slate-500">Terjadwal</div><b>${reg?.slots.length ?? 0} slot</b></button>
-        <button class="rounded-lg bg-slate-50 p-2 text-left hover:bg-slate-100" data-tab="kelas"><div class="text-xs text-slate-500">Kelas tidak aktif</div><b>${tdk} rombel</b></button></div></div>
+        <button class="rounded-lg bg-slate-50 p-2 text-left hover:bg-slate-100" data-tab="kelas"><div class="text-xs text-slate-500">Kelas tidak aktif</div><b>${tdk} rombel</b></button></div>
+      ${s && daftarSemester(p).length > 1 ? `<div class="mt-3"><button class="tombol !text-red-600" data-aksi="semHapus" data-sem="${id}">Hapus semester ini</button></div>` : ''}</div>
     ${caraKerja()}</div>`;
 }
 
 function caraKerja(): string {
   return `<div class="kartu p-4 text-xs leading-relaxed text-slate-600"><div class="mb-1 text-sm font-semibold text-slate-800">Cara kerjanya</div>
     <ol class="list-decimal space-y-1 pl-4">
-      <li><b>Induk</b> berisi jadwal reguler semester. Jadwal ini berlaku di luar kegiatan.</li>
+      <li><b>Induk</b> = satu semester (Gasal, Genap) dengan jadwal reguler dan bebannya. Jadwal ini berlaku di luar kegiatan.</li>
       <li>Tiap <b>kegiatan</b> (TKA, ASAS, UKK, …) berlaku otomatis pada tanggalnya. Di dalamnya, tiap kelas berstatus:
         <b>ikut induk</b> (jadwal diambil langsung dari induk), <b>khusus</b> (jadwal dan beban sendiri), atau <b>tidak aktif</b>.</li>
       <li>Mengubah jadwal atau beban kelas yang ikut induk dari dalam kegiatan otomatis menjadikannya khusus. Induk tidak berubah.</li>
@@ -195,14 +217,15 @@ function infoKegiatan(k: Konteks, g: Kegiatan): string {
 
 // ------------------------------------------------------------------ sub-tab Kelas
 
-function kelasInduk(k: Konteks): string {
+function kelasInduk(k: Konteks, sem: Semester | undefined): string {
   const p = k.p;
-  const tdk = new Set(p.semester?.rombelTidakAktif ?? []);
-  const reg = p.versi.find((v) => v.jenis === 'reguler') ?? p.versi[0];
+  const tdk = new Set(sem?.rombelTidakAktif ?? []);
+  const reg = versiSemester(p, sem);
   const rb = new Map(p.beban.map((b) => [b.id, b.rombelId]));
+  const beban = bebanInduk(p, sem);
   const baris = (r: Rombel) => {
     const off = tdk.has(r.id);
-    const jp = jpRombel(p.beban.filter((b) => b.rombelId === r.id && (!b.versiId || b.versiId === reg?.id)));
+    const jp = jpRombel(beban.filter((b) => b.rombelId === r.id));
     const slot = reg?.slots.filter((s) => rb.get(s.bebanId) === r.id).length ?? 0;
     return `<tr class="border-t border-slate-100"><td class="px-2 py-1.5 font-medium">${esc(r.kode)}</td>
       <td class="px-2 py-1.5"><div class="inline-flex rounded-lg border border-slate-300 bg-white p-0.5 text-xs">${segmen(!off, 'Aktif', 'kelasInduk', r.id, 'aktif')}${segmen(off, 'Tidak aktif', 'kelasInduk', r.id, 'off')}</div></td>
@@ -271,26 +294,44 @@ const SUB: { id: Tab; label: string }[] = [
 export function renderHub(k: Konteks): string {
   const p = k.p;
   const g = kegiatanFokus(p, k.ui.fokus);
-  const auto = k.ui.fokus === 'auto';
-  const sub = SUB.filter((x) => !auto || x.id === 'grid' || x.id === 'beban');
-  const tab = sub.some((x) => x.id === k.ui.tab) ? k.ui.tab : 'grid';
+  const sem = semesterFokus(p, k.ui.fokus);
+  const tab = SUB.some((x) => x.id === k.ui.tab) ? k.ui.tab : 'grid';
   const judul = g
-    ? `<span class="lencana ${WARNA_JENIS[g.jenis].chip}">${esc(g.jenis)}</span> <b>${esc(g.nama)}</b> <span class="text-sm text-slate-500">${esc(rentang(g.mulai, g.selesai))}${g.hariBerlaku?.length ? ` · ${esc(hariTeks(g))}` : ''}</span>`
-    : k.ui.fokus === 'induk'
-      ? `<span class="lencana bg-slate-200 text-slate-700">INDUK</span> <b>${esc(p.semester?.nama ?? 'Jadwal induk')}</b> <span class="text-sm text-slate-500">jadwal reguler${p.semester ? ` · ${esc(rentang(p.semester.mulai, p.semester.selesai))}` : ''}</span>`
-      : `<b>Menurut tanggal</b> <span class="text-sm text-slate-500">gabungan induk dan kegiatan yang berlaku${k.turunan.periode ? `; pekan ini: ${esc(k.turunan.periode.nama)}` : '; pekan ini: induk'}</span>`;
+    ? `<span class="lencana ${WARNA_JENIS[g.jenis].chip}">${esc(g.jenis)}</span> <b>${esc(g.nama)}</b> <span class="text-sm text-slate-500">${esc(rentang(g.mulai, g.selesai))}${g.hariBerlaku?.length ? ` · ${esc(hariTeks(g))}` : ''} · induk: ${esc(semesterKegiatan(p, g)?.nama ?? '—')}</span>`
+    : `<span class="lencana bg-slate-200 text-slate-700">INDUK</span> <b>${esc(sem?.nama ?? 'Jadwal induk')}</b> <span class="text-sm text-slate-500">jadwal reguler${sem ? ` · ${esc(rentang(sem.mulai, sem.selesai))}` : ''}</span>`;
   const isi =
-    tab === 'info' ? (g ? infoKegiatan(k, g) : infoInduk(k))
-    : tab === 'kelas' ? (g ? kelasKegiatan(k, g) : kelasInduk(k))
+    tab === 'info' ? (g ? infoKegiatan(k, g) : infoInduk(k, sem))
+    : tab === 'kelas' ? (g ? kelasKegiatan(k, g) : kelasInduk(k, sem))
     : tab === 'beban' ? renderBeban(k)
     : renderGrid(k) + renderModal(k);
   const tdk = k.turunan.rombelTidakAktif.size;
+  const buka = k.ui.pohonTutup ? '<button class="tombol !px-2 !py-0.5 !text-xs" data-aksi="pohonTutup" title="Tampilkan daftar periode">☰ Periode</button>' : '';
   return `<div class="flex flex-col items-start gap-3 lg:flex-row">
-    <aside class="kartu w-full shrink-0 p-2 lg:sticky lg:top-[108px] lg:max-h-[calc(100vh-124px)] lg:w-60 lg:overflow-y-auto">${pohon(k)}</aside>
+    ${k.ui.pohonTutup ? '' : `<aside class="kartu w-full shrink-0 p-2 lg:sticky lg:top-[108px] lg:max-h-[calc(100vh-124px)] lg:w-64 lg:overflow-y-auto">${pohon(k)}</aside>`}
     <section class="w-full min-w-0 flex-1">
-      <div class="mb-2 flex flex-wrap items-center gap-2">${judul}${tdk ? `<span class="lencana bg-amber-100 text-amber-900">${tdk} kelas tidak aktif</span>` : ''}</div>
-      <div class="mb-3 flex gap-1 border-b border-slate-200">${sub.map((x) => `<button data-tab="${x.id}" class="-mb-px border-b-2 px-3 py-1.5 text-sm font-medium ${x.id === tab ? 'border-[#2347b8] text-[#2347b8]' : 'border-transparent text-slate-500 hover:text-slate-800'}">${x.label}</button>`).join('')}</div>
+      <div class="mb-2 flex flex-wrap items-center gap-2">${buka}${judul}${tdk ? `<span class="lencana bg-amber-100 text-amber-900">${tdk} kelas tidak aktif</span>` : ''}</div>
+      <div class="mb-3 flex gap-1 border-b border-slate-200">${SUB.map((x) => `<button data-tab="${x.id}" class="-mb-px border-b-2 px-3 py-1.5 text-sm font-medium ${x.id === tab ? 'border-[#2347b8] text-[#2347b8]' : 'border-transparent text-slate-500 hover:text-slate-800'}">${x.label}</button>`).join('')}</div>
       ${isi}</section></div>`;
+}
+
+/** Tab Jadwal Berlangsung: jadwal yang berlaku menurut tanggal (gabungan induk dan kegiatan), selebar layar. Calon tampilan publik. */
+export function renderLangsung(k: Konteks): string {
+  const p = k.p;
+  const t = k.turunan;
+  const hariIni = isoLokal(new Date());
+  const chip = t.hari
+    .map((h, i) => {
+      const g = t.pekan.kegiatanHari[i];
+      const s = g ? semesterKegiatan(p, g) : semesterPada(p, h.tgl);
+      const libur = h.info.alasan === 'libur';
+      const label = libur ? `libur: ${h.info.kegiatanLibur ?? ''}` : g ? g.nama : s ? `${s.nama} (reguler)` : 'di luar semester';
+      const warna = libur ? 'bg-red-100 text-red-800' : g ? WARNA_JENIS[g.jenis].chip : 'bg-slate-100 text-slate-600';
+      return `<button class="lencana ${warna} max-w-[15rem] truncate ${h.tgl === hariIni ? 'ring-2 ring-[#2347b8]/50' : ''}" ${g ? `data-aksi="simpul" data-fokus="${esc(g.id)}"` : s ? `data-aksi="simpul" data-fokus="${esc(fokusSemester(s.id))}"` : ''} title="${esc(`${NAMA_HARI[i]} ${tgl(h.tgl)}: ${label}. Klik untuk mengubah di Periode & Jadwal.`)}"><b>${NAMA_HARI[i]?.slice(0, 3)}</b>&nbsp;${esc(label)}</button>`;
+    })
+    .join('');
+  return `<div class="mb-3 flex flex-wrap items-center gap-2"><span class="text-lg font-semibold">Jadwal berlangsung</span><span class="text-sm text-slate-500">pekan ${esc(tgl(t.senin))}</span>
+      <button class="tombol !py-0.5 !text-xs" data-aksi="pekanIni">Pekan ini</button><div class="flex flex-wrap gap-1.5">${chip}</div></div>
+    ${renderGrid(k)}${renderModal(k)}`;
 }
 
 // ------------------------------------------------------------------ aksi
@@ -331,11 +372,73 @@ export function klikHub(k: Konteks, el: HTMLElement): boolean {
   const g = kegiatanFokus(p, k.ui.fokus);
   switch (d.aksi) {
     case 'simpul':
-      bukaSimpul(k, d.fokus ?? 'auto', d.fokus === 'auto' ? 'grid' : undefined);
+      bukaSimpul(k, d.fokus ?? fokusBawaan(p));
       return true;
-    case 'hubKegBaru':
-      bukaDlgKegiatan(k, { tgl: p.semester?.mulai && dalamRentang(isoLokal(new Date()), p.semester.mulai, p.semester.selesai) ? isoLokal(new Date()) : (p.semester?.mulai || isoLokal(new Date())) });
+    case 'hubKegBaru': {
+      const s = daftarSemester(p).find((x) => x.id === d.sem);
+      const hariIni = isoLokal(new Date());
+      bukaDlgKegiatan(k, { tgl: s?.mulai && s.selesai && !dalamRentang(hariIni, s.mulai, s.selesai) ? s.mulai : hariIni });
       return true;
+    }
+    case 'semTutup': {
+      const id = d.id ?? '_';
+      if (k.ui.tutup.has(id)) k.ui.tutup.delete(id);
+      else k.ui.tutup.add(id);
+      k.gambar();
+      return true;
+    }
+    case 'pohonTutup':
+      k.ui.pohonTutup = !k.ui.pohonTutup;
+      k.gambar();
+      return true;
+    case 'pekanIni':
+      k.ui.tanggal = isoLokal(new Date());
+      k.gambar();
+      return true;
+    case 'semBaru': {
+      const id = `sem${Date.now().toString(36)}`;
+      k.ubah((x) => {
+        const ada = daftarSemester(x);
+        // semester lama tanpa versiId dipasangi versi reguler pertamanya agar bebannya terpisah dari semester baru
+        for (const s of ada) if (!s.versiId) s.versiId = versiSemester(x, s)?.id;
+        for (const b of x.beban) if (!b.versiId && ada[0]?.versiId) b.versiId = ada[0].versiId;
+        const vid = `v-${id}`;
+        x.versi.push({ id: vid, nama: 'Jadwal reguler semester baru', jenis: 'reguler', slots: [] });
+        x.semesters = [...ada, { id, nama: 'Semester baru', mulai: '', selesai: '', rombelTidakAktif: [], versiId: vid }];
+      });
+      bukaSimpul(k, fokusSemester(id), 'info');
+      k.lapor('Semester baru dibuat. Isi nama dan tanggalnya, lalu salin beban dari semester lain bila perlu.');
+      return true;
+    }
+    case 'semHapus': {
+      const s = daftarSemester(p).find((x) => x.id === d.sem);
+      if (!s || daftarSemester(p).length < 2) return true;
+      if (!confirm(`Hapus semester “${s.nama}” beserta jadwal reguler dan bebannya? Kegiatan di dalamnya pindah ke semester lain menurut tanggalnya.`)) return true;
+      k.ubah((x) => {
+        x.semesters = daftarSemester(x).filter((y) => y.id !== s.id);
+        if (s.versiId) {
+          x.versi = x.versi.filter((v) => v.id !== s.versiId);
+          x.beban = x.beban.filter((b) => b.versiId !== s.versiId);
+        }
+        for (const g of x.kalender) if (g.semesterId === s.id) delete g.semesterId;
+      });
+      bukaSimpul(k, fokusBawaan(k.p), 'info');
+      return true;
+    }
+    case 'semSalinBeban': {
+      const tujuan = daftarSemester(p).find((x) => x.id === d.sem);
+      const dari = daftarSemester(p).find((x) => x.id === (document.getElementById('semSalinDari') as HTMLSelectElement | null)?.value);
+      if (!tujuan || !dari) return true;
+      k.ubah((x) => {
+        const t = daftarSemester(x).find((y) => y.id === tujuan.id);
+        const sumber = daftarSemester(x).find((y) => y.id === dari.id);
+        const vid = versiSemester(x, t)?.id;
+        if (!t || !sumber || !vid) return;
+        for (const b of bebanInduk(x, sumber)) x.beban.push({ ...structuredClone(b), id: `${b.id}~${t.id}`, versiId: vid });
+      });
+      k.lapor(`Beban disalin dari ${dari.nama}.`);
+      return true;
+    }
     case 'hubDataset':
       k.ui.masterTab = 'data';
       k.ke('master');
@@ -346,7 +449,7 @@ export function klikHub(k: Konteks, el: HTMLElement): boolean {
       return true;
     case 'hubHapus':
       if (!g || !confirm(`Hapus kegiatan “${g.nama}” beserta jadwal dan beban khususnya?`)) return true;
-      k.ui.fokus = 'induk';
+      k.ui.fokus = fokusBawaan(p);
       k.ubah((x) => {
         x.kalender = x.kalender.filter((y) => y.id !== g.id);
         const dipakai = new Set(x.kalender.map((y) => y.versiId));
@@ -398,12 +501,13 @@ export function klikHub(k: Konteks, el: HTMLElement): boolean {
       return true;
     case 'kelasInduk': {
       const id = d.id ?? '';
+      const semId = semesterFokus(p, k.ui.fokus)?.id;
       k.ubah((x) => {
-        x.semester ??= { nama: x.nama, mulai: '', selesai: '', rombelTidakAktif: [] };
-        const s = new Set(x.semester.rombelTidakAktif);
+        const sem = pastikanSemester(x, semId);
+        const s = new Set(sem.rombelTidakAktif);
         if (d.st === 'off') s.add(id);
         else s.delete(id);
-        x.semester.rombelTidakAktif = [...s];
+        sem.rombelTidakAktif = [...s];
       });
       return true;
     }
@@ -411,11 +515,20 @@ export function klikHub(k: Konteks, el: HTMLElement): boolean {
   return false;
 }
 
+/** Semester yang dituju; data tanpa semester mendapat satu semester baru yang memakai versi reguler. */
+function pastikanSemester(x: Proyek, id: string | undefined): Semester {
+  const ada = daftarSemester(x).find((s) => s.id === id) ?? daftarSemester(x)[0];
+  if (ada) return ada;
+  const baru: Semester = { id: 'sem1', nama: x.nama, mulai: '', selesai: '', rombelTidakAktif: [], ...(x.versi.find((v) => v.jenis === 'reguler') ? { versiId: x.versi.find((v) => v.jenis === 'reguler')!.id } : {}) };
+  x.semesters = [baru];
+  return baru;
+}
+
 export function ubahHub(k: Konteks, el: HTMLInputElement): boolean {
   if (el.dataset.aksi !== 'semF') return false;
   const f = el.dataset.f as 'nama' | 'mulai' | 'selesai';
   const nilai = el.value.trim();
-  const s = k.p.semester;
+  const s = daftarSemester(k.p).find((x) => x.id === el.dataset.sem);
   const mulai = f === 'mulai' ? nilai : (s?.mulai ?? '');
   const selesai = f === 'selesai' ? nilai : (s?.selesai ?? '');
   if (mulai && selesai && selesai < mulai) {
@@ -424,8 +537,8 @@ export function ubahHub(k: Konteks, el: HTMLInputElement): boolean {
     return true;
   }
   k.ubah((x) => {
-    x.semester ??= { nama: x.nama, mulai: '', selesai: '', rombelTidakAktif: [] };
-    x.semester[f] = nilai;
+    const sem = pastikanSemester(x, el.dataset.sem);
+    sem[f] = nilai;
   });
   return true;
 }

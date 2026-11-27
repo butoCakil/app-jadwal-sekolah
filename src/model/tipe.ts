@@ -53,18 +53,23 @@ export interface Kegiatan {
    * Kosong (undefined) = data lama: semua rombel aktif memakai versi kegiatan ini apa adanya.
    */
   rombelTerdampak?: string[];
+  /** Semester induk kegiatan ini. Kosong = semester yang memuat tanggal mulainya. */
+  semesterId?: string;
   /** Hari dalam pekan (0 = Senin) tempat kegiatan berlaku di dalam rentang tanggal. Kosong = setiap hari kerja. */
   hariBerlaku?: number[];
   catatan?: string;
 }
 
-/** Periode induk (satu semester): jadwal reguler, pola default, dan kelas yang tidak aktif di luar kegiatan. */
+/** Periode induk (satu semester): jadwal reguler, beban, dan kelas yang tidak aktif di luar kegiatan. */
 export interface Semester {
+  id: string;
   nama: string;
   mulai: string;
   selesai: string;
   /** Rombel tidak aktif di luar kegiatan (mis. PKL sepanjang semester). */
   rombelTidakAktif: string[];
+  /** Versi jadwal reguler semester ini; beban induknya bertanda versiId ini. Kosong = versi reguler pertama. */
+  versiId?: string;
 }
 
 /** Penggantian manual oleh admin. Tanpa rentang tanggal = berlaku untuk semua tanggal. */
@@ -183,8 +188,10 @@ export interface Proyek {
   beban: Beban[];
   aturan: Aturan[];
   versi: VersiJadwal[];
-  /** Periode induk (semester). Kosong = data lama tanpa rentang semester. */
-  semester?: Semester;
+  /** Periode induk (semester gasal, genap, ...). Kosong = data lama tanpa rentang semester. */
+  semesters?: Semester[];
+  /** Format lama (satu semester); dipindah ke `semesters` saat data dimuat. */
+  semester?: Omit<Semester, 'id'> & { id?: string };
   /** Periode (kegiatan kalender) yang sedang dikerjakan; tanggal acuan awal aplikasi mengikuti periode ini. */
   periodeAktifId?: string;
 }

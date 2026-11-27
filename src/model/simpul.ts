@@ -7,11 +7,33 @@
 // - rombel tidak aktif disembunyikan.
 // Mengubah jadwal atau beban rombel yang masih ikut induk dari dalam kegiatan menjadikannya terdampak (salin-saat-ubah).
 
-import type { Beban, Kegiatan, Proyek, Slot, VersiJadwal } from './tipe';
-import { berlakuPada, periodeUntukTanggal, versiReguler } from './kalender';
+import type { Beban, Kegiatan, Proyek, Semester, Slot, VersiJadwal } from './tipe';
+import { berlakuPada, dalamRentang, periodeUntukTanggal, versiReguler } from './kalender';
 
-/** Sasaran yang sedang dikerjakan: 'auto' = menurut tanggal, 'induk' = jadwal reguler semester, selain itu id kegiatan. */
-export type Fokus = 'auto' | 'induk' | string;
+/** Sasaran yang sedang dikerjakan: 'auto' = menurut tanggal, 'sem:<id>' = induk (jadwal reguler) semester itu, selain itu id kegiatan. */
+export type Fokus = 'auto' | `sem:${string}` | string;
+
+export const fokusSemester = (id: string): Fokus => `sem:${id}`;
+export const daftarSemester = (p: Proyek): Semester[] => p.semesters ?? [];
+/** Semester yang difokuskan ('sem:<id>'; 'induk' = semester pertama, format lama). */
+export function semesterFokus(p: Proyek, fokus: Fokus): Semester | undefined {
+  if (fokus === 'induk') return daftarSemester(p)[0];
+  return fokus.startsWith('sem:') ? daftarSemester(p).find((s) => s.id === fokus.slice(4)) : undefined;
+}
+export const fokusInduk = (fokus: Fokus): boolean => fokus === 'induk' || fokus.startsWith('sem:');
+/** Semester yang memuat tanggal (yang pertama bila tumpang tindih). */
+export const semesterPada = (p: Proyek, tanggal: string): Semester | undefined =>
+  daftarSemester(p).find((s) => s.mulai && s.selesai && dalamRentang(tanggal, s.mulai, s.selesai));
+/** Semester induk sebuah kegiatan: yang ditunjuk, atau yang memuat tanggal mulainya, atau yang pertama. */
+export function semesterKegiatan(p: Proyek, g: Kegiatan): Semester | undefined {
+  return (g.semesterId ? daftarSemester(p).find((s) => s.id === g.semesterId) : undefined) ?? semesterPada(p, g.mulai) ?? daftarSemester(p)[0];
+}
+/** Versi jadwal reguler sebuah semester (tanpa semester: versi reguler pertama). */
+export function versiSemester(p: Proyek, s: Semester | undefined): VersiJadwal | undefined {
+  return (s?.versiId ? p.versi.find((v) => v.id === s.versiId) : undefined) ?? versiReguler(p);
+}
+/** Semester yang memakai versi ini sebagai jadwal reguler. */
+export const semesterDariVersi = (p: Proyek, versiId: string | undefined): Semester | undefined => daftarSemester(p).find((s) => (s.versiId ?? versiReguler(p)?.id) === versiId);
 
 export const modelWarisan = (g: Kegiatan): boolean => g.rombelTerdampak !== undefined;
 
@@ -23,48 +45,71 @@ export function terdampak(g: Kegiatan | undefined, rombelId: string): boolean {
 
 export const versiDari = (p: Proyek, id: string | undefined): VersiJadwal | undefined => (id ? p.versi.find((v) => v.id === id) : undefined);
 
-/** Beban induk: tanpa versiId, atau bertanda versi reguler (data impor lama). */
-export function bebanInduk(p: Proyek): Beban[] {
-  const reg = versiReguler(p)?.id;
-  return p.beban.filter((b) => !b.versiId || b.versiId === reg);
+/**
+ * Beban induk sebuah semester: bertanda versi reguler semester itu. Beban tanpa versiId milik semester pertama (atau semua bila
+ * belum ada semester).
+ */
+export function bebanInduk(p: Proyek, sem?: Semester): Beban[] {
+  const s = sem ?? daftarSemester(p)[0];
+  const vid = versiSemester(p, s)?.id;
+  const pertama = !s || s === daftarSemester(p)[0];
+  return p.beban.filter((b) => b.versiId === vid || (!b.versiId && pertama));
+}
+
+/** versiId yang dipasang pada beban baru di induk semester `s` (kosong bila hanya ada satu semester). */
+export function tandaBebanInduk(p: Proyek, s: Semester | undefined): string | undefined {
+  if (daftarSemester(p).length <= 1 && !p.beban.some((b) => b.versiId && b.versiId === versiSemester(p, s)?.id)) return undefined;
+  return versiSemester(p, s)?.id;
 }
 
 /** Beban yang berlaku pada kegiatan: model warisan = induk dikurangi yang digantikan/dihapus + khusus kegiatan; data lama = tanpa versiId + khusus versi. */
 export function bebanKegiatan(p: Proyek, g: Kegiatan): Beban[] {
   const vid = g.versiId;
-  if (!vid) return bebanInduk(p);
+  const sem = semesterKegiatan(p, g);
+  if (!vid) return bebanInduk(p, sem);
   if (!modelWarisan(g)) return p.beban.filter((b) => !b.versiId || b.versiId === vid);
   const khusus = p.beban.filter((b) => b.versiId === vid);
   const ganti = new Set(khusus.map((b) => b.asal).filter((x): x is string => !!x));
-  return [...bebanInduk(p).filter((b) => !ganti.has(b.id)), ...khusus.filter((b) => !b.dihapus)];
+  return [...bebanInduk(p, sem).filter((b) => !ganti.has(b.id)), ...khusus.filter((b) => !b.dihapus)];
 }
 
 /** Beban satu rombel pada konteks kegiatan (atau induk bila tidak ada/tidak terdampak). */
-export function bebanRombel(p: Proyek, g: Kegiatan | undefined, rombelId: string): Beban[] {
-  return (g && terdampak(g, rombelId) ? bebanKegiatan(p, g) : bebanInduk(p)).filter((b) => b.rombelId === rombelId);
+export function bebanRombel(p: Proyek, g: Kegiatan | undefined, rombelId: string, sem?: Semester): Beban[] {
+  return (g && terdampak(g, rombelId) ? bebanKegiatan(p, g) : bebanInduk(p, g ? semesterKegiatan(p, g) : sem)).filter((b) => b.rombelId === rombelId);
 }
 
 /** Kalender sebagaimana dilihat pada fokus: induk = hanya libur; kegiatan = libur + kegiatan itu. */
 export function kalenderFokus(p: Proyek, fokus: Fokus): Kegiatan[] {
   if (fokus === 'auto') return p.kalender;
   const libur = p.kalender.filter((g) => g.jenis === 'libur');
-  if (fokus === 'induk') return libur;
+  if (fokusInduk(fokus)) return libur;
   const g = p.kalender.find((x) => x.id === fokus);
   return g ? [...libur, g] : libur;
 }
 
-export const kegiatanFokus = (p: Proyek, fokus: Fokus): Kegiatan | undefined => (fokus === 'auto' || fokus === 'induk' ? undefined : p.kalender.find((g) => g.id === fokus && g.jenis !== 'libur'));
+export const kegiatanFokus = (p: Proyek, fokus: Fokus): Kegiatan | undefined => (fokus === 'auto' || fokusInduk(fokus) ? undefined : p.kalender.find((g) => g.id === fokus && g.jenis !== 'libur'));
 
 /** Kegiatan yang mengatur satu tanggal pada fokus tertentu. */
 export function kegiatanPadaTanggal(p: Proyek, tanggal: string, fokus: Fokus): Kegiatan | undefined {
   return periodeUntukTanggal(tanggal, kalenderFokus(p, fokus));
 }
 
-export const tidakAktifPada = (p: Proyek, g: Kegiatan | undefined): Set<string> => new Set(g ? g.rombelTidakAktif : (p.semester?.rombelTidakAktif ?? []));
+export const tidakAktifPada = (_p: Proyek, g: Kegiatan | undefined, sem?: Semester): Set<string> => new Set(g ? g.rombelTidakAktif : (sem?.rombelTidakAktif ?? []));
+
+/** Semester yang mengatur satu tanggal pada fokus tertentu. */
+export function semesterPadaFokus(p: Proyek, tanggal: string, fokus: Fokus): Semester | undefined {
+  const s = semesterFokus(p, fokus);
+  if (s) return s;
+  const g = kegiatanFokus(p, fokus);
+  if (g) return semesterKegiatan(p, g);
+  return semesterPada(p, tanggal) ?? daftarSemester(p)[0];
+}
 
 export interface JadwalPekan {
   /** kegiatan yang mengatur tiap hari (indeks 0..n-1); undefined = induk */
   kegiatanHari: (Kegiatan | undefined)[];
+  /** versi jadwal induk (reguler semester) tiap hari */
+  indukHari: (string | undefined)[];
   /** slot yang tampil (rombel aktif), digabung dari induk dan kegiatan */
   slots: Slot[];
   /** asal tiap slot yang tampil: id versi */
@@ -72,32 +117,35 @@ export interface JadwalPekan {
 }
 
 /**
- * Menyusun slot yang berlaku untuk satu pekan: per hari, rombel terdampak dari versi kegiatan hari itu, rombel lain dari induk.
- * `tanggalHari[i]` = tanggal hari kerja ke-i pekan itu.
+ * Menyusun slot yang berlaku untuk satu pekan: per hari, rombel terdampak dari versi kegiatan hari itu, rombel lain dari induk
+ * (jadwal reguler semester yang memuat hari itu). `tanggalHari[i]` = tanggal hari kerja ke-i pekan itu.
  */
 export function jadwalPekan(p: Proyek, tanggalHari: string[], fokus: Fokus): JadwalPekan {
-  const reg = versiReguler(p);
   const rombelBeban = new Map(p.beban.map((b) => [b.id, b.rombelId]));
   const kegiatanHari = tanggalHari.map((t) => kegiatanPadaTanggal(p, t, fokus));
-  const tdkHari = kegiatanHari.map((g) => tidakAktifPada(p, g));
+  const semHari = tanggalHari.map((t, i) => (kegiatanHari[i] ? semesterKegiatan(p, kegiatanHari[i]) : semesterPadaFokus(p, t, fokus)));
+  const indukHari = semHari.map((s) => versiSemester(p, s)?.id);
+  const tdkHari = kegiatanHari.map((g, i) => tidakAktifPada(p, g, semHari[i]));
   const slots: Slot[] = [];
   const asal = new Map<string, string>();
   const masuk = (s: Slot, vid: string) => {
     slots.push(s);
     asal.set(s.id, vid);
   };
-  if (reg) {
-    for (const s of reg.slots) {
+  for (const vid of new Set(indukHari)) {
+    const v = versiDari(p, vid);
+    for (const s of v?.slots ?? []) {
+      if (indukHari[s.hari] !== vid) continue;
       const g = kegiatanHari[s.hari];
       const r = rombelBeban.get(s.bebanId) ?? '';
       if (tdkHari[s.hari]?.has(r)) continue;
       if (g && terdampak(g, r)) continue;
-      masuk(s, reg.id);
+      masuk(s, vid as string);
     }
   }
   const sudah = new Set<string>();
   kegiatanHari.forEach((g) => {
-    if (!g?.versiId || sudah.has(g.versiId) || g.versiId === reg?.id) return;
+    if (!g?.versiId || sudah.has(g.versiId) || indukHari.includes(g.versiId)) return;
     sudah.add(g.versiId);
     const v = versiDari(p, g.versiId);
     for (const s of v?.slots ?? []) {
@@ -107,7 +155,7 @@ export function jadwalPekan(p: Proyek, tanggalHari: string[], fokus: Fokus): Jad
       masuk(s, g.versiId);
     }
   });
-  return { kegiatanHari, slots, asal };
+  return { kegiatanHari, indukHari, slots, asal };
 }
 
 let urut = 0;
@@ -122,7 +170,7 @@ export function jadikanTerdampak(p: Proyek, g: Kegiatan, rombelId: string, salin
   if (!g.versiId || !modelWarisan(g) || g.rombelTerdampak?.includes(rombelId)) return peta;
   g.rombelTerdampak = [...(g.rombelTerdampak ?? []), rombelId];
   const v = versiDari(p, g.versiId);
-  const reg = versiReguler(p);
+  const reg = versiSemester(p, semesterKegiatan(p, g));
   if (!v || !reg || !salin) return peta;
   const milik = new Set(bebanKegiatan(p, g).filter((b) => b.rombelId === rombelId).map((b) => b.id));
   const asalKe = new Map(p.beban.filter((b) => b.versiId === g.versiId && b.asal && b.rombelId === rombelId).map((b) => [b.asal as string, b]));
@@ -205,8 +253,7 @@ export interface HasilAlih {
  * bila harinya diatur kegiatan model warisan; selain itu masuk induk. Pada fokus kegiatan, perubahan yang jatuh ke induk ditolak.
  */
 export function alihkanPerubahan(p: Proyek, pekan: JadwalPekan, sesudah: Slot[], fokus: Fokus): HasilAlih {
-  const reg = versiReguler(p);
-  if (!reg) return { ok: false, pesan: 'Belum ada versi jadwal.', baruTerdampak: [] };
+  if (!pekan.indukHari.some(Boolean)) return { ok: false, pesan: 'Belum ada versi jadwal.', baruTerdampak: [] };
   const rombelOf = (s: Slot) => p.beban.find((b) => b.id === s.bebanId)?.rombelId ?? '';
   const lama = new Map(pekan.slots.map((s) => [s.id, s]));
   const baru = new Map(sesudah.map((s) => [s.id, s]));
@@ -216,10 +263,10 @@ export function alihkanPerubahan(p: Proyek, pekan: JadwalPekan, sesudah: Slot[],
 
   const sasaran = (s: Slot): Kegiatan | undefined => {
     const g = pekan.kegiatanHari[s.hari];
-    return g?.versiId && g.versiId !== reg.id ? g : undefined;
+    return g?.versiId && g.versiId !== pekan.indukHari[s.hari] ? g : undefined;
   };
   // perubahan yang jatuh ke induk saat sedang mengerjakan kegiatan tertentu ditolak
-  if (fokus !== 'auto' && fokus !== 'induk') {
+  if (fokus !== 'auto' && !fokusInduk(fokus)) {
     const keInduk = [...hapus, ...tambah].some((s) => !sasaran(s));
     if (keInduk) return { ok: false, pesan: 'Hari itu di luar kegiatan ini (mengikuti jadwal induk). Ubah lewat jadwal induk.', baruTerdampak: [] };
   }
@@ -246,8 +293,9 @@ export function alihkanPerubahan(p: Proyek, pekan: JadwalPekan, sesudah: Slot[],
   for (const s of tambah) {
     const g = sasaran(s);
     const r = rombelOf(s);
-    const vid = g && terdampak(g, r) ? g.versiId : reg.id;
-    const v = versiDari(p, vid) ?? reg;
+    const vid = g && terdampak(g, r) ? g.versiId : pekan.indukHari[s.hari];
+    const v = versiDari(p, vid);
+    if (!v) continue;
     const id = lama.has(s.id) ? idNyata(s) : s.id;
     const sudahAda = v.slots.some((x) => x.id === id);
     v.slots.push({ ...s, id: sudahAda ? idBaru(id) : id });
@@ -265,10 +313,12 @@ const tandaBeban = (b: Beban) => JSON.stringify([b.rombelId, b.mapelId, b.guruId
  */
 export function jadikanWarisan(p: Proyek, g: Kegiatan): { terdampak: string[]; ikut: string[] } {
   const hasil = { terdampak: [] as string[], ikut: [] as string[] };
-  const reg = versiReguler(p);
+  const sem = semesterKegiatan(p, g);
+  const reg = versiSemester(p, sem);
   const v = versiDari(p, g.versiId);
   if (!reg || !v || v.id === reg.id || modelWarisan(g)) return hasil;
-  const induk = bebanInduk(p);
+  const induk = bebanInduk(p, sem);
+  const hariK = g.hariBerlaku?.length ? new Set(g.hariBerlaku) : undefined;
   const khusus = p.beban.filter((b) => b.versiId === v.id);
   const tdk = new Set(g.rombelTidakAktif);
   const rb = new Map(p.beban.map((b) => [b.id, b.rombelId]));
@@ -305,7 +355,7 @@ export function jadikanWarisan(p: Proyek, g: Kegiatan): { terdampak: string[]; i
     const sisaInduk = ib.filter((i) => !pakai.has(i.id));
     const kunci = (s: Slot) => `${ke.get(s.bebanId) ?? s.bebanId}|${s.hari}|${s.jam}|${s.ruangId}`;
     const a = slotV.map(kunci).sort().join(',');
-    const bR = reg.slots.filter((s) => rb.get(s.bebanId) === r.id).map(kunci).sort().join(',');
+    const bR = reg.slots.filter((s) => rb.get(s.bebanId) === r.id && (!hariK || hariK.has(s.hari))).map(kunci).sort().join(',');
     if (!pengganti.length && !tambahan.length && !sisaInduk.length && a === bR) {
       hasil.ikut.push(r.id);
       v.slots = v.slots.filter((s) => !slotV.includes(s));

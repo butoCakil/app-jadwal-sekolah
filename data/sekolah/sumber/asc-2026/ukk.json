@@ -1,0 +1,5100 @@
+{
+ "sumber": "ukk-kelas.pdf",
+ "hari": [
+  {
+   "pembiasaan": false,
+   "jamKbm": 10
+  },
+  {
+   "pembiasaan": false,
+   "jamKbm": 10
+  },
+  {
+   "pembiasaan": true,
+   "jamKbm": 10
+  },
+  {
+   "pembiasaan": true,
+   "jamKbm": 10
+  },
+  {
+   "pembiasaan": true,
+   "jamKbm": 8
+  }
+ ],
+ "waktuKolom": {},
+ "pjj": [],
+ "tidakHadir": {},
+ "rombel": {
+  "X AT 1": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "dkk.AT",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "dkk.AT",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "dkk.AT",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "dkk.AT",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "dkk.AT",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.R3"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "Teori.AT",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "Teori.AT",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   }
+  ],
+  "X AT 2": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "dkk.AT",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "dkk.AT",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "dkk.AT",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "dkk.AT",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "dkk.AT",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "Teori.AT",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Nurul Hidayati, S.P",
+    "mapel": "Teori.AT",
+    "ruang": "RK.L2"
+   }
+  ],
+  "X AT 3": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Okta Nofiyanto, S.TP",
+    "mapel": "dkk.AT",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Okta Nofiyanto, S.TP",
+    "mapel": "dkk.AT",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Okta Nofiyanto, S.TP",
+    "mapel": "dkk.AT",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Okta Nofiyanto, S.TP",
+    "mapel": "dkk.AT",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Okta Nofiyanto, S.TP",
+    "mapel": "dkk.AT",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Ika Prasetyanti, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Aprisia Khairunnisa, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Nur Laila Wahyuni, S.P",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Okta Nofiyanto, S.TP",
+    "mapel": "Teori.AT",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Okta Nofiyanto, S.TP",
+    "mapel": "Teori.AT",
+    "ruang": "RK.P1"
+   }
+  ],
+  "X DKV 1": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K1"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K1"
+   }
+  ],
+  "X DKV 2": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Agus Priyono, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.K2"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.K2"
+   }
+  ],
+  "X DKV 3": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "RK.K3"
+   }
+  ],
+  "X DKV 4": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Guyub Fauzan, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Khaireni Puspaningtyas, M.Pd",
+    "mapel": "ipas",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "G2"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Efry Widiyanti, S.Kom",
+    "mapel": "D2Dkv",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R1"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.R1"
+   }
+  ],
+  "X TE 1": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.S2"
+   }
+  ],
+  "X TE 2": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Muhammad Harizka Rahmanto, S.Pd",
+    "mapel": "DLE",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Muhammad Harizka Rahmanto, S.Pd",
+    "mapel": "DLE",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "i1"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "i1"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "i1"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "i1"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "i1"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.J1"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.J1"
+   }
+  ],
+  "X TE 3": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Pariyadi, S.Kom",
+    "mapel": "IT",
+    "ruang": "G1"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Muhammad Harizka Rahmanto, S.Pd",
+    "mapel": "DLE",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Muhammad Harizka Rahmanto, S.Pd",
+    "mapel": "DLE",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Muhammad Harizka Rahmanto, S.Pd",
+    "mapel": "DLE",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Novengga Hendrasinta V, S.Sn",
+    "mapel": "SB",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "ipas",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Restin Ardelia, S.Pd",
+    "mapel": "S",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Arif Indra Nugroho, S.Pd",
+    "mapel": "TKB",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Fitrotul Khoiriyah, S.Pd",
+    "mapel": "BK",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Tety Ardiyani T, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Galih Setyagus, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.J2"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.J2"
+   }
+  ],
+  "XI AT 1": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Yeni Hanifah, S.Pd",
+    "mapel": "Pp",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Yeni Hanifah, S.Pd",
+    "mapel": "Pp",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Guru AT",
+    "mapel": "mppAT",
+    "ruang": "O3"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Guru AT",
+    "mapel": "mppAT",
+    "ruang": "O3"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Guru AT",
+    "mapel": "mppAT",
+    "ruang": "O3"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Guru AT",
+    "mapel": "mppAT",
+    "ruang": "O3"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Guru AT",
+    "mapel": "mppAT",
+    "ruang": "O3"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Woro Raharjanti, S.Si",
+    "mapel": "MTK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Woro Raharjanti, S.Si",
+    "mapel": "MTK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Woro Raharjanti, S.Si",
+    "mapel": "MTK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Woro Raharjanti, S.Si",
+    "mapel": "MTK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Woro Raharjanti, S.Si",
+    "mapel": "MTK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "KIK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "KIK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "KIK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "KIK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Ari Nur Cahyani, S.Pd.Si",
+    "mapel": "KIK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.P1"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Yeni Hanifah, S.Pd",
+    "mapel": "Pp",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Yeni Hanifah, S.Pd",
+    "mapel": "Pp",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Dewinta Arya Rini, S. Pd",
+    "mapel": "BK",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Dewinta Arya Rini, S. Pd",
+    "mapel": "BK",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J3"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.J3"
+   }
+  ],
+  "XI AT 2": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Dewinta Arya Rini, S. Pd",
+    "mapel": "BK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Dewinta Arya Rini, S. Pd",
+    "mapel": "BK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Yeni Hanifah, S.Pd",
+    "mapel": "Pp",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Yeni Hanifah, S.Pd",
+    "mapel": "Pp",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Yeni Hanifah, S.Pd",
+    "mapel": "Pp",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Yeni Hanifah, S.Pd",
+    "mapel": "Pp",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Tommy Farid Rosyadi, M.Pd",
+    "mapel": "PJOK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Dadang Kurniawan, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Ahmat Arifin, S.Pd",
+    "mapel": "JW",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Woro Raharjanti, S.Si",
+    "mapel": "MTK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Woro Raharjanti, S.Si",
+    "mapel": "MTK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Nurjati, S.Ag.,M.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "KIK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "KIK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "KIK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "KIK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Erni Hastuti, S.Pd.Si, M.Pd",
+    "mapel": "KIK",
+    "ruang": "RK.L2"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Guru AT",
+    "mapel": "kk.AT",
+    "ruang": "O3"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Guru AT",
+    "mapel": "kk.AT",
+    "ruang": "O3"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Guru AT",
+    "mapel": "kk.AT",
+    "ruang": "O3"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Guru AT",
+    "mapel": "kk.AT",
+    "ruang": "O3"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Guru AT",
+    "mapel": "kk.AT",
+    "ruang": "O3"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Woro Raharjanti, S.Si",
+    "mapel": "MTK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Woro Raharjanti, S.Si",
+    "mapel": "MTK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Woro Raharjanti, S.Si",
+    "mapel": "MTK",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P2"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.P2"
+   }
+  ],
+  "XI DKV 3": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Guru DKV",
+    "mapel": "kk.DKV",
+    "ruang": "G2"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Guru DKV",
+    "mapel": "kk.DKV",
+    "ruang": "G2"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Guru DKV",
+    "mapel": "kk.DKV",
+    "ruang": "G2"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Guru DKV",
+    "mapel": "kk.DKV",
+    "ruang": "G2"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Guru DKV",
+    "mapel": "kk.DKV",
+    "ruang": "G2"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Guru DKV",
+    "mapel": "KIK",
+    "ruang": "G2"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Guru DKV",
+    "mapel": "KIK",
+    "ruang": "G2"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Guru DKV",
+    "mapel": "KIK",
+    "ruang": "G2"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Guru DKV",
+    "mapel": "KIK",
+    "ruang": "G2"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Guru DKV",
+    "mapel": "KIK",
+    "ruang": "G2"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Dewinta Arya Rini, S. Pd",
+    "mapel": "BK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Dewinta Arya Rini, S. Pd",
+    "mapel": "BK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Chintya Febrie Hana Saputri, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Ahmad Najahu Taufik, S.Pd",
+    "mapel": "PABP",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Azaetun, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.K3"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.R2"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.R2"
+   }
+  ],
+  "XI TE 2": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Guru TE",
+    "mapel": "mppTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Guru TE",
+    "mapel": "mppTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Guru TE",
+    "mapel": "mppTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Guru TE",
+    "mapel": "mppTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Guru TE",
+    "mapel": "mppTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Dwiani Lindawati, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Dwiani Lindawati, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Dwiani Lindawati, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Dwiani Lindawati, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Dwiani Lindawati, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Dewinta Arya Rini, S. Pd",
+    "mapel": "BK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Dewinta Arya Rini, S. Pd",
+    "mapel": "BK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Sri Yumiati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Guru TE",
+    "mapel": "kkTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Guru TE",
+    "mapel": "kkTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Guru TE",
+    "mapel": "kkTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Guru TE",
+    "mapel": "kkTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Guru TE",
+    "mapel": "kkTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.S1"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.S1"
+   }
+  ],
+  "XI TE 3": [
+   {
+    "hari": 0,
+    "jam": 1,
+    "guru": "Dwiani Lindawati, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 0,
+    "jam": 2,
+    "guru": "Dwiani Lindawati, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 0,
+    "jam": 3,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 0,
+    "jam": 4,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 0,
+    "jam": 5,
+    "guru": "Wiwit Nurohati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 0,
+    "jam": 6,
+    "guru": "Wiwit Nurohati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 0,
+    "jam": 7,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 0,
+    "jam": 8,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 0,
+    "jam": 9,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 0,
+    "jam": 10,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 1,
+    "jam": 1,
+    "guru": "Guru TE",
+    "mapel": "kkTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 1,
+    "jam": 2,
+    "guru": "Guru TE",
+    "mapel": "kkTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 1,
+    "jam": 3,
+    "guru": "Guru TE",
+    "mapel": "kkTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 1,
+    "jam": 4,
+    "guru": "Guru TE",
+    "mapel": "kkTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 1,
+    "jam": 5,
+    "guru": "Guru TE",
+    "mapel": "kkTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 1,
+    "jam": 6,
+    "guru": "Guru TE",
+    "mapel": "mppTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 1,
+    "jam": 7,
+    "guru": "Guru TE",
+    "mapel": "mppTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 1,
+    "jam": 8,
+    "guru": "Guru TE",
+    "mapel": "mppTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 1,
+    "jam": 9,
+    "guru": "Guru TE",
+    "mapel": "mppTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 1,
+    "jam": 10,
+    "guru": "Guru TE",
+    "mapel": "mppTE",
+    "ruang": "i1"
+   },
+   {
+    "hari": 2,
+    "jam": 1,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 2,
+    "jam": 2,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 2,
+    "jam": 3,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 2,
+    "jam": 4,
+    "guru": "Wiwit Nurohati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 2,
+    "jam": 5,
+    "guru": "Wiwit Nurohati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 2,
+    "jam": 6,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 2,
+    "jam": 7,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 2,
+    "jam": 8,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 2,
+    "jam": 9,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 2,
+    "jam": 10,
+    "guru": "Budiman, S.Pd.Kor",
+    "mapel": "PJOK",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 3,
+    "jam": 1,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 3,
+    "jam": 2,
+    "guru": "Arfan Sodik, S.Pd.I",
+    "mapel": "PABP",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 3,
+    "jam": 3,
+    "guru": "Dwiani Lindawati, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 3,
+    "jam": 4,
+    "guru": "Dwiani Lindawati, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 3,
+    "jam": 5,
+    "guru": "Dwiani Lindawati, S.Pd",
+    "mapel": "BI",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 3,
+    "jam": 6,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 3,
+    "jam": 7,
+    "guru": "Yudha Hardiyanto, S.E",
+    "mapel": "S",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 3,
+    "jam": 8,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 3,
+    "jam": 9,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 3,
+    "jam": 10,
+    "guru": "Widya Pratiwi, S.Pd",
+    "mapel": "MTK",
+    "ruang": "RK.S2"
+   },
+   {
+    "hari": 4,
+    "jam": 1,
+    "guru": "Dewinta Arya Rini, S. Pd",
+    "mapel": "BK",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 4,
+    "jam": 2,
+    "guru": "Dewinta Arya Rini, S. Pd",
+    "mapel": "BK",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 4,
+    "jam": 3,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 4,
+    "jam": 4,
+    "guru": "Mochammad Sugeng S, S.H",
+    "mapel": "Pp",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 4,
+    "jam": 5,
+    "guru": "Wiwit Nurohati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 4,
+    "jam": 6,
+    "guru": "Wiwit Nurohati, S.Pd",
+    "mapel": "ENG",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 4,
+    "jam": 7,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.L1"
+   },
+   {
+    "hari": 4,
+    "jam": 8,
+    "guru": "Sofyan Reza Yahya, S.Pd, M.A",
+    "mapel": "JW",
+    "ruang": "RK.L1"
+   }
+  ]
+ }
+}

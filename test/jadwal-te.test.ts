@@ -90,6 +90,6 @@ describe('periode bersarang', () => {
     expect(tdk.has(id('XI AT 1'))).toBe(false);
     expect(tdk.has(id('XI DKV 3'))).toBe(false);
     expect(tdk.has(id('X TE 1'))).toBe(true);
-    expect(rombelTidakAktifIds('2026-12-08', p.kalender, p.semester).has(id('XI AT 1'))).toBe(true);
+    expect(rombelTidakAktifIds('2026-12-08', p.kalender, p.semesters?.[0]).has(id('XI AT 1'))).toBe(true);
   });
 });

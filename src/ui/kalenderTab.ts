@@ -5,6 +5,7 @@ import { NAMA_HARI } from '../model/tipe';
 import type { DlgKegiatan, Konteks } from './konteks';
 import { ringkasKode } from './pemilih';
 import { bukaSimpul } from './hub';
+import { semesterPada } from '../model/simpul';
 import { esc, isoLokal } from './util';
 
 export const JENIS: JenisKegiatan[] = ['TKA', 'PKL', 'ASAS', 'ASAJ', 'UKK', 'libur', 'lain'];
@@ -93,7 +94,7 @@ function infoTanggal(k: Konteks, tgl: string): string {
   const info = skemaUntukTanggal(tgl, p);
   const skema = info.skemaId ? p.skema.find((s) => s.id === info.skemaId) : undefined;
   const versi = versiUntukTanggal(tgl, p);
-  const tdkAktif = [...rombelTidakAktifIds(tgl, p.kalender, p.semester)].map((id) => p.master.rombel.find((r) => r.id === id)?.kode ?? '?');
+  const tdkAktif = [...rombelTidakAktifIds(tgl, p.kalender, semesterPada(p, tgl))].map((id) => p.master.rombel.find((r) => r.id === id)?.kode ?? '?');
   const periode = periodeUntukTanggal(tgl, p.kalender);
   const status = info.alasan === 'akhirPekan' ? 'Bukan hari kerja, tidak ada KBM.' : info.alasan === 'libur' ? `Libur: ${esc(info.kegiatanLibur ?? '')}. Tidak ada KBM.` : `Skema <b>${esc(skema?.nama ?? '?')}</b> (${skema ? skema.baris.filter((b) => b.tipe === 'kbm').length : 0} JP) · pola dari ${info.sumber === 'kegiatan' ? 'kegiatan kalender' : info.sumber === 'manual' ? 'pola manual' : 'pola reguler'}`;
   return `<div class="text-base font-bold">${esc(tglPanjang(tgl))}</div>
@@ -188,7 +189,7 @@ export function renderKalender(k: Konteks): string {
   const bulan = k.ui.kalBulan || bulanDari(k.ui.tanggal);
   const n = jumlahHariKerja(p);
   return `<div class="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 text-sm">
-      <span class="font-semibold">Semester:</span> ${p.semester ? `<b>${esc(p.semester.nama)}</b> <span class="text-slate-500">${esc(tglRentang(p.semester.mulai, p.semester.selesai))}</span>` : '<span class="text-slate-500">rentang semester belum diatur</span>'}
+      <span class="font-semibold">Semester:</span> ${(p.semesters ?? []).length ? (p.semesters ?? []).map((s) => `<b>${esc(s.nama)}</b> <span class="text-slate-500">${s.mulai && s.selesai ? esc(tglRentang(s.mulai, s.selesai)) : 'belum bertanggal'}</span>`).join(' · ') : '<span class="text-slate-500">rentang semester belum diatur</span>'}
       <span class="text-xs text-slate-500">· Jadwal tiap kegiatan diatur di <button class="underline" data-tab="info">Periode &amp; Jadwal</button></span>
       <span class="text-xs text-slate-500">· Hari kerja: Senin–${esc(NAMA_HARI[n - 1] as string)} <button class="underline" data-aksi="skemaSub" data-sub="pola">ubah</button></span>
       <div class="ml-auto flex flex-wrap gap-2"><label class="tombol cursor-pointer" title="Membaca kalender akademik dari berkas: .xlsx, .csv, .ics, atau .json">Baca dari berkas…<input type="file" id="imporKalender" accept=".xlsx,.csv,.tsv,.txt,.ics,.json" class="hidden"></label>
@@ -273,7 +274,7 @@ function simpanDlg(k: Konteks): void {
         x.versi.push({ id: versiId, nama, jenis: 'varian', slots: [] });
         g.versiId = versiId;
         g.rombelTerdampak = [];
-        g.rombelTidakAktif = [...(x.semester?.rombelTidakAktif ?? [])];
+        g.rombelTidakAktif = [...(semesterPada(x, d.mulai)?.rombelTidakAktif ?? [])];
       }
     }
     g.nama = nama;

@@ -109,6 +109,11 @@ export function migrasiPola<T extends Proyek>(p: T): T {
     }
     delete k.pola;
   }
+  // satu semester format lama -> daftar semester
+  if (p.semester && !p.semesters) {
+    p.semesters = [{ ...p.semester, id: p.semester.id ?? 'sem1', ...(versiReguler(p) ? { versiId: versiReguler(p)!.id } : {}) }];
+  }
+  delete p.semester;
   return p;
 }
 

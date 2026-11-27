@@ -8,7 +8,7 @@ import { Riwayat } from '../mesin/riwayat';
 import { dariJson, hapusDraf, keJson, muatDraf, simpanDraf } from '../io/simpan';
 import type { Konteks, StatusUI, Tab, Turunan } from './konteks';
 import { TAB_HUB } from './konteks';
-import { bilahSasaran, klikHub, renderHub, ubahHub } from './hub';
+import { bilahSasaran, fokusBawaan, jepitTanggal, klikHub, renderHub, renderLangsung, ubahHub } from './hub';
 import { hitungTurunan } from './turunan';
 import { PETA_KOSONG, daftarEntitas, hasilSel, klikGrid, lepas, siapkanSeret, ubahGrid } from './grid';
 import type { PetaSel, Seret } from './grid';
@@ -24,6 +24,7 @@ import { bulanDari, renderDlgKegiatan, tanggalUntukPeriode } from './kalenderTab
 import { esc, isoLokal, unduh } from './util';
 
 const TAB: { id: Tab; label: string }[] = [
+  { id: 'langsung', label: 'Jadwal Berlangsung' },
   { id: 'grid', label: 'Periode & Jadwal' },
   { id: 'inspektur', label: 'Conflict Inspector' },
   { id: 'master', label: 'Master Data' },
@@ -39,8 +40,11 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     return aktif ? tanggalUntukPeriode(aktif, isoLokal(new Date()), x.polaReguler.length) : isoLokal(new Date());
   };
   const ui: StatusUI = {
-    tab: 'grid',
+    tab: 'langsung',
     fokus: 'auto',
+    fokusHub: fokusBawaan(p),
+    tutup: new Set(),
+    pohonTutup: false,
     tanggal: awalTanggal(p),
     kalBulan: bulanDari(awalTanggal(p)),
     kalTanggal: awalTanggal(p),
@@ -127,7 +131,8 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       ui.entitasId = p.master.rombel[0]?.id ?? '';
       ui.mode = 'rombel';
       ui.tanggal = awalTanggal(p);
-      ui.fokus = 'auto';
+      ui.fokus = TAB_HUB.includes(ui.tab) ? fokusBawaan(p) : 'auto';
+      ui.fokusHub = fokusBawaan(p);
       ui.kalTanggal = ui.tanggal;
       ui.kalBulan = bulanDari(ui.tanggal);
       ui.bebanRombel = p.master.rombel[0]?.id ?? '';
@@ -139,6 +144,14 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       if (pesan) lapor(pesan);
     },
     ke(tab) {
+      // Jadwal Berlangsung selalu menurut tanggal; halaman Periode & Jadwal memulihkan sasaran terakhirnya
+      if (tab === 'langsung' && ui.fokus !== 'auto') {
+        ui.fokusHub = ui.fokus;
+        ui.fokus = 'auto';
+      } else if (TAB_HUB.includes(tab) && ui.fokus === 'auto') {
+        ui.fokus = ui.fokusHub;
+        ui.tanggal = jepitTanggal(ctx, ui.tanggal);
+      }
       ui.tab = tab;
       ui.modal = null;
       gambar();
@@ -149,7 +162,10 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     const entitas = daftarEntitas(p, ui.mode);
     if (!entitas.some((e) => e.id === ui.entitasId)) ui.entitasId = entitas[0]?.id ?? '';
     if (!p.master.rombel.some((r) => r.id === ui.bebanRombel)) ui.bebanRombel = p.master.rombel[0]?.id ?? '';
-    if (ui.fokus !== 'auto' && ui.fokus !== 'induk' && !p.kalender.some((g) => g.id === ui.fokus)) ui.fokus = 'auto';
+    const fokusSah = (f: string) => f === 'auto' || f === 'induk' || p.kalender.some((g) => g.id === f) || (p.semesters ?? []).some((s) => `sem:${s.id}` === f);
+    if (!fokusSah(ui.fokusHub)) ui.fokusHub = fokusBawaan(p);
+    if (!fokusSah(ui.fokus)) ui.fokus = TAB_HUB.includes(ui.tab) ? ui.fokusHub : 'auto';
+    if (TAB_HUB.includes(ui.tab) && ui.fokus === 'auto') ui.fokus = ui.fokusHub;
     turunan = hitungTurunan(p, ui.tanggal, ui.fokus);
     if (ui.modal?.jenis === 'slot') {
       const id = ui.modal.slotId;
@@ -164,7 +180,8 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     const diHub = TAB_HUB.includes(ui.tab);
     if (diHub) tabHub = ui.tab;
     const isi =
-      diHub ? renderHub(ctx)
+      ui.tab === 'langsung' ? renderLangsung(ctx)
+      : diHub ? renderHub(ctx)
       : ui.tab === 'inspektur' ? bilahSasaran(ctx) + renderInspektur(ctx)
       : ui.tab === 'master' ? renderMaster(ctx)
       : ui.tab === 'impor' ? renderImpor(ctx)

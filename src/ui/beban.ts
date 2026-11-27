@@ -4,11 +4,11 @@ import { ringkasKode, tombolPemilih } from './pemilih';
 import type { Guru, Proyek } from '../model/tipe';
 import { jpRombel } from '../model/jp';
 import type { Konteks } from './konteks';
-import { bebanUntukDiubah, hapusBebanKegiatan, jadikanTerdampak, kembalikanBeban, modelWarisan, terdampak } from '../model/simpul';
+import { bebanUntukDiubah, hapusBebanKegiatan, jadikanTerdampak, kembalikanBeban, modelWarisan, terdampak, fokusInduk, tandaBebanInduk } from '../model/simpul';
 import type { Kegiatan } from '../model/tipe';
 
 /** Kegiatan yang sedang dikerjakan (bukan induk) di dalam proyek `p`. */
-const kegiatanKonteks = (k: Konteks, p: Proyek): Kegiatan | undefined => (k.ui.fokus === 'induk' ? undefined : p.kalender.find((x) => x.id === k.turunan.periode?.id));
+const kegiatanKonteks = (k: Konteks, p: Proyek): Kegiatan | undefined => (fokusInduk(k.ui.fokus) ? undefined : p.kalender.find((x) => x.id === k.turunan.periode?.id));
 
 /** Mengubah satu beban; dari dalam kegiatan model warisan, beban induk diganti salinan khusus kegiatan lebih dulu. */
 function ubahSatu(k: Konteks, id: string, fn: (b: Beban) => void): void {
@@ -36,7 +36,7 @@ export function opsiGuru(p: Proyek, mapelId: string, terpilih: string, kosong?: 
 
 /** Tanda asal beban dalam kegiatan model warisan: dari induk, diubah khusus kegiatan, atau tambahan kegiatan. */
 function tandaKhusus(k: Konteks, b: Beban): string {
-  const g = k.ui.fokus === 'induk' ? undefined : k.turunan.periode;
+  const g = fokusInduk(k.ui.fokus) ? undefined : k.turunan.periode;
   if (!g?.versiId || !modelWarisan(g)) return '';
   if (b.versiId !== g.versiId) return '<span class="lencana bg-slate-100 text-slate-500" title="Sama dengan induk. Mengubahnya di sini membuat salinan khusus kegiatan ini; induk tidak berubah.">induk</span>';
   if (b.asal) return `<span class="lencana bg-amber-100 text-amber-800">diubah</span><button class="tombol !px-2 !text-xs" data-aksi="bebanKembali" data-id="${esc(b.id)}" title="Kembalikan seperti beban induk">↺ induk</button>`;
@@ -81,7 +81,7 @@ function tabRombel(k: Konteks, aktif: string): string {
     const total = jpRombel(k.turunan.beban.filter((b) => b.rombelId === r.id));
     const tdkAktif = k.turunan.rombelTidakAktif.has(r.id);
     const pilih = r.id === aktif;
-    const g = k.ui.fokus === 'induk' ? undefined : k.turunan.periode;
+    const g = fokusInduk(k.ui.fokus) ? undefined : k.turunan.periode;
     const khusus = !!g && modelWarisan(g) && terdampak(g, r.id) && !tdkAktif;
     return `<button data-aksi="bebanTab" data-id="${esc(r.id)}" class="shrink-0 rounded-md border px-2 py-0.5 text-xs font-medium ${khusus ? 'underline decoration-amber-500 decoration-2 underline-offset-2' : ''} ${pilih ? 'border-[#2347b8] bg-[#2347b8] text-white' : `border-slate-200 bg-slate-50 hover:bg-slate-100 ${tdkAktif ? 'text-slate-400' : 'text-slate-700'}`}" title="${esc(r.kode)} · ${total} JP${tdkAktif ? ' · tidak aktif' : ''}${khusus ? ' · beban/jadwal khusus kegiatan ini' : ''}">${esc(String(r.nomor))}</button>`;
   };
@@ -135,7 +135,7 @@ export function renderBeban(k: Konteks): string {
     })
     .filter((x) => x.tatap + x.non > 0);
 
-  const g = k.ui.fokus === 'induk' ? undefined : k.turunan.periode;
+  const g = fokusInduk(k.ui.fokus) ? undefined : k.turunan.periode;
   let infoVersi = '';
   if (g?.versiId && modelWarisan(g) && r) {
     const tdk = k.turunan.rombelTidakAktif.has(r.id);
@@ -152,7 +152,7 @@ export function renderBeban(k: Konteks): string {
     infoVersi = `<div class="mb-3 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-900">Beban pada kegiatan <b>${esc(g.nama)}</b>. ${ket}${pulih}</div>`;
   } else if (g?.versiId && p.beban.some((b) => b.versiId === g.versiId)) {
     infoVersi = `<div class="mb-3 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-900">Beban untuk jadwal <b>${esc(k.turunan.versi?.nama ?? '—')}</b> (data lama: salinan lengkap). Ubah ke model “ikut induk” di sub-tab Info agar kelas yang sama dengan induk tidak perlu diurus dua kali.</div>`;
-  } else if (k.ui.fokus === 'induk' || !g) {
+  } else if (fokusInduk(k.ui.fokus) || !g) {
     infoVersi = '<div class="mb-3 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">Beban induk (jadwal reguler semester). Kegiatan yang belum mengubah beban sebuah kelas ikut memakai perubahan di sini.</div>';
   }
   return `<div class="mb-2 text-lg font-semibold">Beban mengajar</div>${infoVersi}${tabRombel(k, aktif)}
@@ -222,7 +222,7 @@ export function klikBeban(k: Konteks, el: HTMLElement): boolean {
       const g = kegiatanKonteks(k, p);
       const rombelId = d.rombel ?? '';
       // di dalam kegiatan: beban tambahan khusus kegiatan itu (rombelnya menjadi terdampak); di induk: beban induk
-      const versiId = g?.versiId && (modelWarisan(g) || p.beban.some((b) => b.versiId)) ? g.versiId : undefined;
+      const versiId = g?.versiId && (modelWarisan(g) || p.beban.some((b) => b.versiId)) ? g.versiId : g ? undefined : tandaBebanInduk(p, (p.semesters ?? []).find((s) => s.id === k.turunan.semester?.id));
       if (g && modelWarisan(g)) jadikanTerdampak(p, g, rombelId);
       p.beban.push({ id: `b${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, rombelId, mapelId, guruId, jp, timGuruIds: [], ruangPrioritas: [], ruangTerlarang: [], ...(versiId ? { versiId } : {}) });
     });

@@ -1,10 +1,10 @@
-import type { Beban, JenisKegiatan, Kegiatan, Proyek, Slot, VersiJadwal } from '../model/tipe';
+import type { Beban, JenisKegiatan, Kegiatan, Proyek, Semester, Slot, VersiJadwal } from '../model/tipe';
 import type { Kategori, Masalah } from '../mesin/validator';
 import type { SkemaHari } from '../model/kalender';
 import type { Fokus, JadwalPekan } from '../model/simpul';
 
 export type SubMaster = 'guru' | 'mapel' | 'rombel' | 'ruang' | 'aturan' | 'data';
-export type Tab = 'grid' | 'info' | 'kelas' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor' | 'susun';
+export type Tab = 'langsung' | 'grid' | 'info' | 'kelas' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor' | 'susun';
 /** Sub-tab halaman Periode & Jadwal. */
 export const TAB_HUB: Tab[] = ['info', 'kelas', 'beban', 'grid'];
 export type Tata = 'hari' | 'semua';
@@ -45,6 +45,12 @@ export interface StatusUI {
   tab: Tab;
   /** sasaran yang dikerjakan di halaman Periode & Jadwal */
   fokus: Fokus;
+  /** sasaran terakhir di halaman Periode & Jadwal (dipulihkan setelah melihat Jadwal Berlangsung) */
+  fokusHub: Fokus;
+  /** semester yang diciutkan di pohon */
+  tutup: Set<string>;
+  /** pohon periode disembunyikan (grid selebar layar) */
+  pohonTutup: boolean;
   tanggal: string;
   mode: ModeLihat;
   /** 'hari' = satu entitas, kolom per hari; 'semua' = semua baris sekaligus dalam satu matriks. */
@@ -80,6 +86,8 @@ export interface Turunan {
   /** versi jadwal yang berlaku pada tanggal acuan */
   versi: VersiJadwal | undefined;
   periode: Kegiatan | undefined;
+  /** semester induk pekan ini (atau kegiatan yang difokuskan) */
+  semester: Semester | undefined;
   rombelTidakAktif: ReadonlySet<string>;
   /** slot tampil per hari beserta asal versinya (untuk mengalihkan perubahan) */
   pekan: JadwalPekan;

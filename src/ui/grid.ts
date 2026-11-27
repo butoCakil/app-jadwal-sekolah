@@ -9,7 +9,7 @@ import type { Blok } from '../mesin/blok';
 import { cekPenempatan, rencanaPindah, terapkanRencana } from '../mesin/penempatan';
 import { jpRombel } from '../model/jp';
 import { esc, opsi, tambahHari, tanggalPendek, warnaMapel } from './util';
-import { modelWarisan, terdampak } from '../model/simpul';
+import { modelWarisan, terdampak, fokusInduk } from '../model/simpul';
 import { jepitTanggal } from './hub';
 import type { Konteks, ModeLihat } from './konteks';
 
@@ -327,7 +327,7 @@ function tabelSemua(k: Konteks, pk: Peta, entitas: { id: string; label: string }
     .join('');
 
   const g = k.turunan.periode;
-  const warisan = k.ui.mode === 'rombel' && !!g && modelWarisan(g) && k.ui.fokus !== 'induk';
+  const warisan = k.ui.mode === 'rombel' && !!g && modelWarisan(g) && !fokusInduk(k.ui.fokus);
   const tanda = (id: string): string => {
     if (k.ui.mode !== 'rombel') return '';
     if (k.turunan.rombelTidakAktif.has(id)) return ' <span class="text-[9px] font-normal text-slate-400" title="Tidak aktif pada kegiatan ini">off</span>';
@@ -431,7 +431,7 @@ export function renderGrid(k: Konteks): string {
     const jadi = new Set(milik.map((s) => { const par = pk.beban.get(s.bebanId)?.paralel; return par ? `${par}|${s.hari}|${s.jam}` : s.id; })).size;
     lencana.push(`<span class="lencana ${jadi >= butuh ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">Terjadwal ${jadi} dari ${butuh} JP</span>`);
     const g = t.periode;
-    if (rombel && g && modelWarisan(g) && k.ui.fokus !== 'induk') {
+    if (rombel && g && modelWarisan(g) && !fokusInduk(k.ui.fokus)) {
       lencana.push(t.rombelTidakAktif.has(rombel.id)
         ? '<span class="lencana bg-slate-200 text-slate-600">Tidak aktif pada kegiatan ini</span>'
         : terdampak(g, rombel.id)

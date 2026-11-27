@@ -6,6 +6,8 @@ import { tafsirTugas } from '../src/io/imporTugas';
 import { kodeGuruSekolah } from '../src/model/sekolah';
 import { bangunGasal, bangunGenap, strukturGasalJadwalTe } from '../src/model/bangunData';
 import { dariJadwalTe, type BerkasJadwalTe } from '../src/io/imporJadwalTe';
+import { bangunTahun } from '../src/model/bangunTahun';
+import { SUMBER_TAHUN_2026, SEMESTER_2026 } from '../src/model/sumberTahun';
 
 /**
  * Pembangun data sekolah. Dijalankan manual untuk menulis ulang berkasnya:
@@ -19,6 +21,16 @@ const baca = <T>(f: string): T => JSON.parse(readFileSync(new URL(f, import.meta
 const jalur = (f: string) => new URL(f, import.meta.url);
 
 describe('bangun data sekolah', () => {
+  it('tahun-2026.json = hasil bangunTahun (PDF aSc 9-13 Nov + kegiatan, Genap dari sheet Genap)', () => {
+    const S = (n: string) => baca<never>(`../data/sekolah/sumber/asc-2026/${n}.json`);
+    const { proyek } = bangunTahun(baca<Proyek>('../data/sekolah/gasal-asc-2026.json'), baca<Proyek>('../data/sekolah/genap-2027.json'), {
+      reguler: S('reg'),
+      kegiatan: SUMBER_TAHUN_2026.map((k) => ({ ...k, sumber: S(k.berkas) })),
+    }, SEMESTER_2026);
+    if (process.env.TULIS_DATA) writeFileSync(jalur('../data/sekolah/tahun-2026.json'), JSON.stringify(proyek));
+    expect(baca('../data/sekolah/tahun-2026.json')).toEqual(JSON.parse(JSON.stringify(proyek)));
+  });
+
   it('gasal-2026.json = hasil dariJadwalTe + strukturGasalJadwalTe', () => {
     const { proyek } = dariJadwalTe(baca<BerkasJadwalTe>('../data/sekolah/sumber/jadwal-te-gasal-2026.json'), 'SMK Negeri Bansari - Gasal 2026/2027');
     strukturGasalJadwalTe(proyek);

@@ -142,7 +142,7 @@ export function strukturGasalJadwalTe(p: Proyek): void {
   const genap = p.kalender.find((g) => g.id === 'k-genap');
   if (!tka || !tka2) throw new Error('Periode k-tka dan k-tka2 tidak ada.');
   const reg = versiReguler(p);
-  p.semester = { nama: 'Gasal 2026/2027', mulai: tka.mulai, selesai: tka2.selesai, rombelTidakAktif: [...tka.rombelTidakAktif] };
+  p.semesters = [{ id: 'gasal', nama: 'Gasal 2026/2027', mulai: tka.mulai, selesai: tka2.selesai, rombelTidakAktif: [...tka.rombelTidakAktif], ...(reg ? { versiId: reg.id } : {}) }];
   p.kalender = p.kalender.filter((g) => g !== tka && g !== tka2 && g !== genap);
   if (genap?.versiId) {
     p.versi = p.versi.filter((v) => v.id !== genap.versiId);

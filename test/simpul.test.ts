@@ -12,7 +12,7 @@ const kodeKe = (p: Proyek, kode: string) => p.master.rombel.find((r) => r.kode =
 /** Kegiatan model warisan baru pada pekan 7-11 Des 2026 (semua kelas mula-mula ikut induk). */
 function kegiatanBaru(p: Proyek, hariBerlaku?: number[]): Kegiatan {
   p.versi.push({ id: 'v-uji', nama: 'Uji', jenis: 'varian', slots: [] });
-  const g: Kegiatan = { id: 'k-uji', nama: 'Uji', jenis: 'TKA', mulai: '2026-12-07', selesai: '2026-12-11', rombelTidakAktif: [...(p.semester?.rombelTidakAktif ?? [])], versiId: 'v-uji', rombelTerdampak: [], ...(hariBerlaku ? { hariBerlaku } : {}) };
+  const g: Kegiatan = { id: 'k-uji', nama: 'Uji', jenis: 'TKA', mulai: '2026-12-07', selesai: '2026-12-11', rombelTidakAktif: [...(p.semesters?.[0]?.rombelTidakAktif ?? [])], versiId: 'v-uji', rombelTerdampak: [], ...(hariBerlaku ? { hariBerlaku } : {}) };
   p.kalender.push(g);
   return g;
 }
@@ -20,7 +20,7 @@ function kegiatanBaru(p: Proyek, hariBerlaku?: number[]): Kegiatan {
 describe('data Gasal: induk dan kegiatan', () => {
   const p = proyekSekolah('gasal');
   it('punya semester induk dan dua kegiatan model warisan; valid', () => {
-    expect(p.semester).toMatchObject({ nama: 'Gasal 2026/2027', mulai: '2026-07-12', selesai: '2026-12-18' });
+    expect(p.semesters?.[0]).toMatchObject({ nama: 'Gasal 2026/2027', mulai: '2026-07-12', selesai: '2026-12-18' });
     expect(p.kalender.map((g) => [g.id, g.jenis])).toEqual([['k-asaj', 'ASAJ'], ['k-asas', 'ASAS']]);
     expect(p.kalender.every((g) => Array.isArray(g.rombelTerdampak))).toBe(true);
     expect(validasiProyek(p)).toEqual([]);
@@ -43,7 +43,7 @@ describe('data Gasal: induk dan kegiatan', () => {
     expect(new Set(t.masalah.filter(adalahPelanggaran).map((m) => m.pesan.replace(/pelajaran ke-\d+/, '')))).toEqual(new Set(['X TE 1 IPAS pada Selasa,  memakai ruang N2 yang terlarang untuk beban ini.']));
   });
   it('fokus induk pada pekan ASAS menampilkan jadwal reguler', () => {
-    const t = hitungTurunan(p, '2026-11-30', 'induk');
+    const t = hitungTurunan(p, '2026-11-30', 'sem:gasal');
     expect(t.periode).toBeUndefined();
     expect(t.slots.length).toBe(versiReguler(p)!.slots.length);
   });
@@ -105,5 +105,52 @@ describe('kegiatan model warisan', () => {
     expect(alihkanPerubahan(p, t.pekan, t.slots.filter((x) => x.id !== senin.id), 'k-uji').ok).toBe(true);
     const v = p.versi.find((x) => x.id === 'v-uji')!;
     expect(v.slots.every((s) => s.hari === 0)).toBe(true);
+  });
+});
+
+describe('data Tahun 2026/2027: dua semester induk dan kegiatan dari PDF aSc', () => {
+  const p = proyekSekolah('tahun');
+  it('dua semester, enam kegiatan Gasal, valid', () => {
+    expect(p.semesters?.map((s) => [s.id, s.mulai, s.selesai])).toEqual([['gasal', '2026-07-12', '2026-12-18'], ['genap', '2027-01-03', '2027-06-18']]);
+    expect(p.kalender.map((g) => g.id)).toEqual(['k-pemadatan', 'k-tka1', 'k-tka2', 'k-asaj', 'k-ukk', 'k-asas']);
+    expect(validasiProyek(p)).toEqual([]);
+  });
+  it('tiap pekan memakai jadwal yang benar', () => {
+    const cek = (tgl: string) => {
+      const t = hitungTurunan(p, tgl);
+      return [t.periode?.id ?? t.semester?.id, t.slots.length];
+    };
+    expect(cek('2026-11-09')).toEqual(['gasal', 1200]);
+    expect(cek('2026-10-05')).toEqual(['k-pemadatan', 1200]);
+    expect(cek('2026-10-26')).toEqual(['k-tka1', 595]);
+    expect(cek('2026-11-02')).toEqual(['k-tka2', 1000]);
+    expect(cek('2026-11-16')).toEqual(['k-asaj', 720]);
+    expect(cek('2026-11-23')).toEqual(['k-ukk', 720]);
+    expect(cek('2026-11-30')).toEqual(['k-asas', 239]);
+    expect(cek('2026-12-07')).toEqual(['gasal', 1200]);
+    expect(cek('2027-01-04')).toEqual(['genap', 0]);
+  });
+  it('beban Genap terpisah dari Gasal; pola UKK 10,10,11,11,9', () => {
+    const gasal = hitungTurunan(p, '2026-12-07').beban.length;
+    const genap = hitungTurunan(p, '2027-01-04').beban.length;
+    expect(gasal).toBeGreaterThan(0);
+    expect(genap).toBeGreaterThan(0);
+    expect(hitungTurunan(p, '2027-01-04').beban.every((b) => b.versiId === 'v-genap')).toBe(true);
+    const ukk = p.kalender.find((g) => g.id === 'k-ukk')!;
+    expect(p.polaLain?.find((x) => x.id === ukk.polaId)?.pola).toEqual(['skema10', 'skema10', 'skema11', 'skema11', 'skema9']);
+  });
+  it('tanpa bentrok kecuali temuan data sumber Pemadatan', () => {
+    for (const t of ['2026-11-09', '2026-10-26', '2026-11-02', '2026-11-16', '2026-11-23', '2026-11-30']) expect(hitungTurunan(p, t).jumlahPelanggaran).toBe(0);
+    const pem = hitungTurunan(p, '2026-10-05').masalah.filter(adalahPelanggaran);
+    expect(new Set(pem.map((m) => m.jenis))).toEqual(new Set(['bentrok-guru', 'ruang-terlarang']));
+  });
+  it('mengubah induk Genap tidak menyentuh Gasal', () => {
+    const q = proyekSekolah('tahun');
+    const t = hitungTurunan(q, '2027-01-04');
+    const b = t.beban.find((x) => !x.nonTatapMuka)!;
+    const h = alihkanPerubahan(q, t.pekan, [{ id: 'baru1', bebanId: b.id, hari: 0, jam: 1, ruangId: '' }], 'sem:genap');
+    expect(h.ok).toBe(true);
+    expect(q.versi.find((v) => v.id === 'v-genap')!.slots.length).toBe(1);
+    expect(q.versi.find((v) => v.id === 'v-gasal')!.slots.length).toBe(1200);
   });
 });
