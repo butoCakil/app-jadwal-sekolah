@@ -32,7 +32,7 @@ export function hitungTurunan(p: Proyek, tanggal: string, fokus: Fokus = 'auto')
   const diterima = new Map((p.diterima ?? []).map((x) => [x.pesan, x.catatan?.trim() || 'diterima']));
   const masalah = periksa({ ...p, beban: [...beban, ...rujukan] }, pekan.slots, { skemaPerHari, rombelTidakAktif, aturan }).map((m) => (adalahPelanggaran(m) && diterima.has(m.pesan) ? { ...m, diterima: diterima.get(m.pesan) as string } : m));
   return {
-    senin, hari, skemaPerHari, slots: pekan.slots, beban, masalah, peta: masalahPerSlot(masalah.filter((m) => !m.diterima)), jumlahPelanggaran: masalah.filter((m) => adalahPelanggaran(m) && !m.diterima).length,
+    senin, hari, skemaPerHari, slots: pekan.slots, beban, masalah, peta: masalahPerSlot(masalah.filter((m) => !m.diterima)), diterimaPeta: masalahPerSlot(masalah.filter((m) => !!m.diterima)), jumlahPelanggaran: masalah.filter((m) => adalahPelanggaran(m) && !m.diterima).length,
     versi, periode, semester, rombelTidakAktif, pekan, fokus, aturan,
   };
 }

@@ -72,6 +72,38 @@ function polaDari(p: Proyek, src: SumberAscKelas, nama: string): string | undefi
   return id;
 }
 
+/** Penyesuaian jadwal sumber atas keputusan admin: memindah ruang satu rombel+mapel pada hari tertentu di satu versi jadwal. */
+export interface Penyesuaian {
+  versiId: string;
+  rombel: string;
+  mapel: string;
+  hari: number;
+  ruang: string;
+  catatan: string;
+}
+
+/** Menerapkan penyesuaian; mengembalikan jumlah slot yang diubah per penyesuaian (0 = tidak ada yang cocok, perlu diperlakukan sebagai galat). */
+export function terapkanPenyesuaian(p: Proyek, daftar: Penyesuaian[]): number[] {
+  return daftar.map((x) => {
+    const ruang = p.master.ruang.find((r) => r.kode === x.ruang)?.id;
+    const rombel = p.master.rombel.find((r) => r.kode === x.rombel)?.id;
+    const mapel = p.master.mapel.find((m) => m.kode === x.mapel)?.id;
+    const versi = p.versi.find((v) => v.id === x.versiId);
+    if (!ruang || !rombel || !mapel || !versi) return 0;
+    const bebanIds = new Set(p.beban.filter((b) => b.rombelId === rombel && b.mapelId === mapel).map((b) => b.id));
+    let n = 0;
+    for (const sl of versi.slots) {
+      if (sl.hari === x.hari && bebanIds.has(sl.bebanId)) {
+        sl.ruangId = ruang;
+        n += 1;
+      }
+    }
+    const g = p.kalender.find((k) => k.versiId === x.versiId);
+    if (g && n > 0) g.catatan = [g.catatan, `Penyesuaian: ${x.catatan}`].filter(Boolean).join(' ');
+    return n;
+  });
+}
+
 /**
  * Memasang aturan ujian dari jadwal pengawas: ruang yang dipakai ujian terkunci pada jendela waktu tiap sesi, dan tiap pengawas
  * tercatat pada tanggal, waktu, dan ruangnya. Mengembalikan peringatan untuk kode yang tidak ditemukan.

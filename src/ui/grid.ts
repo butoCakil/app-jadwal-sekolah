@@ -7,6 +7,7 @@ import { selisihKapasitas } from '../model/kalender';
 import { susunBlok, potongBlok } from '../mesin/blok';
 import type { Blok } from '../mesin/blok';
 import { cekPenempatan, rencanaPindah, terapkanRencana } from '../mesin/penempatan';
+import { tombolTerima } from './inspektur';
 import { jpRombel } from '../model/jp';
 import { esc, opsi, tambahHari, tanggalPendek, warnaMapel } from './util';
 import { modelWarisan, terdampak, fokusInduk } from '../model/simpul';
@@ -70,6 +71,8 @@ interface Rujukan {
   cls: string;
   judul: string;
   tanda: boolean;
+  /** ada pelanggaran yang diterima (keputusan lapangan): tampil sebagai info */
+  info: string;
 }
 
 /** Teks dan status satu kartu (gabungan beberapa slot berurutan atau satu slot). */
@@ -85,13 +88,15 @@ function rujuk(k: Konteks, pk: Peta, slots: Slot[]): Rujukan | null {
   const wajib = ms.filter((m) => m.kategori === 'bentrok' || m.kategori === 'aturan');
   const [kedua, lencana] =
     k.ui.mode === 'rombel' ? [guru, ruang.join('·')] : k.ui.mode === 'guru' ? [rombel, ruang.join('·')] : [rombel, guru];
-  const judul = ms.length ? [...new Set(ms.map((m) => m.pesan))].join('\n') : `${rombel} · ${mapel} · ${guru} · ${ruang.join('/')}`;
+  const diterima = [...new Set(slots.flatMap((s) => k.turunan.diterimaPeta.get(s.id) ?? []).map((m) => m.diterima as string))];
+  const judul = ms.length ? [...new Set(ms.map((m) => m.pesan))].join('\n') : `${rombel} · ${mapel} · ${guru} · ${ruang.join('/')}${diterima.length ? `\nInfo: ${diterima.join('; ')}` : ''}`;
   return {
     mapel, guru, rombel, ruang, kedua, lencana,
     warna: warnaMapel(mapel),
     cls: wajib.length ? 'bermasalah' : ms.length ? 'peringatan' : '',
     judul,
     tanda: wajib.length > 0,
+    info: diterima.join('; '),
   };
 }
 
@@ -263,7 +268,7 @@ function tabelPekan(k: Konteks, pk: Peta, milik: Slot[]): string {
         const jp = slotsB.length;
         const info = `${jp} JP${b.dari > 1 ? ` · bagian ${b.ke + 1}/${b.dari}` : ''}`;
         lapis.push(`<div class="chip chip-besar kartu-slot ${r.cls}" style="--bg:${r.warna.bg};--garis:${r.warna.garis};top:${t + 2}px;height:${tinggiKartu - 4}px;left:calc(${(l * 100) / n}% + 2px);width:calc(${100 / n}% - 4px)" title="${esc(r.judul)}${b.dari > 1 ? '\nTerpotong istirahat; seret untuk memindah seluruh blok.' : ''}" data-aksi="slotDetail" data-slot="${esc(slotsB[0]?.id ?? '')}" ${atrSeret(b.blok.slots)}>
-          <div class="flex w-full items-center justify-between gap-1"><b class="text-[13px]">${esc(r.mapel)}</b>${r.tanda ? '<span class="text-red-600">⚠</span>' : ''}<span class="lencana-ruang">${esc(r.lencana)}</span></div>
+          <div class="flex w-full items-center justify-between gap-1"><b class="text-[13px]">${esc(r.mapel)}</b>${r.tanda ? '<span class="text-red-600">⚠</span>' : r.info ? '<span class="text-sky-600" title="Diterima (keputusan lapangan)">ℹ</span>' : ''}<span class="lencana-ruang">${esc(r.lencana)}</span></div>
           <div class="truncate text-[11px] text-slate-600">${esc(r.kedua)}</div>
           <div class="text-[10px] text-slate-500">${info}${wa && wb ? ` · ${wa.mulai}–${wb.selesai}` : ''}</div></div>`);
       }
@@ -374,7 +379,7 @@ function tabelSemua(k: Konteks, pk: Peta, entitas: { id: string; label: string }
               .map((grup) => {
                 const r = rujuk(k, pk, grup);
                 if (!r) return '';
-                return `<div class="chip chip-mini ${r.cls}" style="--bg:${r.warna.bg};--garis:${r.warna.garis}" title="${esc(r.judul)}" data-aksi="slotDetail" data-slot="${esc(grup[0]?.id ?? '')}" ${atrSeret(s0 && blok ? bagian : grup)}><b>${esc(r.mapel)}</b><span>${esc(r.kedua)}</span><span class="text-slate-500">${esc(r.lencana)}</span>${r.tanda ? '<span class="text-red-600">⚠</span>' : ''}</div>`;
+                return `<div class="chip chip-mini ${r.cls}" style="--bg:${r.warna.bg};--garis:${r.warna.garis}" title="${esc(r.judul)}" data-aksi="slotDetail" data-slot="${esc(grup[0]?.id ?? '')}" ${atrSeret(s0 && blok ? bagian : grup)}><b>${esc(r.mapel)}</b><span>${esc(r.kedua)}</span><span class="text-slate-500">${esc(r.lencana)}</span>${r.tanda ? '<span class="text-red-600">⚠</span>' : r.info ? '<span class="text-sky-600" title="Diterima (keputusan lapangan)">ℹ</span>' : ''}</div>`;
               })
               .join('');
             out.push(`<td ${lebar > 1 ? `colspan="${lebar}"` : ''} class="sel-mx ${pertama}" ${lebar > 1 ? 'style="max-width:none;width:auto"' : ''} data-sel="1" data-hari="${i}" data-jam="${c.n}" data-baris="${esc(e.id)}">${chips}</td>`);
@@ -600,13 +605,15 @@ export function renderModal(k: Konteks): string {
   const rombel = pk.rombel.get(b.rombelId) ?? '?';
   const guru = [b.guruId, ...b.timGuruIds].map((g) => k.p.master.guru.find((x) => x.id === g)?.nama ?? '?').join(', ');
   const ms = k.turunan.peta.get(s.id) ?? [];
+  const dt = k.turunan.diterimaPeta.get(s.id) ?? [];
   return `<div class="modal-latar" data-aksi="tutupModal"><div class="modal-isi" data-aksi="diam">
     <div class="mb-1 text-lg font-semibold">${esc(mapel)} <span class="text-slate-500">· ${esc(rombel)}</span></div>
     <div class="mb-3 text-sm text-slate-500">${esc(labelWaktu(k, s.hari, s.jam))}</div>
     <div class="mb-3 text-sm">Guru: ${esc(guru)}${b.paralel ? ` · kelompok paralel ${esc(b.paralel)}` : ''}</div>
     <label class="mb-3 block text-sm">Ruang
       <select class="isian ml-2" data-aksi="ubahRuang" data-slot="${esc(s.id)}">${opsi(k.p.master.ruang, s.ruangId, (r) => r.id, (r) => `${r.kode} · ${r.nama}`, '— belum ada ruang —')}</select></label>
-    ${ms.length ? `<div class="mb-3 space-y-1">${ms.map((x) => `<div class="rounded-lg ${x.kategori === 'bentrok' || x.kategori === 'aturan' ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-800'} p-2 text-xs">${esc(x.pesan)}</div>`).join('')}</div>` : '<div class="mb-3 rounded-lg bg-emerald-50 p-2 text-xs text-emerald-800">Tidak ada masalah pada slot ini.</div>'}
+    ${ms.length ? `<div class="mb-3 space-y-1">${ms.map((x) => `<div class="flex items-start justify-between gap-2 rounded-lg ${x.kategori === 'bentrok' || x.kategori === 'aturan' ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-800'} p-2 text-xs"><span>${esc(x.pesan)}</span>${tombolTerima(x).replace('class="tombol shrink-0"', 'class="tombol shrink-0 !px-2 !py-0.5 !text-xs"')}</div>`).join('')}</div>` : dt.length ? '' : '<div class="mb-3 rounded-lg bg-emerald-50 p-2 text-xs text-emerald-800">Tidak ada masalah pada slot ini.</div>'}
+    ${dt.length ? `<div class="mb-3 space-y-1">${dt.map((x) => `<div class="flex items-start justify-between gap-2 rounded-lg bg-sky-50 p-2 text-xs text-sky-900"><span><b>ℹ Diterima:</b> ${esc(x.diterima ?? '')}<br><span class="text-sky-700">${esc(x.pesan)}</span></span>${tombolTerima(x).replace('class="tombol shrink-0"', 'class="tombol shrink-0 !px-2 !py-0.5 !text-xs"')}</div>`).join('')}</div>` : ''}
     <div class="flex items-center justify-between">${k.ui.mode === 'rombel' ? `<button class="tombol !border-red-300 !text-red-700" data-aksi="lepasSlot" data-slot="${esc(s.id)}">Lepas dari jadwal</button>` : '<span></span>'}${tutup}</div></div></div>`;
 }
 

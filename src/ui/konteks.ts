@@ -86,6 +86,8 @@ export interface Turunan {
   beban: Beban[];
   masalah: Masalah[];
   peta: Map<string, Masalah[]>;
+  /** pelanggaran yang diterima admin, per slot (tampil sebagai info, tidak dihitung bentrok) */
+  diterimaPeta: Map<string, Masalah[]>;
   jumlahPelanggaran: number;
   /** versi jadwal yang berlaku pada tanggal acuan */
   versi: VersiJadwal | undefined;

@@ -91,5 +91,13 @@ export const AGENDA_2026: [string, string, string, string, string, string][] = [
  * ASAS; guru memberi tugas di kelas saat mengawas. Tidak bisa diselesaikan penyusunan otomatis.
  */
 export const DITERIMA_2026: { tanggal: string; jenis: 'pengawas-bentrok'; guru: string; rombel: string; mapel: string; catatan: string }[] = [
-  { tanggal: '2026-11-30', jenis: 'pengawas-bentrok', guru: 'EDW', rombel: 'XI TE 2', mapel: 'PSRT', catatan: 'Keputusan lapangan: guru memberi tugas di kelas saat mengawas ASAS.' },
+  { tanggal: '2026-11-30', jenis: 'pengawas-bentrok', guru: 'EDW', rombel: 'XI TE 2', mapel: 'PSRT', catatan: 'EDW memberi tugas ke siswa saat mengawas ASAS (keputusan lapangan).' },
+];
+
+/**
+ * Penyesuaian jadwal ASAS (keputusan Benny, 27 Nov 2026): D1 ternyata ruang ujian (kolom D.1 pada jadwal pengawas), jadi PSRT XI TE 2
+ * pada hari Kamis (jam 3-6) pindah ke B3, yang kosong pada jam itu.
+ */
+export const PENYESUAIAN_2026: { versiId: string; rombel: string; mapel: string; hari: number; ruang: string; catatan: string }[] = [
+  { versiId: 'v-asas', rombel: 'XI TE 2', mapel: 'PSRT', hari: 3, ruang: 'B3', catatan: 'PSRT XI TE 2 Kamis pindah dari D1 (ruang ujian) ke B3 (keputusan Benny, 27 Nov 2026).' },
 ];

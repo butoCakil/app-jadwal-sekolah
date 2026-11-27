@@ -170,13 +170,16 @@ describe('data Tahun 2026: jadwal pengawas ASAS dan keputusan diterima', () => {
     expect(pw.every((m) => m.pesan.includes('Guru EDW') && m.pesan.includes('(XI TE 2 PSRT)') && m.pesan.includes('Kamis'))).toBe(true);
     expect(pw.every((m) => !!m.diterima)).toBe(true);
     expect(t.jumlahPelanggaran).toBe(t.masalah.filter((m) => adalahPelanggaran(m) && !m.diterima).length);
-    expect(t.masalah.filter((m) => m.jenis !== 'pengawas-bentrok' && adalahPelanggaran(m)).every((m) => m.jenis === 'ruang-dikunci')).toBe(true);
+    expect(t.masalah.filter((m) => m.jenis !== 'pengawas-bentrok' && adalahPelanggaran(m))).toEqual([]); // PSRT sudah pindah dari D1 ke B3
+    expect(pw.every((m) => m.diterima === 'EDW memberi tugas ke siswa saat mengawas ASAS (keputusan lapangan).')).toBe(true);
+    expect(t.diterimaPeta.size).toBe(4);
   });
   it('membatalkan penerimaan mengembalikan hitungan bentrok', () => {
     const q = structuredClone(p);
     const sebelum = hitungTurunan(q, '2026-11-30').jumlahPelanggaran;
     delete q.diterima;
     expect(hitungTurunan(q, '2026-11-30').jumlahPelanggaran).toBe(sebelum + 4);
+    expect(hitungTurunan(q, '2026-11-30').diterimaPeta.size).toBe(0);
   });
   it('pekan TKA gelombang 2: rombel PJJ tidak dilaporkan belum punya ruang', () => {
     const tka = hitungTurunan(p, '2026-11-02');
