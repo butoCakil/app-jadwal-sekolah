@@ -7,6 +7,8 @@ import { susun } from '../src/mesin/solver';
 import { adalahPelanggaran, periksa } from '../src/mesin/validator';
 import { rencanaPindah, tentukanRuang } from '../src/mesin/penempatan';
 import { hitungTurunan } from '../src/ui/turunan';
+import { polaUntukTanggal } from '../src/model/kalender';
+import { kalenderFokus } from '../src/model/simpul';
 import type { Kegiatan, Proyek, Slot } from '../src/model/tipe';
 
 const HARI = ['2026-12-07', '2026-12-08', '2026-12-09', '2026-12-10', '2026-12-11'];
@@ -187,5 +189,53 @@ describe('data Tahun 2026: jadwal pengawas ASAS dan keputusan diterima', () => {
     const q = structuredClone(p);
     delete q.kalender.find((x) => x.id === 'k-tka2')!.rombelTanpaRuang;
     expect(hitungTurunan(q, '2026-11-02').masalah.filter((m) => m.jenis === 'ruang-belum').length).toBe(400);
+  });
+});
+
+describe('alasan sisa solver menyebut penyebab sebenarnya', () => {
+  it('sintetis: guru mengawas dan ruang prioritas terkunci pada semua waktu', () => {
+    const p = kosong(proyekContoh());
+    const b = p.beban.find((x) => !x.nonTatapMuka && x.jp > 0)!;
+    const ruang = p.master.ruang[0]!.id;
+    b.ruangPrioritas = [ruang];
+    const hari = Array.from({ length: 5 }, (_, i) => i);
+    const a: AturanPekan = {
+      kunci: hari.map((h) => ({ hari: h, ruangId: ruang, kegiatan: 'ASAS' })),
+      pengawas: hari.map((h) => ({ guruId: b.guruId, hari: h, jam: Array.from({ length: 14 }, (_, i) => i + 1), kegiatan: 'ASAS', waktu: '07:00–15:00' })),
+      tanpaRuang: [],
+    };
+    const h = susun(p, { skemaPerHari: p.polaReguler, aturan: a, batasMs: 800 });
+    const sisa = h.sisa.find((x) => x.bebanId === b.id);
+    expect(sisa).toBeTruthy();
+    expect(sisa!.alasan).toMatch(/sedang mengawas pada \d+/);
+    expect(sisa!.alasan).toMatch(/dibatasi ke/);
+  });
+
+  it('sintetis: tanpa penghalang aturan, alasan tidak menyebut mengawas atau terkunci', () => {
+    const p = kosong(proyekContoh());
+    const b = p.beban.find((x) => !x.nonTatapMuka && x.jp > 0)!;
+    b.jp = 60; // melebihi kapasitas pekan -> sisa
+    const h = susun(p, { skemaPerHari: p.polaReguler, batasMs: 800 });
+    const sisa = h.sisa.find((x) => x.bebanId === b.id);
+    expect(sisa).toBeTruthy();
+    expect(sisa!.alasan).not.toMatch(/mengawas|terkunci/);
+  });
+
+  it('data Tahun 2026: PSRT XI TE 2 dikosongkan, solver melapor guru EDW mengawas, tidak memaksa', () => {
+    const p = proyekSekolah('tahun');
+    const t = hitungTurunan(p, '2026-11-30');
+    const psrt = new Set(t.beban.filter((b) => b.mapelId === p.master.mapel.find((m) => m.kode === 'PSRT')!.id && b.rombelId === p.master.rombel.find((r) => r.kode === 'XI TE 2')!.id).map((b) => b.id));
+    expect(psrt.size).toBeGreaterThan(0);
+    const kloning = structuredClone(p);
+    kloning.beban = structuredClone(t.beban).filter((b) => !t.rombelTidakAktif.has(b.rombelId));
+    for (const v of kloning.versi) v.slots = [];
+    const tetap = t.slots.filter((s) => !psrt.has(s.bebanId));
+    const pola = polaUntukTanggal('2026-11-30', { ...p, kalender: kalenderFokus(p, 'auto') }).pola;
+    const h = susun(kloning, { skemaPerHari: pola, tetap, aturan: t.aturan, batasMs: 3000 });
+    const sisa = h.sisa.filter((x) => psrt.has(x.bebanId));
+    expect(sisa).toHaveLength(1);
+    expect(sisa[0]!.jpSisa).toBe(4);
+    expect(sisa[0]!.alasan).toMatch(/EDW sedang mengawas pada \d+/);
+    expect(periksa({ ...kloning }, h.slots, { skemaPerHari: pola, rombelTidakAktif: t.rombelTidakAktif, aturan: t.aturan }).filter(adalahPelanggaran)).toEqual([]);
   });
 });

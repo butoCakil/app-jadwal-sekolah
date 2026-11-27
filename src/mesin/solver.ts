@@ -123,6 +123,10 @@ class Mesin {
   readonly rombelOcc: Int32Array[];
   readonly ruangOcc: Int32Array[];
   readonly guruTutup: Uint8Array[];
+  /** subset guruTutup yang berasal dari tugas mengawas (untuk alasan sisa) */
+  readonly guruMengawas: Uint8Array[];
+  /** sel ruang yang dikunci kegiatan (untuk alasan sisa) */
+  readonly ruangKunci: Uint8Array[];
   readonly bersama: boolean[];
   readonly kodeRuang: string[];
   readonly ruangIds: string[];
@@ -167,6 +171,8 @@ class Mesin {
     this.rombelOcc = baru(p.master.rombel.length);
     this.ruangOcc = baru(p.master.ruang.length);
     this.guruTutup = p.master.guru.map(() => new Uint8Array(HARI * LEBAR));
+    this.guruMengawas = p.master.guru.map(() => new Uint8Array(HARI * LEBAR));
+    this.ruangKunci = p.master.ruang.map(() => new Uint8Array(HARI * LEBAR));
     for (const a of p.aturan) {
       if (a.jenis !== 'guruTidakTersedia') continue;
       const g = guruIdx.get(a.guruId);
@@ -179,12 +185,20 @@ class Mesin {
       const u = ruangIdx.get(k.ruangId);
       if (u === undefined || k.hari < 0 || k.hari >= HARI) continue;
       const jams = k.jam ?? Array.from({ length: LEBAR }, (_, i) => i);
-      for (const j of jams) if (j >= 0 && j < LEBAR) (this.ruangOcc[u] as Int32Array)[k.hari * LEBAR + j] = -2;
+      for (const j of jams) {
+        if (j < 0 || j >= LEBAR) continue;
+        (this.ruangOcc[u] as Int32Array)[k.hari * LEBAR + j] = -2;
+        (this.ruangKunci[u] as Uint8Array)[k.hari * LEBAR + j] = 1;
+      }
     }
     for (const t of opsi.aturan?.pengawas ?? []) {
       const g = guruIdx.get(t.guruId);
       if (g === undefined || t.hari < 0 || t.hari >= HARI) continue;
-      for (const j of t.jam) if (j >= 0 && j < LEBAR) (this.guruTutup[g] as Uint8Array)[t.hari * LEBAR + j] = 1;
+      for (const j of t.jam) {
+        if (j < 0 || j >= LEBAR) continue;
+        (this.guruTutup[g] as Uint8Array)[t.hari * LEBAR + j] = 1;
+        (this.guruMengawas[g] as Uint8Array)[t.hari * LEBAR + j] = 1;
+      }
     }
 
     // slot tetap menempati sumber daya lebih dulu
@@ -539,25 +553,74 @@ class Mesin {
     }
   }
 
+  /**
+   * Alasan sebuah pertemuan tidak tertempatkan. Setiap waktu yang mungkin diperiksa terhadap SEMUA penyebab (bukan hanya yang
+   * pertama gagal), lalu penyebab dilaporkan beserta jumlah waktu yang terhalang olehnya.
+   */
   diagnosa(c: Chunk): string {
-    const hit: Record<string, number> = { rombel: 0, guru: 0, tutup: 0, ruang: 0, kapasitas: 0 };
-    for (let h = 0; h < this.hari; h++) {
-      for (let m = 1; m + c.size - 1 <= (this.cap[h] as number); m++) {
-        const s = { v: '' };
-        if (!this.muat(c, h, m, s)) hit[s.v] = (hit[s.v] ?? 0) + 1;
-      }
-    }
     const u = c.unit;
     const rb = this.rombelKode[u.rombel];
     const gk = u.guru.map((g) => this.guruKode[g]).join('/');
-    const calon = [...new Set(u.anggota.flatMap((a) => a.calon))].filter((r) => r >= 0).map((r) => this.kodeRuang[r]);
-    const urut = Object.entries(hit).sort((a, b) => b[1] - a[1]);
-    const utama = urut[0]?.[0];
-    if (utama === 'ruang') return `Ruang kurang: ruang yang diizinkan (${calon.slice(0, 6).join(', ')}${calon.length > 6 ? ', ...' : ''}) terpakai pada semua waktu yang guru dan rombelnya kosong.`;
-    if (utama === 'rombel') return `Jam ${rb} sudah penuh (kapasitas pekan ini habis atau bentrok dengan pelajaran lain).`;
-    if (utama === 'guru') return `Guru ${gk} sudah penuh pada waktu-waktu yang rombel ${rb} kosong.`;
-    if (utama === 'tutup') return `Guru ${gk} tidak tersedia pada waktu-waktu yang rombel ${rb} kosong.`;
-    return `Tidak ada waktu ${c.size} JP berurutan yang muat.`;
+    const calon = [...new Set(u.anggota.flatMap((a) => a.calon))].filter((r) => r >= 0);
+    const kodeCalon = calon.map((r) => this.kodeRuang[r]);
+    const ruangTxt = `${kodeCalon.slice(0, 6).join(', ')}${kodeCalon.length > 6 ? ', ...' : ''}`;
+    const n = { rombel: 0, guru: 0, tutup: 0, mengawas: 0, kunci: 0, ruang: 0 };
+    let total = 0;
+    for (let h = 0; h < this.hari; h++) {
+      for (let m = 1; m + c.size - 1 <= (this.cap[h] as number); m++) {
+        total += 1;
+        const k0 = h * LEBAR + m;
+        const ro = this.rombelOcc[u.rombel] as Int32Array;
+        if (Array.from({ length: c.size }, (_, j) => ro[k0 + j] !== -1).some(Boolean)) n.rombel += 1;
+        const ada = { guru: false, tutup: false, mengawas: false };
+        for (const g of u.guru) {
+          for (let j = 0; j < c.size; j++) {
+            if ((this.guruMengawas[g] as Uint8Array)[k0 + j]) ada.mengawas = true;
+            else if ((this.guruTutup[g] as Uint8Array)[k0 + j]) ada.tutup = true;
+            if ((this.guruOcc[g] as Int32Array)[k0 + j] !== -1) ada.guru = true;
+          }
+        }
+        if (ada.guru) n.guru += 1;
+        if (ada.tutup) n.tutup += 1;
+        if (ada.mengawas) n.mengawas += 1;
+        // ruang: terhalang bila ada anggota yang semua calon ruangnya terisi; 'kunci' bila setiap calon yang terisi itu terkunci kegiatan
+        for (const a of u.anggota) {
+          if (a.calon.includes(-1)) continue;
+          let bebas = false;
+          let semuaKunci = true;
+          for (const r of a.calon) {
+            if (this.bersama[r]) { bebas = true; break; }
+            const oc = this.ruangOcc[r] as Int32Array;
+            const kc = this.ruangKunci[r] as Uint8Array;
+            let terisi = false;
+            let kunci = false;
+            for (let j = 0; j < c.size; j++) {
+              if (oc[k0 + j] !== -1) terisi = true;
+              if (kc[k0 + j]) kunci = true;
+            }
+            if (!terisi) { bebas = true; break; }
+            if (!kunci) semuaKunci = false;
+          }
+          if (!bebas) {
+            if (semuaKunci) n.kunci += 1;
+            else n.ruang += 1;
+            break;
+          }
+        }
+      }
+    }
+    if (total === 0) return `Kapasitas hari tidak cukup untuk ${c.size} JP berurutan.`;
+    const bagian: [number, string][] = [
+      [n.rombel, `jam ${rb} sudah terisi`],
+      [n.guru, `guru ${gk} sudah mengajar`],
+      [n.mengawas, `guru ${gk} sedang mengawas`],
+      [n.tutup, `guru ${gk} tidak tersedia`],
+      [n.kunci, `ruang (${ruangTxt}) terkunci kegiatan`],
+      [n.ruang, `ruang (${ruangTxt}) terpakai`],
+    ];
+    const rinci = bagian.filter(([x]) => x > 0).sort((a, b) => b[0] - a[0]).map(([x, t]) => `${t} pada ${x}`).join('; ');
+    const dibatasi = u.anggota.some((a) => a.beban.ruangPrioritas.length > 0) && n.kunci + n.ruang > 0;
+    return `Tidak ada waktu ${c.size} JP berurutan yang muat (dari ${total} kemungkinan): ${rinci}.${dibatasi ? ` Ruang beban ini dibatasi ke ${ruangTxt}; bila boleh ruang lain, ubah ruang prioritasnya di tab Beban.` : ''}`;
   }
 
   hasilSlot(): Slot[] {
