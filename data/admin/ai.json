@@ -1,7 +1,7 @@
 {
  "format": "jadwal-smkn-bansari-ai",
  "versi": 1,
- "disimpan": "2026-11-28T11:06:11.613Z",
+ "disimpan": "2026-11-28T11:07:37.425Z",
  "pengaturan": {
   "nilai": {
    "model": "gemini-3.5-flash-lite",
@@ -23,7 +23,7 @@
    "id": "pmx0aq4832ym",
    "judul": "",
    "dibuat": 1795863441891,
-   "diubah": 1795863922375,
+   "diubah": 1795864007916,
    "sasaran": {
     "mode": "tetap",
     "semesterId": "genap"
@@ -169266,7 +169266,8 @@
        }
       },
       "status": "diterapkan",
-      "diputuskan": 1795863922319
+      "diputuskan": 1795863922319,
+      "susunRingkas": "1000 dari 1040 JP tertempatkan, 30 beban belum penuh"
      },
      "sumber": "gemini-3.5-flash-lite · bennysurahman@gmail.com",
      "id": 14,
@@ -169275,7 +169276,8 @@
    ],
    "urut": 14,
    "catatan": [
-    "[Catatan sistem] Admin MENERAPKAN usulan Anda. Perubahan: (tidak ada perubahan data) | Penyusunan jadwal dijalankan."
+    "[Catatan sistem] Admin MENERAPKAN usulan Anda. Perubahan: (tidak ada perubahan data) | Penyusunan jadwal dijalankan.",
+    "[Catatan sistem] Hasil penyusunan otomatis: 1000 dari 1040 JP tertempatkan, 30 beban belum penuh"
    ]
   },
   {
