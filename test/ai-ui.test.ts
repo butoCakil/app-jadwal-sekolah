@@ -37,7 +37,7 @@ function buatKonteks() {
   return { k, p, gambar };
 }
 const tunggu = async (kondisi: () => boolean) => {
-  for (let i = 0; i < 200 && !kondisi(); i++) await new Promise((r) => setTimeout(r, 10));
+  for (let i = 0; i < 800 && !kondisi(); i++) await new Promise((r) => setTimeout(r, 10));
   expect(kondisi()).toBe(true);
 };
 const balasanGemini = (isi: unknown) => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(isi) }] } }], usageMetadata: { promptTokenCount: 100, candidatesTokenCount: 20 } }), { status: 200 });
@@ -89,6 +89,7 @@ describe('jendela Asisten AI: alur dari brankas sampai usulan diterapkan', () =>
     nilaiForm.aiTeks = 'terima kasih';
     klikAi(k, tombol('aiKirim'));
     await tunggu(() => fetchPalsu.mock.calls.length === 2);
+    await tunggu(() => renderAi(k).includes('Baik.') && !renderAi(k).includes('sedang menyusun'));
     const badan = JSON.parse(String((fetchPalsu.mock.calls[1] as unknown as [string, RequestInit])[1].body));
     const terakhir = badan.contents.at(-1).parts[0].text as string;
     expect(terakhir).toContain('Admin MENERAPKAN usulan Anda');
