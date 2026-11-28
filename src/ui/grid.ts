@@ -485,7 +485,7 @@ export function renderGrid(k: Konteks): string {
     aside = `<aside class="${semua ? 'mt-3 grid gap-3 lg:grid-cols-[2fr_1fr]' : 'space-y-3'}">
       <div class="kartu p-3"><div class="mb-1 text-sm font-semibold">Belum terjadwal</div>${isiBelum}</div>
       ${tamp.length ? `<div class="kartu border-amber-300 bg-amber-50 p-3"><div class="mb-1 text-sm font-semibold">Tampungan (${tamp.length})</div>
-        <div class="mb-2 text-xs text-slate-600">Tidak muat pada skema pekan ini. Seret ke sel yang tersedia, atau ganti pola pekan.</div>
+        <div class="mb-2 text-xs text-slate-600">Tidak muat pada skema pekan ini. Seret ke sel yang tersedia, atau ganti skema mingguan pekan ini.</div>
         ${tamp.map((s) => `<div class="mb-1 text-[11px] text-slate-500">${NAMA_HARI[s.hari]}, pelajaran ke-${s.jam}</div>${chipSederhana(k, pk, s)}`).join('')}</div>` : ''}
     </aside>`;
   }

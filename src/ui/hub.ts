@@ -167,7 +167,7 @@ function infoInduk(k: Konteks, s: Semester | undefined): string {
         <label class="block text-xs font-semibold text-slate-600 sm:col-span-3">Nama semester<input class="isian mt-1 w-full font-normal" value="${esc(s?.nama ?? '')}" placeholder="mis. Gasal 2026/2027" data-aksi="semF" data-f="nama" data-sem="${id}"></label>
         <label class="block text-xs font-semibold text-slate-600">Mulai<input type="date" class="isian mt-1 w-full font-normal" value="${esc(s?.mulai ?? '')}" data-aksi="semF" data-f="mulai" data-sem="${id}"></label>
         <label class="block text-xs font-semibold text-slate-600">Selesai<input type="date" class="isian mt-1 w-full font-normal" value="${esc(s?.selesai ?? '')}" data-aksi="semF" data-f="selesai" data-sem="${id}"></label>
-        <div class="self-end pb-1 text-xs text-slate-500">Pola jam: <b>${esc(pola?.nama ?? '—')}</b> <button class="underline" data-aksi="hubPola">ubah</button></div></div>
+        <div class="self-end pb-1 text-xs text-slate-500">Skema mingguan: <b>${esc(pola?.nama ?? '—')}</b> <button class="underline" data-aksi="hubPola">ubah</button></div></div>
       ${salin}
       <div class="mt-4 grid gap-2 text-sm sm:grid-cols-3">
         <button class="rounded-lg bg-slate-50 p-2 text-left hover:bg-slate-100" data-tab="beban"><div class="text-xs text-slate-500">Beban</div><b>${jpRombel(beban)} JP</b></button>
@@ -203,7 +203,7 @@ function infoKegiatan(k: Konteks, g: Kegiatan): string {
       <dl class="mt-3 grid grid-cols-[120px_1fr] gap-y-1.5 text-sm">
         <dt class="text-slate-500">Tanggal</dt><dd>${esc(rentang(g.mulai, g.selesai))}</dd>
         <dt class="text-slate-500">Hari berlaku</dt><dd>${esc(hariTeks(g) || 'setiap hari kerja')}</dd>
-        <dt class="text-slate-500">Pola jam</dt><dd>${esc(pola ?? 'ikut induk')}</dd>
+        <dt class="text-slate-500">Skema mingguan</dt><dd>${esc(pola ?? 'ikut induk')}</dd>
         ${g.catatan ? `<dt class="text-slate-500">Catatan</dt><dd>${esc(g.catatan)}</dd>` : ''}</dl>
       <div class="mt-3 flex flex-wrap gap-2"><button class="tombol" data-aksi="kegBuka" data-id="${esc(g.id)}" data-modal="1">Ubah info…</button>
         <button class="tombol !text-red-600" data-aksi="hubHapus">Hapus kegiatan</button></div>
@@ -261,7 +261,7 @@ function aturanKegiatan(k: Konteks, g: Kegiatan): string {
     <div class="text-xs text-slate-500">Mis. PJJ: tetap punya jadwal, tidak dilaporkan “belum punya ruang”.</div>
     <div class="mt-2">${tombolPemilih('kegiatanTanpaRuang', g.id, ringkasKode(tanpa, 'rombel', 8), 'Pilih rombel…')}</div>
     <div class="mt-4 text-sm font-semibold">Tugas mengawas</div>
-    <div class="text-xs text-slate-500">Guru yang mengawas tidak boleh dijadwalkan mengajar pada JP yang beririsan dengan waktu tugasnya (menurut pola jam hari itu).</div>
+    <div class="text-xs text-slate-500">Guru yang mengawas tidak boleh dijadwalkan mengajar pada JP yang beririsan dengan waktu tugasnya (menurut skema jam hari itu).</div>
     <div class="mt-2 grid gap-1.5">${daftarTugas || '<div class="text-xs text-slate-400">Belum ada tugas mengawas.</div>'}</div>
     <div class="mt-2 flex flex-wrap items-end gap-2 rounded-lg bg-slate-50 p-2 text-xs" id="formPawas">
       <label>Guru<br><select id="pwGuru" class="isian !text-xs"><option value="">Pilih…</option>${guruOpsi}</select></label>

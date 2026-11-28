@@ -7,7 +7,7 @@ import type { Konteks } from './konteks';
 import { barisPola, klikKalender, renderKalender, ubahKalender } from './kalenderTab';
 
 /** Istilah yang tampil di layar; satu tempat agar mudah diselaraskan. */
-const ISTILAH = { pola: 'Pola', polaMingguan: 'Pola mingguan', templateSkema: 'Template skema jam' } as const;
+const ISTILAH = { pola: 'Skema mingguan', polaMingguan: 'Skema mingguan', templateSkema: 'Template skema jam' } as const;
 
 const SUB = [
   { id: 'kalender', label: 'Kalender akademik & periode' },
@@ -21,11 +21,11 @@ function bagianPola(p: Proyek): string {
   const n = jumlahHariKerja(p);
   const hariKerja = `<section class="mb-5 rounded-xl border border-slate-200 bg-white p-3"><div class="flex flex-wrap items-center gap-3"><h2 class="text-base font-semibold">Hari kerja per pekan</h2>
       <div class="inline-flex rounded-lg border border-slate-300 bg-white p-0.5">${[5, 6].map((x) => `<button class="rounded-md px-3 py-1 text-sm font-medium ${x === n ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}" data-aksi="hariKerja" data-n="${x}">${x} hari (Senin–${NAMA_HARI[x - 1]})</button>`).join('')}</div>
-      <span class="text-xs text-slate-500">Hari di luar ini dianggap libur: tidak ada KBM dan tidak dihitung di kalender. Hari baru (Sabtu) memakai skema pertama; ubah di pola di bawah.</span></div></section>`;
+      <span class="text-xs text-slate-500">Hari di luar ini dianggap libur: tidak ada KBM dan tidak dihitung di kalender. Hari baru (Sabtu) memakai skema pertama; ubah di daftar skema mingguan di bawah.</span></div></section>`;
   const ringkasPola = (pola: PolaMinggu) => pola.map((id) => labelSkema(p, id)).join(' · ');
   const daftar = daftarPola(p)
     .map((x) => {
-      const pakai = pemakaiPola(p, x.id).filter((y) => y !== 'pola default');
+      const pakai = pemakaiPola(p, x.id).filter((y) => y !== 'skema mingguan default');
       const kapPola = kapasitasPola(x.pola, p.skema);
       const kap = kapPola.total;
       const selisih = x.default ? selisihKapasitas(p.master.rombel, kapPola).length : 0;
@@ -36,12 +36,12 @@ function bagianPola(p: Proyek): string {
     .join('');
   const manual = p.penggantiManual;
   const blokManual = manual
-    ? `<section class="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-3"><h2 class="mb-1 text-base font-semibold">Penggantian manual (format lama)</h2><div class="mb-2 text-xs text-slate-600">Menimpa semua pola sampai dilepas. Sebaiknya lepas, lalu pasang pola yang diinginkan pada kegiatan di kalender.</div>
+    ? `<section class="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-3"><h2 class="mb-1 text-base font-semibold">Penggantian manual (format lama)</h2><div class="mb-2 text-xs text-slate-600">Menimpa semua skema mingguan sampai dilepas. Sebaiknya lepas, lalu pasang skema mingguan yang diinginkan pada kegiatan di kalender.</div>
         ${barisPola(p, manual.pola, 'manual')}
         <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">Berlaku <input type="date" class="isian" value="${esc(manual.mulai ?? '')}" data-aksi="manualMulai"> s/d <input type="date" class="isian" value="${esc(manual.selesai ?? '')}" data-aksi="manualSelesai"> <span class="text-slate-500">(kosong = semua tanggal)</span> <button class="tombol" data-aksi="hapusManual">Lepas penggantian manual</button></div></section>`
     : '';
-  return `${hariKerja}<section><div class="mb-2 flex flex-wrap items-center gap-3"><h2 class="text-lg font-semibold">Pola mingguan</h2><button class="tombol-utama" data-aksi="polaBaru">+ Pola baru</button>
-      <span class="text-xs text-slate-500">Skema jam untuk tiap hari kerja. Pola baru dimulai dari kosong (semua hari memakai skema pertama). Satu pola menjadi default; pola lain dipasang pada periode di kalender (mis. bulan puasa).</span></div>
+  return `${hariKerja}<section><div class="mb-2 flex flex-wrap items-center gap-3"><h2 class="text-lg font-semibold">${ISTILAH.polaMingguan}</h2><button class="tombol-utama" data-aksi="polaBaru">+ Skema mingguan baru</button>
+      <span class="text-xs text-slate-500">Kombinasi template skema jam untuk tiap hari kerja dalam sepekan (mis. 11·10·10·11·9). Skema mingguan baru dimulai dari kosong (semua hari memakai template pertama). Satu skema mingguan menjadi default; yang lain dipasang pada periode di kalender (mis. ASAS atau bulan puasa).</span></div>
     <div class="space-y-2">${daftar}</div></section>${blokManual}`;
 }
 
@@ -76,8 +76,8 @@ function kartuSkema(p: Proyek, s: Skema): string {
 /** Tempat skema dipakai (pola reguler, manual, kegiatan); skema yang dipakai tidak boleh dihapus. */
 function pemakaiSkema(p: Proyek, id: string): string[] {
   const ket: string[] = [];
-  for (const x of daftarPola(p)) if (x.pola.includes(id)) ket.push(x.default ? `pola default “${x.nama}”` : `pola “${x.nama}”`);
-  if (p.penggantiManual?.pola.includes(id)) ket.push('pola manual');
+  for (const x of daftarPola(p)) if (x.pola.includes(id)) ket.push(x.default ? `skema mingguan default “${x.nama}”` : `skema mingguan “${x.nama}”`);
+  if (p.penggantiManual?.pola.includes(id)) ket.push('penggantian manual');
   for (const g of p.kalender) if (g.pola?.includes(id)) ket.push(g.nama);
   return ket;
 }
@@ -107,7 +107,7 @@ function labelSkema(p: Proyek, id: string): string {
 function isiPolaModal(p: Proyek, id: string): string {
   const x = daftarPola(p).find((y) => y.id === id);
   if (!x) return '';
-  const pakai = pemakaiPola(p, x.id).filter((y) => y !== 'pola default');
+  const pakai = pemakaiPola(p, x.id).filter((y) => y !== 'skema mingguan default');
   const bisaHapus = !x.default && pakai.length === 0;
   const sel = x.default ? selisihKapasitas(p.master.rombel, kapasitasPola(x.pola, p.skema)) : [];
   const infoSelisih = sel.length
@@ -205,7 +205,7 @@ export function klikSkema(k: Konteks, el: HTMLElement): boolean {
           baris: sumber.baris.map((b, i) => ({ ...b, id: `${id}_${i}` })),
         });
       });
-      k.lapor('Skema baru ditambahkan di akhir daftar. Ubah nama, baris, dan durasinya, lalu pasang di Pola mingguan atau pada periode.');
+      k.lapor('Skema baru ditambahkan di akhir daftar. Ubah nama, baris, dan durasinya, lalu pasang di Skema mingguan atau pada periode.');
       return true;
     case 'hapusSkema': {
       const s = skema();
@@ -232,23 +232,23 @@ export function klikSkema(k: Konteks, el: HTMLElement): boolean {
     case 'polaSalin': {
       const sumber = d.aksi === 'polaSalin' ? daftarPola(k.p).find((x) => x.id === d.id) : undefined;
       k.ubah((x) => {
-        const id = tambahPola(x, sumber ? `${sumber.nama} (salinan)` : `Pola ${(x.polaLain?.length ?? 0) + 2}`, sumber?.id);
+        const id = tambahPola(x, sumber ? `${sumber.nama} (salinan)` : `Skema mingguan ${(x.polaLain?.length ?? 0) + 2}`, sumber?.id);
         k.ui.dlgSkema = { jenis: 'pola', id };
       });
-      k.lapor('Pola baru ditambahkan di akhir daftar. Ubah nama dan skema tiap harinya.');
+      k.lapor('Skema mingguan baru ditambahkan di akhir daftar. Ubah nama dan template skema tiap harinya.');
       return true;
     }
     case 'polaDefault': {
       const x = daftarPola(k.p).find((y) => y.id === d.id);
       if (!x) return true;
       k.ubah((pp) => jadikanDefault(pp, x.id));
-      k.lapor(`“${x.nama}” kini menjadi pola default.`);
+      k.lapor(`“${x.nama}” kini menjadi skema mingguan default.`);
       return true;
     }
     case 'polaHapus': {
       const x = daftarPola(k.p).find((y) => y.id === d.id);
       if (!x || x.default || pemakaiPola(k.p, x.id).length) return true;
-      if (!confirm(`Hapus pola “${x.nama}”?`)) return true;
+      if (!confirm(`Hapus skema mingguan “${x.nama}”?`)) return true;
       k.ui.dlgSkema = null;
       k.ubah((pp) => void (pp.polaLain = (pp.polaLain ?? []).filter((y) => y.id !== x.id)));
       return true;
@@ -275,7 +275,7 @@ export function ubahSkema(k: Konteks, el: HTMLInputElement & HTMLSelectElement):
     case 'namaPola': {
       const nama = el.value.trim();
       if (!nama) {
-        k.lapor('Nama pola tidak boleh kosong.');
+        k.lapor('Nama skema mingguan tidak boleh kosong.');
         k.gambar();
         return true;
       }

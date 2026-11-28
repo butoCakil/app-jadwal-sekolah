@@ -25,7 +25,7 @@ export type SumberPola = 'manual' | 'kegiatan' | 'reguler';
 type DataPola = Pick<Proyek, 'polaReguler' | 'penggantiManual' | 'kalender'> & Partial<Pick<Proyek, 'polaRegulerId' | 'polaRegulerNama' | 'polaLain'>>;
 
 export const ID_POLA_DEFAULT = 'reguler';
-export const NAMA_POLA_DEFAULT = 'Pola reguler';
+export const NAMA_POLA_DEFAULT = 'Skema reguler';
 
 /** Jumlah hari kerja per pekan (5 atau 6) = panjang pola default. */
 export const jumlahHariKerja = (p: Pick<Proyek, 'polaReguler'>): number => p.polaReguler.length;
@@ -51,7 +51,7 @@ export function polaDariId(p: DataPola, id: string | undefined): PolaMinggu | un
 /** Nama kegiatan/ketentuan yang memakai pola ini (pola yang dipakai tidak boleh dihapus). */
 export function pemakaiPola(p: DataPola, id: string): string[] {
   const hasil: string[] = [];
-  if ((p.polaRegulerId ?? ID_POLA_DEFAULT) === id) hasil.push('pola default');
+  if ((p.polaRegulerId ?? ID_POLA_DEFAULT) === id) hasil.push('skema mingguan default');
   for (const k of p.kalender) if (k.polaId === id) hasil.push(k.nama);
   return hasil;
 }
@@ -221,7 +221,7 @@ export function kapasitasPola(pola: PolaMinggu, skema: Skema[]): KapasitasPekan 
 export function cekPola(pola: PolaMinggu, skema: Skema[], jumlah?: number): string[] {
   const ada = new Set(skema.map((s) => s.id));
   const galat: string[] = [];
-  if (jumlah !== undefined ? pola.length !== jumlah : pola.length !== 5 && pola.length !== 6) galat.push(`Pola harus berisi ${jumlah ?? '5 atau 6'} hari kerja.`);
+  if (jumlah !== undefined ? pola.length !== jumlah : pola.length !== 5 && pola.length !== 6) galat.push(`Skema mingguan harus berisi ${jumlah ?? '5 atau 6'} hari kerja.`);
   pola.forEach((id, i) => {
     if (!ada.has(id)) galat.push(`Hari ke-${i + 1}: skema "${id}" tidak ada.`);
   });

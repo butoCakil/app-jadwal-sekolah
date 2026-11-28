@@ -31,7 +31,7 @@ describe('pola mingguan bernama', () => {
     expect(p.polaReguler).toEqual(asas.pola);
     expect(p.polaRegulerId).toBe(asas.id);
     const lama = daftarPola(p).find((x) => !x.default && x.pola.join() === lamaIsi.join());
-    expect(lama?.nama).toBe('Pola reguler');
+    expect(lama?.nama).toBe('Skema reguler');
     // tanggal di luar periode memakai default baru; periode tetap memakai pola yang sama isinya
     expect(polaUntukTanggal('2026-12-01', p).pola).toEqual(sebelum.pola);
     expect(polaUntukTanggal('2026-11-24', p).pola).toEqual(asas.pola);

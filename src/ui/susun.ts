@@ -92,7 +92,7 @@ export function renderSusun(k: Konteks): string {
   }
   return `<h2 class="mb-3 text-lg font-bold">Susun Otomatis</h2>
     <div class="kartu p-4"><div class="text-sm text-slate-600">Menempatkan JP semua beban (${k.turunan.beban.filter((b) => !b.nonTatapMuka).length} beban tatap muka) ke versi “${esc(versi?.nama ?? '—')}” tanpa bentrok guru, rombel, atau ruang, dengan memperhatikan guru tidak tersedia, ruang terlarang, jenis ruang per mapel, pola pertemuan, dan kelompok paralel. Yang tidak muat <b>tidak dipaksakan</b>: dilaporkan beserta alasannya.</div>
-      <div class="mt-2 text-xs text-slate-500">Kapasitas jam mengikuti pola pada tanggal acuan (${esc(k.ui.tanggal)}): ${esc(pola)} (Senin–Jum'at). Sasaran (induk atau kegiatan) dipilih di halaman Periode &amp; Jadwal; pada kegiatan, kelas yang ikut induk tidak disusun ulang.${tdkAktif.size ? ` ${tdkAktif.size} rombel tidak aktif (PKL) dilewati.` : ''}</div>
+      <div class="mt-2 text-xs text-slate-500">Kapasitas jam mengikuti skema mingguan pada tanggal acuan (${esc(k.ui.tanggal)}): ${esc(pola)} (Senin–Jum'at). Sasaran (induk atau kegiatan) dipilih di halaman Periode &amp; Jadwal; pada kegiatan, kelas yang ikut induk tidak disusun ulang.${tdkAktif.size ? ` ${tdkAktif.size} rombel tidak aktif (PKL) dilewati.` : ''}</div>
       ${opsi}${bagian}</div>`;
 }
 

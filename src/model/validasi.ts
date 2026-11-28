@@ -24,10 +24,10 @@ export function validasiProyek(x: unknown): string[] {
   const hari = proyek.polaReguler.length;
   cekPola(proyek.polaReguler, proyek.skema).forEach((g) => galat.push(`Pola default: ${g}`));
   const idPola = daftarPola(proyek).map((x) => x.id);
-  if (new Set(idPola).size !== idPola.length) galat.push('Ada id pola mingguan ganda.');
+  if (new Set(idPola).size !== idPola.length) galat.push('Ada id skema mingguan ganda.');
   for (const x of proyek.polaLain ?? []) {
-    if (!x.nama?.trim()) galat.push(`Pola ${x.id}: nama kosong.`);
-    cekPola(x.pola, proyek.skema, hari).forEach((g) => galat.push(`Pola ${x.nama}: ${g}`));
+    if (!x.nama?.trim()) galat.push(`Skema mingguan ${x.id}: nama kosong.`);
+    cekPola(x.pola, proyek.skema, hari).forEach((g) => galat.push(`Skema mingguan ${x.nama}: ${g}`));
   }
   if (proyek.penggantiManual) cekPola(proyek.penggantiManual.pola, proyek.skema, hari).forEach((g) => galat.push(`Pengganti manual: ${g}`));
   proyek.kalender.forEach((k) => {

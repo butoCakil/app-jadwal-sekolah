@@ -32,7 +32,7 @@ const ringkasan = (p: Proyek): string => {
 
 const idDataset = (): string => `ds${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
 
-/** Salinan proyek untuk semester baru: master, beban, aturan, skema, dan pola dipertahankan; jadwal dan kalender dikosongkan. */
+/** Salinan proyek untuk semester baru: master, beban, aturan, skema, dan skema mingguan dipertahankan; jadwal dan kalender dikosongkan. */
 function semesterBaru(p: Proyek, nama: string): Proyek {
   const x = structuredClone(p);
   x.nama = nama;
@@ -120,7 +120,7 @@ export function klikDataset(k: Konteks, el: HTMLElement): boolean {
     case 'dsBaru': {
       const nama = prompt('Nama semester baru (mis. Gasal 2027/2028):', '')?.trim();
       if (!nama) return true;
-      if (!confirm(`Membuat “${nama}” dari draf ini: guru, mapel, rombel, beban, ruang, aturan, skema, dan pola dipertahankan; jadwal dan kalender dikosongkan. Draf yang sedang dikerjakan diganti (simpan dulu sebagai dataset bila perlu). Lanjutkan?`)) return true;
+      if (!confirm(`Membuat “${nama}” dari draf ini: guru, mapel, rombel, beban, ruang, aturan, skema, dan skema mingguan dipertahankan; jadwal dan kalender dikosongkan. Draf yang sedang dikerjakan diganti (simpan dulu sebagai dataset bila perlu). Lanjutkan?`)) return true;
       k.ganti(semesterBaru(k.p, nama), `Semester baru “${nama}” dibuat. Atur kalender dan kelas PKL, lalu ubah beban seperlunya.`);
       return true;
     }

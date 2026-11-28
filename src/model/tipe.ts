@@ -232,7 +232,7 @@ export interface Proyek {
   skema: Skema[];
   /** Pola default (berlaku bila periode tidak memilih pola lain). Jumlah hari kerja = panjangnya. */
   polaReguler: PolaMinggu;
-  /** Id dan nama pola default (bawaan 'reguler' / 'Pola reguler'). */
+  /** Id dan nama pola default (bawaan 'reguler' / 'Skema reguler'). */
   polaRegulerId?: string;
   polaRegulerNama?: string;
   /** Pola mingguan lain yang bisa dipasang pada periode di kalender. */
