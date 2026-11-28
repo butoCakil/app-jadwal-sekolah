@@ -119,13 +119,13 @@ describe('tampilan publik', () => {
     }
   });
 
-  it('skema berpengaruh: skema 11 punya pembiasaan (PMB), skema 10 langsung pelajaran; istirahat memotong blok', () => {
+  it('skema berpengaruh: skema 11 punya pembiasaan (P1), skema 10 langsung pelajaran; istirahat memotong blok', () => {
     const id = rombel('X AT 1');
     const sen = jadwalHariP(p, '2026-11-09', 'rombel', id);
     const sel = jadwalHariP(p, '2026-11-10', 'rombel', id);
     expect(sen.skema).toMatch(/11/);
     expect(sel.skema).toMatch(/10/);
-    expect(sen.elemen[0]).toMatchObject({ jenis: 'nonKbm', kode: 'PMB', label: '1' });
+    expect(sen.elemen[0]).toMatchObject({ jenis: 'nonKbm', kode: 'P1', label: '1' });
     expect(sen.kolom[1]).toMatchObject({ tipe: 'kbm', label: '2', nomor: 1 });
     expect(sel.elemen[0]!.jenis).not.toBe('nonKbm');
     expect(sel.kolom[0]).toMatchObject({ tipe: 'kbm', label: '1', nomor: 1 });
@@ -205,10 +205,10 @@ describe('halaman publik', () => {
     expect(await muatTerbit(putus)).toMatchObject({ ok: false });
   });
 
-  it('per pekan berbentuk grid: PMB, istirahat, sel digabung (rowspan), nomor jam poster per hari', async () => {
+  it('per pekan berbentuk grid: P1, istirahat, sel digabung (rowspan), nomor jam poster per hari', async () => {
     const { gambarHalaman } = await import('../src/publik/halaman');
     const html = gambarHalaman(t, { ...K, tab: 'rombel', id: rombel('X AT 1'), tanggal: '2026-11-10', tata: 'pekan' }, '2026-11-10');
-    expect(html).toContain('>PMB<');
+    expect(html).toContain('>P1<');
     expect(html).toContain('Istirahat</td>');
     // nomor jam mengikuti poster tiap hari: skema 11 sampai 11 (pembiasaan = 1), skema 10 sampai 10
     const nomor = (h: string): string[] => [...h.matchAll(/tabular-nums text-slate-500">([^<]*)<\/td>/g)].map((m) => m[1]!);
@@ -217,7 +217,7 @@ describe('halaman publik', () => {
     expect(semua.length).toBe(5 * 11);
     expect(semua.filter((x) => x === '11').length).toBe(2); // Sen dan Kam (skema 11)
     expect(semua.filter((x) => x === '10').length).toBe(5 - 1); // skema 9 hanya sampai 9
-    expect(semua.slice(0, 5)).toEqual(['1', '', '', '1', '1']); // baris Pagi: PMB = jam 1 pada skema 11 dan 9
+    expect(semua.slice(0, 5)).toEqual(['1', '', '', '1', '1']); // baris Pagi: P1 = jam 1 pada skema 11 dan 9
     expect(semua.slice(5, 10)).toEqual(['2', '1', '1', '2', '2']); // pelajaran pertama
     expect(html).toContain('text-slate-500">1</td>');
     expect(html).not.toContain('>Pagi<');
@@ -274,7 +274,7 @@ describe('halaman publik', () => {
 
   it('singkatan kegiatan non-KBM', async () => {
     const { kodeNonKbm } = await import('../src/publik/tampil');
-    expect(kodeNonKbm('Pembiasaan/UB')).toBe('PMB');
+    expect(kodeNonKbm('Pembiasaan/UB')).toBe('P1');
     expect(kodeNonKbm('Upacara bendera')).toBe('UPC');
     expect(kodeNonKbm('Literasi')).toBe('LIT');
   });
@@ -312,5 +312,21 @@ describe('halaman publik', () => {
     expect(asas).toContain('Kelas tidak ada KBM di sekolah');
     expect(asas).toContain('Praktik Kerja Lapangan');
     expect(asas).not.toContain('tdk. KBM');
+  });
+
+  it('tab Semua: header jam berupa angka, kolom istirahat berikon, garis putus-putus di sekat P1 dan istirahat', async () => {
+    const { gambarHalaman } = await import('../src/publik/halaman');
+    const h = gambarHalaman(t, { ...K, tab: 'semua', hariSemua: 0, zoom: 'sedang' }, '2026-11-09');
+    const kepala = /<thead>([\s\S]*?)<\/thead>/.exec(h)![1]!;
+    expect(kepala).not.toContain('>P1<');
+    expect(kepala).toContain('>1</th>'); // pembiasaan = jam 1 pada skema 11
+    expect(kepala).toContain('aria-label="istirahat"');
+    // skema 11: satu garis di kanan P1 + dua garis tiap kolom istirahat (2 istirahat) = 5
+    expect((h.match(/border-dashed" style="left:/g) ?? []).length).toBe(5);
+    // skema 10 tanpa pembiasaan: hanya garis istirahat (4)
+    const s10 = gambarHalaman(t, { ...K, tab: 'semua', hariSemua: 1, zoom: 'sedang' }, '2026-11-10');
+    expect((s10.match(/border-dashed" style="left:/g) ?? []).length).toBe(4);
+    // kotak P1 di baris tetap memakai kode
+    expect(h).toContain('>P1</td>');
   });
 });

@@ -86,9 +86,9 @@ export function daftarEntitasP(p: Proyek, mode: ModeP): Entitas[] {
   return p.master.ruang.filter((r) => r.dijadwalkan !== false).sort((a, b) => a.kode.localeCompare(b.kode, undefined, { numeric: true })).map((r) => ({ id: r.id, label: r.kode, grup: '' }));
 }
 
-/** Singkatan kegiatan non-KBM (Pembiasaan/UB -> PMB, Upacara -> UPC; selain itu tiga huruf pertama). */
+/** Singkatan kegiatan non-KBM (Pembiasaan/UB -> P1, Upacara -> UPC; selain itu tiga huruf pertama). */
 export function kodeNonKbm(nama: string): string {
-  if (/pembiasaan/i.test(nama)) return 'PMB';
+  if (/pembiasaan/i.test(nama)) return 'P1';
   if (/upacara/i.test(nama)) return 'UPC';
   return (nama.replace(/[^A-Za-z]/g, '').slice(0, 3) || 'NKB').toUpperCase();
 }

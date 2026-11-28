@@ -28,36 +28,36 @@ const kodeRuang = (p: Proyek, ids: unknown): string[] => (Array.isArray(ids) ? i
 
 const KOLOM: Record<Tabel, Kolom[]> = {
   guru: [
-    { f: 'kode', judul: 'Kode', tipe: 'teks', lebar: 'w-16' },
-    { f: 'nama', judul: 'Nama', tipe: 'teks', lebar: 'min-w-64 flex-1' },
+    { f: 'kode', judul: 'Kode', tipe: 'teks', lebar: 'sm:w-16' },
+    { f: 'nama', judul: 'Nama', tipe: 'teks', lebar: 'sm:min-w-64 sm:flex-1' },
     {
-      f: 'mapelIds', judul: 'Mapel yang diampu', tipe: 'banyak', lebar: 'w-56', sasaran: 'guruMapel',
+      f: 'mapelIds', judul: 'Mapel yang diampu', tipe: 'banyak', lebar: 'sm:w-56', sasaran: 'guruMapel',
       ringkas: (p, b) => ringkasKode((Array.isArray(b.mapelIds) ? b.mapelIds : []).map((i) => p.master.mapel.find((m) => m.id === i)?.kode ?? '?'), 'mapel', 5),
     },
   ],
   mapel: [
-    { f: 'kode', judul: 'Kode', tipe: 'teks', lebar: 'w-20' },
-    { f: 'nama', judul: 'Nama mapel / elemen', tipe: 'teks', lebar: 'min-w-64 flex-1' },
-    { f: 'induk', judul: 'Induk (untuk elemen)', tipe: 'pilih', lebar: 'w-52', pilihan: (p, b) => p.master.mapel.filter((m) => !m.induk && m.id !== b.id).map((m) => [m.id, `${m.kode} · ${m.nama}`]) },
-    { f: 'kategori', judul: 'Kategori', tipe: 'kategori', lebar: 'w-36' },
-    { f: 'jenisRuang', judul: 'Jenis ruang (berurutan)', tipe: 'teks', lebar: 'w-44' },
-    { f: 'ruangIds', judul: 'Hanya ruang…', tipe: 'banyak', lebar: 'w-44', sasaran: 'mapelRuang', ringkas: (p, b) => ringkasKode(kodeRuang(p, b.ruangIds), 'ruang') },
+    { f: 'kode', judul: 'Kode', tipe: 'teks', lebar: 'sm:w-20' },
+    { f: 'nama', judul: 'Nama mapel / elemen', tipe: 'teks', lebar: 'sm:min-w-64 sm:flex-1' },
+    { f: 'induk', judul: 'Induk (untuk elemen)', tipe: 'pilih', lebar: 'sm:w-52', pilihan: (p, b) => p.master.mapel.filter((m) => !m.induk && m.id !== b.id).map((m) => [m.id, `${m.kode} · ${m.nama}`]) },
+    { f: 'kategori', judul: 'Kategori', tipe: 'kategori', lebar: 'sm:w-36' },
+    { f: 'jenisRuang', judul: 'Jenis ruang (berurutan)', tipe: 'teks', lebar: 'sm:w-44' },
+    { f: 'ruangIds', judul: 'Hanya ruang…', tipe: 'banyak', lebar: 'sm:w-44', sasaran: 'mapelRuang', ringkas: (p, b) => ringkasKode(kodeRuang(p, b.ruangIds), 'ruang') },
   ],
   rombel: [
-    { f: 'kode', judul: 'Kode', tipe: 'teks', lebar: 'w-28' },
-    { f: 'tingkat', judul: 'Tingkat', tipe: 'pilih', lebar: 'w-20', pilihan: () => [['X', 'X'], ['XI', 'XI'], ['XII', 'XII']] },
-    { f: 'jurusan', judul: 'Jurusan', tipe: 'teks', lebar: 'w-24' },
-    { f: 'nomor', judul: 'No.', tipe: 'angka', lebar: 'w-16' },
-    { f: 'jpButuh', judul: 'JP data sumber', tipe: 'angka', lebar: 'w-28' },
-    { f: 'ruangIds', judul: 'Hanya ruang…', tipe: 'banyak', lebar: 'w-48', sasaran: 'rombelRuang', ringkas: (p, b) => ringkasKode(kodeRuang(p, b.ruangIds), 'ruang') },
+    { f: 'kode', judul: 'Kode', tipe: 'teks', lebar: 'sm:w-28' },
+    { f: 'tingkat', judul: 'Tingkat', tipe: 'pilih', lebar: 'sm:w-20', pilihan: () => [['X', 'X'], ['XI', 'XI'], ['XII', 'XII']] },
+    { f: 'jurusan', judul: 'Jurusan', tipe: 'teks', lebar: 'sm:w-24' },
+    { f: 'nomor', judul: 'No.', tipe: 'angka', lebar: 'sm:w-16' },
+    { f: 'jpButuh', judul: 'JP data sumber', tipe: 'angka', lebar: 'sm:w-28' },
+    { f: 'ruangIds', judul: 'Hanya ruang…', tipe: 'banyak', lebar: 'sm:w-48', sasaran: 'rombelRuang', ringkas: (p, b) => ringkasKode(kodeRuang(p, b.ruangIds), 'ruang') },
   ],
   ruang: [
-    { f: 'kode', judul: 'Kode', tipe: 'teks', lebar: 'w-20' },
-    { f: 'nama', judul: 'Nama ruang', tipe: 'teks', lebar: 'min-w-56 flex-1' },
-    { f: 'jenis', judul: 'Jenis', tipe: 'pilih', lebar: 'w-28', pilihan: () => [['teori', 'teori'], ['praktik', 'praktik'], ['lab', 'lab'], ['lapangan', 'lapangan']] },
-    { f: 'kategori', judul: 'Kategori', tipe: 'kategori', lebar: 'w-36' },
-    { f: 'dijadwalkan', judul: 'Ikut dijadwalkan', tipe: 'cek', lebar: 'w-28', bawaan: true },
-    { f: 'bersama', judul: 'Boleh dipakai bersama', tipe: 'cek', lebar: 'w-32' },
+    { f: 'kode', judul: 'Kode', tipe: 'teks', lebar: 'sm:w-20' },
+    { f: 'nama', judul: 'Nama ruang', tipe: 'teks', lebar: 'sm:min-w-56 sm:flex-1' },
+    { f: 'jenis', judul: 'Jenis', tipe: 'pilih', lebar: 'sm:w-28', pilihan: () => [['teori', 'teori'], ['praktik', 'praktik'], ['lab', 'lab'], ['lapangan', 'lapangan']] },
+    { f: 'kategori', judul: 'Kategori', tipe: 'kategori', lebar: 'sm:w-36' },
+    { f: 'dijadwalkan', judul: 'Ikut dijadwalkan', tipe: 'cek', lebar: 'sm:w-28', bawaan: true },
+    { f: 'bersama', judul: 'Boleh dipakai bersama', tipe: 'cek', lebar: 'sm:w-32' },
   ],
 };
 
@@ -110,6 +110,9 @@ function sel(p: Proyek, t: Tabel, baris: Baris, c: Kolom): string {
   return `<input class="isian ${indukTebal}" ${c.tipe === 'angka' ? 'type="number" min="0"' : ''} value="${esc(nilai === undefined ? '' : String(nilai))}" ${attr}>`;
 }
 
+/** Di ponsel isian lebar (nama, pilihan panjang) memenuhi satu baris kartu; yang pendek berdampingan. */
+const spanHp = (lebar: string): string => (lebar.includes('flex-1') || Number(/w-(\d+)/.exec(lebar)?.[1] ?? 0) >= 36 ? 'col-span-2' : 'col-span-1');
+
 function kartuTabel(k: Konteks, t: Tabel): string {
   const p = k.p;
   const kol = KOLOM[t];
@@ -118,9 +121,9 @@ function kartuTabel(k: Konteks, t: Tabel): string {
   const kategoriM = t === 'mapel' ? `<datalist id="daftarKategoriMapel">${[...new Set([...KATEGORI_MAPEL_BAWAAN, ...p.master.rombel.map((r) => `Jurusan ${r.jurusan}`), ...p.master.mapel.map((m) => kategoriMapel(m, p.master.mapel))])].map((x) => `<option value="${esc(x)}">`).join('')}</datalist>` : '';
   return `<div class="kartu p-3"><div class="mb-1 flex items-baseline gap-2"><h3 class="text-base font-semibold">${JUDUL[t]}</h3><span class="text-xs text-slate-500">${rows.length} data</span></div>
     <div class="mb-2 text-xs text-slate-500">${KETERANGAN[t]}</div>${kategori}${kategoriM}
-    <div class="space-y-1.5 overflow-x-auto pb-1">
-      <div class="flex gap-2 text-[11px] font-medium text-slate-500">${kol.map((c) => `<div class="${c.lebar}">${c.judul}</div>`).join('')}<div class="w-8"></div></div>
-      ${rows.map((b) => `<div class="flex items-center gap-2">${kol.map((c) => `<div class="${c.lebar}">${sel(p, t, b, c)}</div>`).join('')}<button class="w-8 text-red-600" data-aksi="mhapus" data-t="${t}" data-id="${esc(b.id)}" title="Hapus">✕</button></div>`).join('')}
+    <div class="space-y-2 pb-1 sm:space-y-1.5 sm:overflow-x-auto">
+      <div class="hidden gap-2 text-[11px] font-medium text-slate-500 sm:flex">${kol.map((c) => `<div class="${c.lebar}">${c.judul}</div>`).join('')}<div class="w-8"></div></div>
+      ${rows.map((b) => `<div class="grid grid-cols-2 gap-x-2 gap-y-1.5 rounded-lg border border-slate-200 p-2 sm:flex sm:items-center sm:gap-2 sm:rounded-none sm:border-0 sm:p-0">${kol.map((c) => `<div class="min-w-0 ${spanHp(c.lebar)} ${c.lebar}"><div class="mb-0.5 text-[10px] font-medium text-slate-500 sm:hidden">${c.judul}</div>${sel(p, t, b, c)}</div>`).join('')}<button class="col-span-2 justify-self-end rounded px-2 py-0.5 text-xs text-red-600 sm:w-8 sm:p-0 sm:text-base" data-aksi="mhapus" data-t="${t}" data-id="${esc(b.id)}" title="Hapus"><span class="sm:hidden">✕ Hapus</span><span class="hidden sm:inline">✕</span></button></div>`).join('')}
     </div>
     <button class="tombol mt-3" data-aksi="mtambah" data-t="${t}">+ Tambah</button></div>`;
 }
@@ -132,8 +135,8 @@ function kartuAturan(k: Konteks): string {
   const jurusan = [...new Set(p.master.rombel.map((r) => r.jurusan))];
   const baris = p.aturan
     .map((a) => {
-      const hapus = `<button class="w-8 text-red-600" data-aksi="ahapus" data-id="${esc(a.id)}" title="Hapus aturan">✕</button>`;
-      const ket = `<input class="isian min-w-40 flex-1" placeholder="Catatan (opsional)" value="${esc(a.catatan ?? '')}" data-aksi="af" data-f="catatan" data-id="${esc(a.id)}">`;
+      const hapus = `<button class="ml-auto w-8 text-red-600" data-aksi="ahapus" data-id="${esc(a.id)}" title="Hapus aturan">✕</button>`;
+      const ket = `<input class="isian w-full sm:w-auto sm:min-w-40 sm:flex-1" placeholder="Catatan (opsional)" value="${esc(a.catatan ?? '')}" data-aksi="af" data-f="catatan" data-id="${esc(a.id)}">`;
       const guruPilih = (id: string) => `<select class="isian" data-aksi="af" data-f="guruId" data-id="${esc(a.id)}">${opsi(p.master.guru, id, (g) => g.id, (g) => `${g.kode} · ${g.nama}`)}</select>`;
       if (a.jenis === 'guruTidakTersedia') {
         const jamMaks = 10;

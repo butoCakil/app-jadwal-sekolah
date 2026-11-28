@@ -257,6 +257,9 @@ function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
 
 // ------------------------------------------------------------------ tab Semua: matriks semua kelas/guru/ruang
 
+/** Cangkir kecil penanda kolom istirahat pada kepala tabel. */
+const IKON_ISTIRAHAT = '<svg viewBox="0 0 12 12" width="8" height="8" class="mx-auto text-emerald-700" aria-label="istirahat"><title>Istirahat</title><path d="M1.5 4h6v3a3 3 0 0 1-6 0zM7.5 5h1a1.3 1.3 0 0 1 0 2.6h-1M3 .8v1.5M5 .8v1.5" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
 const WARNA_ALASAN: Record<string, { bg: string; fg: string }> = {
   PKL: { bg: '#e0f2fe', fg: '#075985' },
   UKK: { bg: '#ede9fe', fg: '#5b21b6' },
@@ -305,21 +308,24 @@ function legendaKode(m: ReturnType<typeof matriksP>, tampil: number[], mode: Mod
       }
     }
   }
-  const urut = (mp: Map<string, string>) => [...mp.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  const bagian = (judul: string, mp: Map<string, string>, chip?: (k: string) => string) =>
-    mp.size
-      ? `<div class="mt-2"><div class="text-[11px] font-semibold text-slate-600">${judul}</div><div class="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-600">${urut(mp).map(([k, n]) => `<span>${chip ? chip(k) : `<b class="text-slate-800">${esc(k)}</b>`}${n ? ` ${esc(n)}` : ''}</span>`).join('')}</div></div>`
-      : '';
+  const urut = (mp: Map<string, string>) => [...mp.entries()].sort((x, y) => x[0].localeCompare(y[0]));
+  const tabel = (xs: [string, string][], chip?: (k: string) => string) =>
+    `<table class="w-full text-[11px]"><tbody>${xs.map(([k, n]) => `<tr class="border-t border-slate-100"><td class="w-14 whitespace-nowrap py-[1px] pr-2 align-top font-bold text-slate-800">${chip ? chip(k) : esc(k)}</td><td class="py-[1px] align-top text-slate-600">${esc(n)}</td></tr>`).join('')}</tbody></table>`;
+  const bagian = (judul: string, mp: Map<string, string>, chip?: (k: string) => string) => {
+    if (!mp.size) return '';
+    const xs = urut(mp);
+    const isi = xs.length > 10 ? `<div class="grid gap-x-6 sm:grid-cols-2">${tabel(xs.slice(0, Math.ceil(xs.length / 2)), chip)}${tabel(xs.slice(Math.ceil(xs.length / 2)), chip)}</div>` : tabel(xs, chip);
+    return `<div class="mt-2"><div class="mb-0.5 text-[11px] font-semibold text-slate-600">${judul}</div>${isi}</div>`;
+  };
   const chipAlasan = (k: string) => {
     const w = warnaAlasan(k);
-    return `<b class="rounded px-1" style="background:${w.bg};color:${w.fg}">${esc(k)}</b> =`;
+    return `<span class="rounded px-1 font-bold" style="background:${w.bg};color:${w.fg}">${esc(k)}</span>`;
   };
-  const alasanNama = new Map([...alasan].map(([k, n]) => [k, n]));
   const html =
-    bagian('Kelas tidak ada KBM di sekolah', alasanNama, chipAlasan) +
+    bagian('Kelas tidak ada KBM di sekolah', alasan, chipAlasan) +
     bagian('Mapel', mapel) +
     (mode === 'rombel' || mode === 'ruang' ? bagian('Guru', guru) : '') +
-    (mode === 'rombel' || mode === 'guru' ? bagian('Ruang', ruang) : '');
+    (mode === 'rombel' || mode === 'guru' ? bagian('Ruang', new Map([...ruang].map(([k, n]) => [k, n || '']))) : '');
   return html ? `<div class="mt-2 rounded-xl border border-slate-200 bg-white px-3 pb-2.5 pt-1">${html}</div>` : '';
 }
 
@@ -347,11 +353,27 @@ function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): stri
     return { i, h, lebar: h.kolom.map((c) => (c.tipe === 'istirahat' ? lebarIst : w)), jumlah: h.kolom.length };
   });
   const total = lebarLabel + grupHari.reduce((a, g) => a + g.lebar.reduce((x, y) => x + y, 0), 0);
+  // garis putus-putus tegak di sekat pembiasaan (P1) dan istirahat, menembus semua baris termasuk kotak yang digabung
+  const garis: number[] = [];
+  let xAwal = lebarLabel;
+  for (const g of grupHari) {
+    if (g.h.status === 'normal') {
+      let x = xAwal;
+      g.h.kolom.forEach((c, ci) => {
+        const lb = g.lebar[ci] as number;
+        if (c.tipe === 'istirahat') garis.push(x, x + lb);
+        else if (c.tipe === 'nonKbm') garis.push(x + lb);
+        x += lb;
+      });
+    }
+    xAwal += g.lebar.reduce((a, b) => a + b, 0);
+  }
+  const hurufGaris = [...new Set(garis.map((x) => x.toFixed(1)))].map((x) => `<div class="pointer-events-none absolute bottom-0 top-0 border-l border-dashed" style="left:${x}px;z-index:5;border-color:rgba(71,85,105,.6)"></div>`).join('');
   const cols = `<col style="width:${lebarLabel}px">${grupHari.flatMap((g) => g.lebar.map((x) => `<col style="width:${x.toFixed(1)}px">`)).join('')}`;
 
   const kepala1 = grupHari.map((g) => `<th colspan="${g.jumlah}" class="sticky top-0 z-20 border-r border-white px-0.5 text-center text-white ${g.h.tanggal === hariIni ? 'outline outline-2 -outline-offset-2 outline-amber-300' : ''}" style="height:20px;background:${esc(g.h.warna ?? '#64748b')}"><span class="text-[10px] font-bold">${esc(g.h.hari.slice(0, 3))} ${Number(g.h.tanggal.slice(8))}</span>${g.h.status === 'normal' && w * g.jumlah > 90 ? `<span class="ml-1 text-[9px] opacity-80">${esc(skemaPendek(g.h.skema))}</span>` : ''}</th>`).join('');
   const kepala2 = grupHari.flatMap((g) => (g.h.status === 'normal'
-    ? g.h.kolom.map((c) => `<th class="sticky z-20 border-r border-slate-200 bg-slate-100 p-0 text-center text-[8px] font-semibold text-slate-500" style="top:20px;height:15px">${c.tipe === 'istirahat' ? '' : c.tipe === 'nonKbm' ? (w >= 15 ? esc(c.kode ?? '') : '') : w >= 9 ? esc(c.label) : ''}</th>`)
+    ? g.h.kolom.map((c) => `<th class="sticky z-20 border-r border-slate-200 bg-slate-100 p-0 text-center text-[8px] font-semibold text-slate-500" style="top:20px;height:15px">${c.tipe === 'istirahat' ? (lebarIst >= 6 ? IKON_ISTIRAHAT : '') : w >= 9 ? esc(c.label) : ''}</th>`)
     : [`<th class="sticky z-20 border-r border-slate-200 bg-slate-100 p-0 text-center text-[8px] text-slate-500" style="top:20px;height:15px" title="${esc(g.h.keterangan)}">${w >= 15 ? (g.h.status === 'libur' ? 'libur' : '–') : ''}</th>`])).join('');
 
   let grupLalu = '';
@@ -386,8 +408,8 @@ function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): stri
   const info = `${kegiatan.length ? `<div class="mb-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">Pekan ini: <b>${esc(kegiatan.join(', '))}</b></div>` : ''}${agenda.length ? `<div class="mb-2 flex flex-wrap gap-1.5">${agenda.map((a) => `<span class="rounded-full bg-violet-100 px-2.5 py-1 text-xs text-violet-900">${esc(a.nama)}${a.untuk && a.untuk !== 'semua' ? ` · ${esc(a.untuk)}` : ''}</span>`).join('')}</div>` : ''}`;
   const ket = `Isi kotak dari atas: ${JUDUL_BARIS[mode]} (tanda + = ada kelompok paralel).`;
   const legenda = legendaKode(m, tampil, mode);
-  return `${info}<div id="matriks" class="overflow-auto rounded-xl border border-slate-200 bg-white" style="max-height:72vh"><table class="border-separate border-spacing-0" style="table-layout:fixed;width:${total.toFixed(0)}px"><colgroup>${cols}</colgroup>
-    <thead><tr><th rowspan="2" class="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500" style="height:35px">${NAMA_MODE[mode]}</th>${kepala1}</tr><tr>${kepala2}</tr></thead><tbody>${isi}</tbody></table></div>
+  return `${info}<div id="matriks" class="overflow-auto rounded-xl border border-slate-200 bg-white" style="max-height:72vh"><div class="relative" style="width:${total.toFixed(0)}px"><table class="border-separate border-spacing-0" style="table-layout:fixed;width:${total.toFixed(0)}px"><colgroup>${cols}</colgroup>
+    <thead><tr><th rowspan="2" class="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500" style="height:35px">${NAMA_MODE[mode]}</th>${kepala1}</tr><tr>${kepala2}</tr></thead><tbody>${isi}</tbody></table>${hurufGaris}</div></div>
     <p class="mt-2 text-[11px] leading-relaxed text-slate-500">${ket} Jam berurutan dengan guru dan mapel yang sama digabung; kolom sempit hijau = istirahat. Sentuh kotak untuk detail, geser untuk melihat hari lain, atau pilih satu hari / tombol Peta untuk ringkasan.${kode ? ` ${kode}.` : ''}</p>${legenda}
     ${m.baris.length === 0 ? '<p class="mt-2 text-sm text-slate-500">Tidak ada data pada pekan ini.</p>' : ''}`;
 }
