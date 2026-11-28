@@ -5,8 +5,11 @@ import { NAMA_HARI } from '../model/tipe';
 import { hariPekan } from '../model/kalender';
 import { keMenit } from '../model/skema';
 import { bacaTerbit, type Terbit } from '../terbit/format';
-import { bukuCetak, rekapCetak } from './cetak';
+import { IKON_CETAK, htmlDialogCetak, namaBerkas, type KeadaanCetak } from './dialogCetak';
+import { buatPdf, type Gaya, type Lingkup } from './pdf/buat';
+import type { UkuranKertas } from './pdf/umum';
 import { gambarKalender } from './kalender';
+import { barisKotak, warnaAlasan } from './kotak';
 import { daftarEntitasP, jadwalHariP, jadwalPekanP, matriksP, type ElemenHari, type HariP, type ItemP, type ModeP } from './tampil';
 import { esc, isoLokal, seninPekan, tambahHari, warnaMapel } from '../ui/util';
 
@@ -173,8 +176,8 @@ function isiSel(mode: ModeP, it: ItemP): string {
   return `<b>${esc(it.mapel.kode)}</b>${ruang}<div class="text-[9.5px] text-slate-600">${esc(mode === 'rombel' ? guru : it.rombel)}</div>`;
 }
 
-/** Tabel satu pekan. `cetak`: hanya tabel, baris dipadatkan agar satu halaman A4 landscape memuat skema 11 jam. */
-export function tabelPekan(p: Proyek, k: Keadaan, hariIni: string, cetak = false): string {
+/** Tabel satu pekan untuk satu kelas/guru/ruang. */
+export function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
   const mode = k.tab as ModeP;
   const pk = jadwalPekanP(p, k.tanggal, mode, k.id);
   const hari = pk.hari;
@@ -242,7 +245,7 @@ export function tabelPekan(p: Proyek, k: Keadaan, hariIni: string, cetak = false
   });
 
   const isi = baris.map((r, ri) => {
-    const tinggi = cetak ? (r.t === 'ist' ? 14 : r.t === 'pagi' ? 26 : 44) : r.t === 'ist' ? 20 : r.t === 'pagi' ? 34 : 46;
+    const tinggi = r.t === 'ist' ? 20 : r.t === 'pagi' ? 34 : 46;
     const td = kolom.map((c) => {
       const s = c.sel.get(ri);
       if (c.status) return c.lewat.has(ri) ? '' : (s ?? '');
@@ -257,7 +260,6 @@ export function tabelPekan(p: Proyek, k: Keadaan, hariIni: string, cetak = false
   const kode = [...new Map(hari.flatMap((h) => h.elemen.flatMap((e) => (e.jenis === 'nonKbm' ? [[e.kode, e.nama] as const] : [])))).entries()].map(([c, n]) => `<b>${esc(c)}</b> = ${esc(n)}`).join(' · ');
   const alasan = [...new Set(hari.filter((h) => h.status !== 'normal').map((h) => h.keterangan).filter(Boolean))];
   const kosongSemua = baris.length === 0 ? `<tr><td colspan="10" class="px-3 py-6 text-center text-sm text-slate-500">Tidak ada KBM pada pekan ini.${alasan.length ? `<div class="mt-1 text-xs">${alasan.map(esc).join(' · ')}</div>` : ''}</td></tr>` : '';
-  if (cetak) return `<table class="w-full table-fixed border-collapse"><colgroup>${hari.map(() => '<col style="width:6.5%"><col>').join('')}</colgroup><thead><tr>${kepala}</tr></thead><tbody>${isi}${kosongSemua}</tbody></table>`;
   return `${kegiatan.length ? `<div class="mb-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">Pekan ini: <b>${esc(kegiatan.join(', '))}</b></div>` : ''}
     <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white"><table class="w-full table-fixed border-collapse"><colgroup>${hari.map(() => '<col style="width:6.5%"><col>').join('')}</colgroup><thead><tr>${kepala}</tr></thead><tbody>${isi}${kosongSemua}</tbody></table></div>
     <p class="mt-2 text-[11px] leading-relaxed text-slate-500">Angka kecil di tiap hari = jam ke- menurut poster skema hari itu (pembiasaan jam 1 pada skema 11 dan 9; pada skema 10 pelajaran pertama jam 1).${kode ? ` ${kode}.` : ''} Jam berurutan dengan guru dan mapel yang sama digabung; istirahat memotongnya. Sentuh kotak untuk detail.</p>`;
@@ -268,32 +270,11 @@ export function tabelPekan(p: Proyek, k: Keadaan, hariIni: string, cetak = false
 /** Cangkir kecil penanda kolom istirahat pada kepala tabel. */
 const IKON_ISTIRAHAT = '<svg viewBox="0 0 12 12" width="8" height="8" class="mx-auto text-emerald-700" aria-label="istirahat"><title>Istirahat</title><path d="M1.5 4h6v3a3 3 0 0 1-6 0zM7.5 5h1a1.3 1.3 0 0 1 0 2.6h-1M3 .8v1.5M5 .8v1.5" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-const WARNA_ALASAN: Record<string, { bg: string; fg: string }> = {
-  PKL: { bg: '#e0f2fe', fg: '#075985' },
-  UKK: { bg: '#ede9fe', fg: '#5b21b6' },
-  ASAS: { bg: '#ffedd5', fg: '#9a3412' },
-  ASAJ: { bg: '#fce7f3', fg: '#9d174d' },
-  TKA: { bg: '#dcfce7', fg: '#166534' },
-};
-function warnaAlasan(kode: string): { bg: string; fg: string } {
-  return WARNA_ALASAN[kode] ?? { bg: '#fef3c7', fg: '#92400e' };
-}
-
 const JUDUL_BARIS: Record<ModeP, string> = {
   rombel: 'kode mapel, kode guru, kode ruang',
   guru: 'kelas, kode mapel, kode ruang',
   ruang: 'kelas, kode mapel, kode guru',
 };
-
-/** Tiga baris teks pada satu kotak jadwal, sesuai mode tabel. */
-function barisKotak(mode: ModeP, x: ItemP, paralel: boolean): string[] {
-  const rombel = x.rombel.replace(/\s+/g, '');
-  const guru = x.guru.map((g) => g.kode).join('/');
-  const mapel = x.mapel.kode + (paralel ? '+' : '');
-  if (mode === 'rombel') return [mapel, guru, x.ruang];
-  if (mode === 'guru') return [rombel, mapel, x.ruang];
-  return [rombel, mapel, guru];
-}
 
 /** Penjelasan kode yang tampil pada tabel: alasan tidak ada KBM, mapel, guru, ruang. */
 function legendaKode(m: ReturnType<typeof matriksP>, tampil: number[], mode: ModeP): string {
@@ -337,31 +318,22 @@ function legendaKode(m: ReturnType<typeof matriksP>, tampil: number[], mode: Mod
   return html ? `<div class="mt-2 rounded-xl border border-slate-200 bg-white px-3 pb-2.5 pt-1">${html}</div>` : '';
 }
 
-/** Ukuran tabel Semua untuk cetak: lebar dan tinggi baris dalam piksel, huruf dalam piksel, dan baris (id) yang dimuat. */
-export interface UkuranCetakSemua {
-  lebar: number;
-  tinggi: number;
-  huruf: number;
-  ids: string[];
-}
-
-/** Matriks semua kelas/guru/ruang x semua hari. `cetak`: hanya tabel dengan lebar pas halaman (tanpa gulir) dan hanya baris `ids`. */
-export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number, cetak?: UkuranCetakSemua): string {
+/** Matriks semua kelas/guru/ruang x semua hari. */
+export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): string {
   const mode = k.baris;
-  const mAsli = matriksP(p, k.tanggal, mode);
-  const m = cetak ? { ...mAsli, baris: mAsli.baris.filter((b) => cetak.ids.includes(b.id)) } : mAsli;
-  const tampil = m.hari.map((_, i) => i).filter((i) => cetak || k.hariSemua < 0 || i === k.hariSemua);
+  const m = matriksP(p, k.tanggal, mode);
+  const tampil = m.hari.map((_, i) => i).filter((i) => k.hariSemua < 0 || i === k.hariSemua);
   const lebarLabel = mode === 'rombel' ? 50 : 40;
   const bobot = (h: HariP) => (h.status === 'normal' ? h.kolom.reduce((a, c) => a + (c.tipe === 'istirahat' ? 0.3 : 1), 0) : 1.5);
   const jumlahBobot = tampil.reduce((a, i) => a + bobot(m.hari[i] as HariP), 0);
   const pas = (Math.min(lebar, 768) - 32 - lebarLabel) / Math.max(1, jumlahBobot);
   const dasar = mode === 'rombel' ? 28 : 30;
   const jepit = (x: number, a: number, b: number) => Math.max(a, Math.min(b, x));
-  const w = cetak ? (cetak.lebar - lebarLabel) / Math.max(1, jumlahBobot) : k.zoom === 'peta' ? jepit(pas, 3, 44) : k.zoom === 'sedang' ? (k.hariSemua >= 0 ? jepit(pas, dasar, 44) : dasar) : k.hariSemua >= 0 ? jepit(pas * 1.35, dasar + 8, 56) : dasar * 1.5;
-  const tinggi = cetak ? cetak.tinggi : k.zoom === 'peta' ? 9 : k.zoom === 'sedang' ? 31 : 40;
+  const w = k.zoom === 'peta' ? jepit(pas, 3, 44) : k.zoom === 'sedang' ? (k.hariSemua >= 0 ? jepit(pas, dasar, 44) : dasar) : k.hariSemua >= 0 ? jepit(pas * 1.35, dasar + 8, 56) : dasar * 1.5;
+  const tinggi = k.zoom === 'peta' ? 9 : k.zoom === 'sedang' ? 31 : 40;
   // tiap kotak memuat 3 baris kode (mapel / guru / ruang), jadi huruf dibatasi oleh tinggi kotak
-  const huruf = cetak ? cetak.huruf : Math.min(w >= 40 ? 11 : w >= 30 ? 10 : w >= 22 ? 9 : 8, Math.floor((tinggi - 3) / 3));
-  const bacaTeks = cetak ? true : w >= 15 && tinggi >= 20;
+  const huruf = Math.min(w >= 40 ? 11 : w >= 30 ? 10 : w >= 22 ? 9 : 8, Math.floor((tinggi - 3) / 3));
+  const bacaTeks = w >= 15 && tinggi >= 20;
   const lebarIst = Math.max(2, w * 0.3);
 
   // kolom per hari
@@ -371,25 +343,13 @@ export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number
     return { i, h, lebar: h.kolom.map((c) => (c.tipe === 'istirahat' ? lebarIst : w)), jumlah: h.kolom.length };
   });
   const total = lebarLabel + grupHari.reduce((a, g) => a + g.lebar.reduce((x, y) => x + y, 0), 0);
-  // garis putus-putus tegak di sekat pembiasaan (P1) dan istirahat, menembus semua baris termasuk kotak yang digabung
-  const garis: number[] = [];
+  // garis padat tegas di batas antar hari (awal tiap hari, termasuk sisi kanan terakhir)
   const batasHari: number[] = [];
   let xAwal = lebarLabel;
   for (const g of grupHari) {
     batasHari.push(xAwal);
-    if (g.h.status === 'normal') {
-      let x = xAwal;
-      g.h.kolom.forEach((c, ci) => {
-        const lb = g.lebar[ci] as number;
-        if (c.tipe === 'istirahat') garis.push(x, x + lb);
-        else if (c.tipe === 'nonKbm') garis.push(x + lb);
-        x += lb;
-      });
-    }
     xAwal += g.lebar.reduce((a, b) => a + b, 0);
   }
-  const hurufGaris = [...new Set(garis.map((x) => x.toFixed(1)))].map((x) => `<div class="pointer-events-none absolute bottom-0 top-0 border-l border-dashed" style="left:${x}px;z-index:5;border-color:rgba(71,85,105,.6)"></div>`).join('');
-  // garis padat tegas di batas antar hari (awal tiap hari, termasuk sisi kanan terakhir)
   const hurufBatas = [...batasHari, total].map((x) => `<div class="pointer-events-none absolute bottom-0 top-0 border-l-2 border-solid" style="left:${(x - 1).toFixed(1)}px;z-index:6;border-color:rgb(51,65,85)"></div>`).join('');
   const cols = `<col style="width:${lebarLabel}px">${grupHari.flatMap((g) => g.lebar.map((x) => `<col style="width:${x.toFixed(1)}px">`)).join('')}`;
 
@@ -424,11 +384,6 @@ export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number
     return `<tr><th class="sticky left-0 z-10 overflow-hidden whitespace-nowrap border-b border-r border-slate-200 bg-slate-50 px-1 text-left text-[9px] font-bold text-slate-700 ${pisah}" style="height:${tinggi}px" title="${esc(b.label)}">${esc(b.label)}</th>${sel}</tr>`;
   }).join('');
 
-  if (cetak) {
-    // tanpa gulir: kelas "sticky" tidak diperlukan
-    return `<div class="relative" style="width:${total.toFixed(0)}px"><table class="border-separate border-spacing-0" style="table-layout:fixed;width:${total.toFixed(0)}px"><colgroup>${cols}</colgroup>
-    <thead><tr><th rowspan="2" class="border-b border-r border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500" style="height:35px">${NAMA_MODE[mode]}</th>${kepala1}</tr><tr>${kepala2}</tr></thead><tbody>${isi}</tbody></table>${hurufGaris}${hurufBatas}</div>`.replace(/\bsticky /g, '');
-  }
   const kegiatan = [...new Set(tampil.map((i) => (m.hari[i] as HariP).kegiatan?.nama).filter((x): x is string => !!x))];
   const agenda = [...new Map(tampil.flatMap((i) => (m.hari[i] as HariP).agenda).map((a) => [a.nama, a])).values()];
   const kode = [...new Map(tampil.flatMap((i) => (m.hari[i] as HariP).kolom.filter((c) => c.tipe === 'nonKbm').map((c) => [c.kode ?? '', c.nama] as const))).entries()].map(([c, n]) => `<b>${esc(c)}</b> = ${esc(n)}`).join(' · ');
@@ -436,7 +391,7 @@ export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number
   const ket = `Isi kotak dari atas: ${JUDUL_BARIS[mode]} (tanda + = ada kelompok paralel).`;
   const legenda = legendaKode(m, tampil, mode);
   return `${info}<div id="matriks" class="overflow-auto rounded-xl border border-slate-200 bg-white" style="max-height:72vh"><div class="relative" style="width:${total.toFixed(0)}px"><table class="border-separate border-spacing-0" style="table-layout:fixed;width:${total.toFixed(0)}px"><colgroup>${cols}</colgroup>
-    <thead><tr><th rowspan="2" class="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500" style="height:35px">${NAMA_MODE[mode]}</th>${kepala1}</tr><tr>${kepala2}</tr></thead><tbody>${isi}</tbody></table>${hurufGaris}${hurufBatas}</div></div>
+    <thead><tr><th rowspan="2" class="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500" style="height:35px">${NAMA_MODE[mode]}</th>${kepala1}</tr><tr>${kepala2}</tr></thead><tbody>${isi}</tbody></table>${hurufBatas}</div></div>
     <p class="mt-2 text-[11px] leading-relaxed text-slate-500">${ket} Jam berurutan dengan guru dan mapel yang sama digabung; kolom sempit hijau = istirahat. Sentuh kotak untuk detail, geser untuk melihat hari lain, atau pilih satu hari / tombol Peta untuk ringkasan.${kode ? ` ${kode}.` : ''}</p>${legenda}
     ${m.baris.length === 0 ? '<p class="mt-2 text-sm text-slate-500">Tidak ada data pada pekan ini.</p>' : ''}`;
 }
@@ -505,26 +460,25 @@ export function gambarHalaman(t: Terbit, k: Keadaan, hariIni: string, lebar = 39
        ${tombolTgl}
        <div class="flex items-center gap-2"><button data-aksi="hariIni" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">Pekan ini</button>
          <div class="ml-auto flex overflow-hidden rounded-xl border border-slate-300">${segZoom('peta', 'Peta')}${segZoom('sedang', 'Sedang')}${segZoom('besar', 'Besar')}</div></div>
-       <div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-500">Cetak rekap pekan ini:</span><button data-aksi="cetakRekap" data-ukuran="A4" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">A4</button><button data-aksi="cetakRekap" data-ukuran="F4" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">F4</button></div>
        <div class="flex gap-1.5"><button data-aksi="hariSemua" data-i="-1" class="rounded-xl px-2 py-1.5 text-xs font-semibold ${k.hariSemua < 0 ? 'bg-[#0d1e33] text-white' : 'border border-slate-200 bg-white text-slate-700'}">Semua<br>hari</button>${chipHari(true)}</div>`
     : `${barisTab}
        <div class="flex items-center gap-2">${panah('sebelumnya', '‹', `${NAMA_MODE[mode]} sebelumnya`)}<select id="pilih" class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base font-medium" aria-label="Pilih ${NAMA_MODE[mode]}">${pilihan}</select>${panah('berikutnya', '›', `${NAMA_MODE[mode]} berikutnya`)}</div>
        ${tombolTgl}
        <div class="flex items-center gap-2"><button data-aksi="hariIni" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">Hari ini</button>
          <div class="ml-auto flex overflow-hidden rounded-xl border border-slate-300">${segTata('hari', 'Per hari')}${segTata('pekan', 'Per pekan')}</div></div>
-       ${k.tata === 'hari' ? `<div class="flex gap-1.5">${chipHari(false)}</div>` : ''}
-       <div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-500">Cetak A4:</span><button data-aksi="cetak" data-lingkup="satu" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">Pekan ini</button><button data-aksi="cetak" data-lingkup="semua" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">Semua ${esc(NAMA_MODE[mode].toLowerCase())}</button></div>`;
+       ${k.tata === 'hari' ? `<div class="flex gap-1.5">${chipHari(false)}</div>` : ''}`;
 
   const isi = kalender ? gambarKalender(p, k.bulan ?? k.tanggal.slice(0, 7), k.tanggal, hariIni) : semua ? tabelSemua(p, k, hariIni, lebar) : k.tata === 'hari' ? tampilanHari(p, k, hariIni) : tabelPekan(p, k, hariIni);
   const lebarMaks = semua ? 'max-w-5xl' : 'max-w-3xl';
   return `<header class="border-b border-slate-200 bg-white">
       <div class="mx-auto flex ${lebarMaks} items-center gap-3 px-4 py-3">
         <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#0d1e33]"><svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="12" width="4" height="8" rx="1.5" fill="#f5b21a"/><rect x="9" y="7" width="4" height="13" rx="1.5" fill="#157f6e"/><rect x="16" y="2" width="4" height="18" rx="1.5" fill="#2347b8"/></svg></div>
-        <div class="min-w-0"><div class="text-[11px] font-semibold tracking-widest text-amber-600">SMK NEGERI BANSARI</div><div class="truncate text-base font-bold leading-tight">Jadwal Pelajaran</div></div></div></header>
+        <div class="min-w-0 flex-1"><div class="text-[11px] font-semibold tracking-widest text-amber-600">SMK NEGERI BANSARI</div><div class="truncate text-base font-bold leading-tight">Jadwal Pelajaran</div></div>
+        ${kalender ? '' : `<button data-aksi="cetakBuka" class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-300 bg-white text-slate-700" aria-label="Cetak jadwal" title="Cetak jadwal">${IKON_CETAK}</button>`}</div></header>
     <div class="border-b border-slate-200 bg-stone-100"><div class="mx-auto ${lebarMaks} space-y-2 px-4 py-2.5">${kontrol}</div></div>
     <main class="mx-auto ${lebarMaks} px-4 py-4">${isi}</main>
     <footer class="mx-auto ${lebarMaks} px-4 pb-8 pt-2 text-center text-[11px] text-slate-500">${diperbarui ? `Jadwal diperbarui ${esc(diperbarui)} WIB · ` : ''}<a class="underline" href="#/admin">Admin</a></footer>
-    <div id="rincian"></div>`;
+    <div id="rincian"></div><div id="dialogCetak"></div>`;
 }
 
 /** Mengambil dan membaca data terbit. */
@@ -537,24 +491,6 @@ export async function muatTerbit(ambil: typeof fetch = fetch, alamat = './terbit
   } catch {
     return { ok: false, galat: 'Jadwal tidak bisa dimuat. Periksa koneksi internet, lalu muat ulang halaman.' };
   }
-}
-
-/** Isi wadah cetak lalu buka dialog cetak; wadah dikosongkan setelah selesai. */
-function cetakHalaman(html: string): void {
-  let el = document.getElementById('cetak');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'cetak';
-    document.body.appendChild(el);
-  }
-  const wadah = el;
-  wadah.innerHTML = html;
-  const bersih = () => {
-    wadah.innerHTML = '';
-    window.removeEventListener('afterprint', bersih);
-  };
-  window.addEventListener('afterprint', bersih);
-  window.print();
 }
 
 export async function mulaiPublik(akar: HTMLElement, ambil: typeof fetch = fetch): Promise<void> {
@@ -610,6 +546,16 @@ export async function mulaiPublik(akar: HTMLElement, ambil: typeof fetch = fetch
     k.tanggal = k.tab !== 'semua' && k.tab !== 'kalender' && k.tata === 'hari' ? langkahHari(k.tanggal, arah, n) : tambahHari(k.tanggal, 7 * arah);
   };
 
+  let cetak: KeadaanCetak | null = null;
+  const gambarDialog = () => {
+    const el = document.getElementById('dialogCetak');
+    if (el && cetak) el.innerHTML = htmlDialogCetak(cetak, { semua: k.tab === 'semua', jenis: NAMA_MODE[modeAktif()].toLowerCase() });
+  };
+  const tutupDialog = () => {
+    const el = document.getElementById('dialogCetak');
+    if (el) el.innerHTML = '';
+  };
+
   akar.addEventListener('click', (e) => {
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-aksi]');
     if (!el) return;
@@ -648,16 +594,45 @@ export async function mulaiPublik(akar: HTMLElement, ambil: typeof fetch = fetch
         gambar();
         window.scrollTo(0, 0);
         return;
-      case 'cetak': {
-        const mode = modeAktif();
-        const ids = d.lingkup === 'semua' ? daftarEntitasP(p, mode).map((e) => e.id) : [k.id];
-        const diperbarui = t.diterapkan ? new Date(t.diterapkan).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) : '';
-        cetakHalaman(bukuCetak(p, { mode, ids, tanggal: k.tanggal, diperbarui, tabel: (id) => tabelPekan(p, { ...k, tab: mode, id, tata: 'pekan' }, '', true) }));
+      case 'cetakBuka': {
+        const semuaTab = k.tab === 'semua';
+        if (!cetak || (semuaTab ? cetak.lingkup === 'satu' : cetak.lingkup === 'rekap')) cetak = { lingkup: semuaTab ? 'rekap' : 'satu', gaya: cetak?.gaya ?? 'bawaan', kertas: cetak?.kertas ?? 'A4', status: 'pilih' };
+        else cetak = { ...cetak, status: 'pilih' };
+        gambarDialog();
         return;
       }
-      case 'cetakRekap': {
-        const diperbarui = t.diterapkan ? new Date(t.diterapkan).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) : '';
-        cetakHalaman(rekapCetak(p, { mode: k.baris, tanggal: k.tanggal, ukuran: d.ukuran === 'F4' ? 'F4' : 'A4', diperbarui, tabel: (ids, u) => tabelSemua(p, { ...k, tab: 'semua' }, '', u.lebar, { ...u, ids }) }));
+      case 'cetakTutup':
+        tutupDialog();
+        return;
+      case 'cetakPilih': {
+        if (!cetak) return;
+        if (d.kunci === 'lingkup') cetak.lingkup = d.nilai as Lingkup;
+        else if (d.kunci === 'gaya') cetak.gaya = d.nilai as Gaya;
+        else if (d.kunci === 'kertas') cetak.kertas = d.nilai as UkuranKertas;
+        cetak.status = 'pilih';
+        delete cetak.url;
+        gambarDialog();
+        return;
+      }
+      case 'cetakBuat': {
+        if (!cetak) return;
+        cetak.status = 'membuat';
+        gambarDialog();
+        const pilihan = { ...cetak };
+        // beri kesempatan layar menampilkan "Membuat PDF…" sebelum perhitungan
+        setTimeout(() => {
+          if (!cetak) return;
+          try {
+            const mode = modeAktif();
+            const diperbarui = t.diterapkan ? new Date(t.diterapkan).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) : '';
+            const byte = buatPdf(p, { mode, lingkup: pilihan.lingkup, id: k.id, tanggal: k.tanggal, gaya: pilihan.gaya, kertas: pilihan.kertas, diperbarui });
+            if (cetak.url) URL.revokeObjectURL(cetak.url);
+            cetak = { ...cetak, status: 'selesai', url: URL.createObjectURL(new Blob([byte], { type: 'application/pdf' })), berkas: namaBerkas(pilihan.lingkup, mode, k.tanggal), halaman: (new TextDecoder('latin1').decode(byte).match(/\/Type \/Page /g) ?? []).length };
+          } catch (err) {
+            cetak = { ...cetak, status: 'galat', galat: err instanceof Error ? err.message : String(err) };
+          }
+          gambarDialog();
+        }, 30);
         return;
       }
       case 'baris': k.baris = d.mode as ModeP; break;
@@ -685,6 +660,7 @@ export async function mulaiPublik(akar: HTMLElement, ambil: typeof fetch = fetch
     if (e.key === 'Escape') {
       const sheet = document.getElementById('rincian');
       if (sheet) sheet.innerHTML = '';
+      tutupDialog();
     }
   });
   gambar();

@@ -58,7 +58,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     masterTab: 'guru',
     pemilih: null,
     mode: 'rombel',
-    tata: 'hari',
+    tata: 'semua',
     entitasId: p.master.rombel[0]?.id ?? '',
     modal: null,
     bebanRombel: p.master.rombel[0]?.id ?? '',

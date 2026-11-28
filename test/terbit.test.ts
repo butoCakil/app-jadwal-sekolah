@@ -276,23 +276,67 @@ describe('halaman publik', () => {
     }
   });
 
-  it('cetak: satu halaman per entitas, tombol cetak ada, kode pada halaman dijelaskan', async () => {
-    const { gambarHalaman, tabelPekan } = await import('../src/publik/halaman');
-    const { bukuCetak, kodeHalaman } = await import('../src/publik/cetak');
-    for (const tab of ['rombel', 'guru', 'ruang'] as const) {
-      const html = gambarHalaman(t, { ...K, tab, id: daftarEntitasP(p, tab)[0]!.id }, '2026-11-10');
-      expect(html).toContain('data-aksi="cetak" data-lingkup="satu"');
-      expect(html).toContain('data-aksi="cetak" data-lingkup="semua"');
+  it('cetak: satu tombol ikon membuka dialog; tab Kalender tidak punya tombol; tombol cetak lama sudah tiada', async () => {
+    const { gambarHalaman } = await import('../src/publik/halaman');
+    for (const tab of ['semua', 'rombel', 'guru', 'ruang'] as const) {
+      const html = gambarHalaman(t, { ...K, tab, id: daftarEntitasP(p, tab === 'semua' ? 'rombel' : tab)[0]!.id }, '2026-11-10');
+      expect((html.match(/data-aksi="cetakBuka"/g) ?? []).length).toBe(1);
+      expect(html).toContain('id="dialogCetak"');
+      expect(html).not.toContain('data-aksi="cetak"');
+      expect(html).not.toContain('data-aksi="cetakRekap"');
+      expect(html).not.toContain('Cetak A4');
     }
-    expect(gambarHalaman(t, { ...K, tab: 'semua' }, '2026-11-10')).not.toContain('data-aksi="cetak"');
+    expect(gambarHalaman(t, { ...K, tab: 'kalender' }, '2026-11-10')).not.toContain('cetakBuka');
+  });
+
+  it('dialog cetak: pilihan isi, tampilan bawaan/aSc, kertas A4/F4; rekap mengunci tampilan bawaan', async () => {
+    const { htmlDialogCetak, namaBerkas } = await import('../src/publik/dialogCetak');
+    const dasar = { gaya: 'bawaan' as const, kertas: 'A4' as const, status: 'pilih' as const };
+    const satu = htmlDialogCetak({ ...dasar, lingkup: 'satu' }, { semua: false, jenis: 'kelas' });
+    expect(satu).toContain('Tampilan bawaan');
+    expect(satu).toContain('Tampilan aSc timetable');
+    expect(satu).toContain('data-kunci="kertas" data-nilai="F4"');
+    expect(satu).toContain('data-kunci="lingkup" data-nilai="satu"');
+    expect(satu).not.toContain('data-nilai="rekap"');
+    const rekap = htmlDialogCetak({ ...dasar, lingkup: 'rekap' }, { semua: true, jenis: 'guru' });
+    expect(rekap).toContain('data-nilai="rekap"');
+    expect(rekap).toMatch(/data-nilai="asc" disabled/);
+    const siap = htmlDialogCetak({ ...dasar, lingkup: 'satu', status: 'selesai', url: 'blob:x', berkas: 'a.pdf', halaman: 3 }, { semua: false, jenis: 'kelas' });
+    expect(siap).toContain('href="blob:x"');
+    expect(siap).toContain('download="a.pdf"');
+    expect(namaBerkas('rekap', 'rombel', '2026-11-23')).toBe('jadwal-rekap-kelas-2026-11-23.pdf');
+    expect(namaBerkas('satu', 'guru', '2026-11-23')).toBe('jadwal-guru-2026-11-23.pdf');
+  });
+
+  it('PDF: selalu landscape (A4 atau F4), jumlah halaman benar, semua kelas/guru muncul, teks Latin-1 aman', async () => {
+    const { buatPdf } = await import('../src/publik/pdf/buat');
+    const { KERTAS, kodeHalaman, kodeRekap } = await import('../src/publik/pdf/umum');
+    const baca = (b: Uint8Array) => new TextDecoder('latin1').decode(b);
+    const halaman = (s: string) => (s.match(/\/Type \/Page /g) ?? []).length;
+    const tgl = '2026-09-14';
+    const dasar = { tanggal: tgl, diperbarui: '28 Nov 2026 14.00' };
+    for (const kertas of ['A4', 'F4'] as const) {
+      for (const gaya of ['bawaan', 'asc'] as const) {
+        const s = baca(buatPdf(p, { ...dasar, mode: 'rombel', lingkup: 'satu', id, gaya, kertas }));
+        expect(s.startsWith('%PDF-1.4')).toBe(true);
+        expect(s).toContain(`/MediaBox [0 0 ${KERTAS[kertas].lebar.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')} ${KERTAS[kertas].tinggi.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')}]`);
+        expect(KERTAS[kertas].lebar).toBeGreaterThan(KERTAS[kertas].tinggi);
+        expect(halaman(s)).toBe(1);
+        expect(s.trimEnd().endsWith('%%EOF')).toBe(true);
+      }
+    }
+    // satu halaman per entitas
     for (const mode of ['rombel', 'guru', 'ruang'] as const) {
-      const ids = daftarEntitasP(p, mode).map((e) => e.id);
-      const buku = bukuCetak(p, { mode, ids, tanggal: '2026-11-10', diperbarui: '28 Nov 2026', tabel: (i) => tabelPekan(p, { ...K, tab: mode, id: i, tata: 'pekan' }, '', true) });
-      expect((buku.match(/class="halaman-cetak"/g) ?? []).length).toBe(ids.length);
-      // mode cetak: hanya tabel, tanpa kotak pembungkus layar maupun pemilih
-      expect(buku).not.toContain('overflow-x-auto');
-      expect(buku).not.toContain('id="pilih"');
+      const n = daftarEntitasP(p, mode).length;
+      expect(halaman(baca(buatPdf(p, { ...dasar, mode, lingkup: 'semua', id: '', gaya: 'asc', kertas: 'A4' })))).toBe(n);
     }
+    // rekap: kelas muat satu halaman + satu halaman kode; guru dibagi beberapa halaman
+    expect(halaman(baca(buatPdf(p, { ...dasar, mode: 'rombel', lingkup: 'rekap', id: '', gaya: 'bawaan', kertas: 'A4' })))).toBe(2);
+    expect(halaman(baca(buatPdf(p, { ...dasar, mode: 'guru', lingkup: 'rekap', id: '', gaya: 'bawaan', kertas: 'A4' })))).toBeGreaterThan(2);
+    // teks: kode kelas muncul pada halaman rekap; karakter di luar Latin-1 tidak merusak berkas
+    const rekap = baca(buatPdf(p, { ...dasar, mode: 'rombel', lingkup: 'rekap', id: '', gaya: 'bawaan', kertas: 'A4' }));
+    for (const r of p.master.rombel) expect(rekap).toContain(`(${r.kode})`);
+    expect(baca(buatPdf({ ...p, master: { ...p.master, rombel: p.master.rombel.map((r, i) => (i === 0 ? { ...r, kode: 'X “Ω” 1' } : r)) } }, { ...dasar, mode: 'rombel', lingkup: 'rekap', id: '', gaya: 'bawaan', kertas: 'A4' }))).toContain('%%EOF');
     // legenda: kode guru dan ruang pada halaman kelas dijelaskan; jenis yang sama dengan judul tidak diulang
     const kode = kodeHalaman(p, 'rombel', id, '2026-11-10');
     expect(kode.mapel.length).toBeGreaterThan(3);
@@ -301,41 +345,10 @@ describe('halaman publik', () => {
     expect(kodeHalaman(p, 'guru', daftarEntitasP(p, 'guru')[0]!.id, '2026-11-10').guru).toEqual([]);
     expect(kodeHalaman(p, 'ruang', daftarEntitasP(p, 'ruang')[0]!.id, '2026-11-10').ruang).toEqual([]);
     for (const [k, n] of kode.guru) expect(p.master.guru.some((g) => g.kode === k && g.nama === n)).toBe(true);
-  });
-
-  it('cetak rekap: semua kelas satu halaman A4/F4 + halaman kode; baris banyak dibagi rata', async () => {
-    const { gambarHalaman, tabelSemua } = await import('../src/publik/halaman');
-    const { rekapCetak, kodeRekap, KERTAS } = await import('../src/publik/cetak');
-    const semua = gambarHalaman(t, { ...K, tab: 'semua' }, '2026-11-10');
-    expect(semua).toContain('data-aksi="cetakRekap" data-ukuran="A4"');
-    expect(semua).toContain('data-aksi="cetakRekap" data-ukuran="F4"');
-    expect(gambarHalaman(t, { ...K, tab: 'rombel', id }, '2026-11-10')).not.toContain('data-aksi="cetakRekap"');
-    const KS = { ...K, tab: 'semua' as const };
-    for (const ukuran of ['A4', 'F4'] as const) {
-      const html = rekapCetak(p, { mode: 'rombel', tanggal: '2026-11-10', ukuran, tabel: (ids, u) => tabelSemua(p, { ...KS, baris: 'rombel' }, '', u.lebar, { ...u, ids }) });
-      // 30 kelas muat satu halaman + satu halaman penjelasan kode
-      expect((html.match(/class="halaman-cetak"/g) ?? []).length).toBe(2);
-      expect(html).toContain('Penjelasan kode');
-      expect(html).toContain(`size:${KERTAS[ukuran].mm}`);
-      expect(html).not.toContain('overflow-auto');
-      expect(html).not.toContain('sticky');
-      // tiap kelas tampil sekali
-      for (const r of p.master.rombel) expect(html.split(`>${r.kode}</th>`).length - 1).toBe(1);
-      // lebar tabel tidak melebihi lebar halaman
-      const lebar = Number(/<table[^>]*style="[^"]*width:(\d+)px/.exec(html)![1]);
-      expect(lebar).toBeLessThanOrEqual(KERTAS[ukuran].lebar);
-    }
-    // 61 guru tidak muat satu halaman: dibagi beberapa halaman dengan semua guru tetap tampil sekali
-    const g = rekapCetak(p, { mode: 'guru', tanggal: '2026-11-10', ukuran: 'A4', tabel: (ids, u) => tabelSemua(p, { ...KS, baris: 'guru' }, '', u.lebar, { ...u, ids }) });
-    const halamanRekap = (g.match(/class="halaman-cetak" style/g) ?? []).length;
-    expect(halamanRekap).toBeGreaterThan(1);
-    expect(g).toContain(`Halaman 1 dari ${halamanRekap}`);
-    // kode pada halaman penjelasan sesuai master
-    const kode = kodeRekap(p, '2026-11-10');
-    expect(kode.guru.length).toBeGreaterThan(30);
-    for (const [k, n] of kode.guru) expect(p.master.guru.some((x) => x.kode === k && x.nama === n)).toBe(true);
-    expect(kode.mapel.some(([k]) => k === 'P1')).toBe(true);
-    expect(kode.alasan.some(([k]) => k === 'PKL')).toBe(true);
+    const kr = kodeRekap(p, '2026-11-10');
+    expect(kr.guru.length).toBeGreaterThan(30);
+    expect(kr.mapel.some(([k]) => k === 'P1')).toBe(true);
+    expect(kr.alasan.some(([k]) => k === 'PKL')).toBe(true);
   });
 
   it('tab Semua: satu baris per kelas, semua hari, kepala skema, dan bisa dibatasi satu hari', async () => {
@@ -417,18 +430,16 @@ describe('halaman publik', () => {
     expect(asas).not.toContain('tdk. KBM');
   });
 
-  it('tab Semua: header jam berupa angka, kolom istirahat berikon, garis putus-putus di sekat P1 dan istirahat', async () => {
+  it('tab Semua: header jam berupa angka, kolom istirahat berikon, tanpa garis putus-putus (sekat lewat blok warna)', async () => {
     const { gambarHalaman } = await import('../src/publik/halaman');
     const h = gambarHalaman(t, { ...K, tab: 'semua', hariSemua: 0, zoom: 'sedang' }, '2026-11-09');
     const kepala = /<thead>([\s\S]*?)<\/thead>/.exec(h)![1]!;
     expect(kepala).not.toContain('>P1<');
     expect(kepala).toContain('>1</th>'); // pembiasaan = jam 1 pada skema 11
     expect(kepala).toContain('aria-label="istirahat"');
-    // skema 11: satu garis di kanan P1 + dua garis tiap kolom istirahat (2 istirahat) = 5
-    expect((h.match(/border-dashed" style="left:/g) ?? []).length).toBe(5);
-    // skema 10 tanpa pembiasaan: hanya garis istirahat (4)
-    const s10 = gambarHalaman(t, { ...K, tab: 'semua', hariSemua: 1, zoom: 'sedang' }, '2026-11-10');
-    expect((s10.match(/border-dashed" style="left:/g) ?? []).length).toBe(4);
+    // keputusan Benny (28 Nov): tanpa garis putus-putus; kolom istirahat (hijau) dan P1 (abu-abu) cukup sebagai blok warna
+    expect(h).not.toContain('border-dashed" style="left:');
+    expect(h).toContain('bg-emerald-50');
     // batas antar hari: garis padat di awal tiap hari + sisi kanan terakhir (tampilan 1 hari = 2 garis)
     expect((h.match(/border-l-2 border-solid" style="left:/g) ?? []).length).toBe(2);
     // kotak P1 di baris tetap memakai kode

@@ -46,36 +46,3 @@ body {
 .kartu { @apply rounded-xl border border-slate-200 bg-white shadow-sm; }
 .modal-latar { @apply fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4; }
 .modal-isi { @apply max-h-[85vh] w-full max-w-lg overflow-auto rounded-2xl bg-white p-5 shadow-xl; }
-
-/* Cetak buku jadwal: hanya #cetak yang tampil, A4 landscape, satu entitas per halaman. */
-#cetak {
-  display: none;
-}
-@media print {
-  @page {
-    size: A4 landscape;
-    margin: 8mm;
-  }
-  html,
-  body {
-    background: #fff !important;
-  }
-  body > *:not(#cetak) {
-    display: none !important;
-  }
-  #cetak {
-    display: block;
-  }
-  #cetak,
-  #cetak * {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  #cetak .halaman-cetak {
-    break-after: page;
-    break-inside: avoid;
-  }
-  #cetak .halaman-cetak:last-child {
-    break-after: auto;
-  }
-}
