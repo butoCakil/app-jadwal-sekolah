@@ -1,7 +1,7 @@
 {
  "format": "jadwal-smkn-bansari-ai",
  "versi": 1,
- "disimpan": "2026-11-28T11:01:54.201Z",
+ "disimpan": "2026-11-28T11:03:00.256Z",
  "pengaturan": {
   "nilai": {
    "model": "gemini-3.5-flash-lite",
@@ -23,7 +23,7 @@
    "id": "pmx0aq4832ym",
    "judul": "",
    "dibuat": 1795863441891,
-   "diubah": 1795863665604,
+   "diubah": 1795863729520,
    "sasaran": {
     "mode": "tetap",
     "semesterId": "genap"
@@ -112837,7 +112837,8 @@
         ]
        }
       },
-      "status": "menunggu"
+      "status": "ditolak",
+      "diputuskan": 1795863729480
      },
      "sumber": "gemini-3.5-flash-lite · bennysurahman@gmail.com",
      "id": 10,
@@ -112845,7 +112846,9 @@
     }
    ],
    "urut": 10,
-   "catatan": []
+   "catatan": [
+    "[Catatan sistem] Admin MENOLAK usulan Anda sebelumnya; tidak ada yang diubah."
+   ]
   },
   {
    "id": "pmx09mga3dxo",
