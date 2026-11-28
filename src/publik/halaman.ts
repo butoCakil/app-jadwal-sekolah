@@ -189,7 +189,7 @@ function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
   }).join('');
 
   const atr = (h: HariP, a: number) => `data-aksi="det" data-tgl="${h.tanggal}" data-a="${a}" data-id="${esc(k.id)}"`;
-  const GUTER = 'border border-white bg-slate-50 p-0 text-center align-middle text-[10px] font-bold tabular-nums text-slate-500';
+  const GUTER = 'border border-white border-l-2 border-l-slate-600 bg-slate-50 p-0 text-center align-middle text-[10px] font-bold tabular-nums text-slate-500';
   const kosongSel = '<td class="border border-white bg-stone-200/50"></td>';
   // tiap hari: nomor jam menurut poster skema hari itu (pembiasaan = 1 pada skema 11 dan 9) dan isi kotak
   const kolom = hari.map((h) => {
@@ -200,7 +200,7 @@ function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
     const lewat = new Set<number>();
     if (h.status !== 'normal') {
       if (baris.length) {
-        sel.set(0, `<td colspan="2" rowspan="${baris.length}" class="border border-white p-0.5 align-top"><div class="rounded-md border px-0.5 py-2 text-center text-[10px] ${WARNA_STATUS[h.status] ?? ''}">${esc(h.keterangan)}</div></td>`);
+        sel.set(0, `<td colspan="2" rowspan="${baris.length}" class="border border-white border-l-2 border-l-slate-600 p-0.5 align-top"><div class="rounded-md border px-0.5 py-2 text-center text-[10px] ${WARNA_STATUS[h.status] ?? ''}">${esc(h.keterangan)}</div></td>`);
         for (let r = 1; r < baris.length; r++) lewat.add(r);
       }
     } else {
@@ -355,8 +355,10 @@ function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): stri
   const total = lebarLabel + grupHari.reduce((a, g) => a + g.lebar.reduce((x, y) => x + y, 0), 0);
   // garis putus-putus tegak di sekat pembiasaan (P1) dan istirahat, menembus semua baris termasuk kotak yang digabung
   const garis: number[] = [];
+  const batasHari: number[] = [];
   let xAwal = lebarLabel;
   for (const g of grupHari) {
+    batasHari.push(xAwal);
     if (g.h.status === 'normal') {
       let x = xAwal;
       g.h.kolom.forEach((c, ci) => {
@@ -369,6 +371,8 @@ function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): stri
     xAwal += g.lebar.reduce((a, b) => a + b, 0);
   }
   const hurufGaris = [...new Set(garis.map((x) => x.toFixed(1)))].map((x) => `<div class="pointer-events-none absolute bottom-0 top-0 border-l border-dashed" style="left:${x}px;z-index:5;border-color:rgba(71,85,105,.6)"></div>`).join('');
+  // garis padat tegas di batas antar hari (awal tiap hari, termasuk sisi kanan terakhir)
+  const hurufBatas = [...batasHari, total].map((x) => `<div class="pointer-events-none absolute bottom-0 top-0 border-l-2 border-solid" style="left:${(x - 1).toFixed(1)}px;z-index:6;border-color:rgb(51,65,85)"></div>`).join('');
   const cols = `<col style="width:${lebarLabel}px">${grupHari.flatMap((g) => g.lebar.map((x) => `<col style="width:${x.toFixed(1)}px">`)).join('')}`;
 
   const kepala1 = grupHari.map((g) => `<th colspan="${g.jumlah}" class="sticky top-0 z-20 border-r border-white px-0.5 text-center text-white ${g.h.tanggal === hariIni ? 'outline outline-2 -outline-offset-2 outline-amber-300' : ''}" style="height:20px;background:${esc(g.h.warna ?? '#64748b')}"><span class="text-[10px] font-bold">${esc(g.h.hari.slice(0, 3))} ${Number(g.h.tanggal.slice(8))}</span>${g.h.status === 'normal' && w * g.jumlah > 90 ? `<span class="ml-1 text-[9px] opacity-80">${esc(skemaPendek(g.h.skema))}</span>` : ''}</th>`).join('');
@@ -409,7 +413,7 @@ function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): stri
   const ket = `Isi kotak dari atas: ${JUDUL_BARIS[mode]} (tanda + = ada kelompok paralel).`;
   const legenda = legendaKode(m, tampil, mode);
   return `${info}<div id="matriks" class="overflow-auto rounded-xl border border-slate-200 bg-white" style="max-height:72vh"><div class="relative" style="width:${total.toFixed(0)}px"><table class="border-separate border-spacing-0" style="table-layout:fixed;width:${total.toFixed(0)}px"><colgroup>${cols}</colgroup>
-    <thead><tr><th rowspan="2" class="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500" style="height:35px">${NAMA_MODE[mode]}</th>${kepala1}</tr><tr>${kepala2}</tr></thead><tbody>${isi}</tbody></table>${hurufGaris}</div></div>
+    <thead><tr><th rowspan="2" class="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500" style="height:35px">${NAMA_MODE[mode]}</th>${kepala1}</tr><tr>${kepala2}</tr></thead><tbody>${isi}</tbody></table>${hurufGaris}${hurufBatas}</div></div>
     <p class="mt-2 text-[11px] leading-relaxed text-slate-500">${ket} Jam berurutan dengan guru dan mapel yang sama digabung; kolom sempit hijau = istirahat. Sentuh kotak untuk detail, geser untuk melihat hari lain, atau pilih satu hari / tombol Peta untuk ringkasan.${kode ? ` ${kode}.` : ''}</p>${legenda}
     ${m.baris.length === 0 ? '<p class="mt-2 text-sm text-slate-500">Tidak ada data pada pekan ini.</p>' : ''}`;
 }

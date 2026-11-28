@@ -19,7 +19,7 @@ import { klikImpor, renderImpor, ubahImpor } from './imporExcel';
 import { klikSusun, renderSusun, ubahSusun } from './susun';
 import { klikAi, masukanAi, renderAi, tombolAi } from './ai';
 import { klikTerapkan, masukanTerapkan, renderTerapkan, ubahTerapkan } from './terapkan';
-import { klikSkema, renderSkemaTab, ubahSkema } from './skemaTab';
+import { klikSkema, renderDlgSkema, renderSkemaTab, ubahSkema } from './skemaTab';
 import { klikPemilih, renderPemilih, segarkanPemilih, ubahPemilih } from './pemilih';
 import { klikDataset, muatDaftarDataset, ubahDataset } from './dataset';
 import { bulanDari, renderDlgKegiatan, tanggalUntukPeriode } from './kalenderTab';
@@ -53,6 +53,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     kalBulan: bulanDari(awalTanggal(p)),
     kalTanggal: awalTanggal(p),
     dlg: null,
+    dlgSkema: null,
     skemaSub: 'kalender',
     masterTab: 'guru',
     pemilih: null,
@@ -193,6 +194,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       : ui.tab === 'ai' ? bilahSasaran(ctx) + renderAi(ctx)
       : ui.tab === 'terapkan' ? renderTerapkan(ctx)
       : renderSkemaTab(ctx);
+    const gulirModal = document.getElementById('dlgSkemaIsi')?.scrollTop ?? 0;
     akar.innerHTML = `<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div class="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2 sm:py-2.5">
           <div class="flex min-w-0 items-center gap-3"><div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0d1e33] sm:h-10 sm:w-10"><svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="12" width="4" height="8" rx="1.5" fill="#f5b21a"/><rect x="9" y="7" width="4" height="13" rx="1.5" fill="#157f6e"/><rect x="16" y="2" width="4" height="18" rx="1.5" fill="#2347b8"/></svg></div>
@@ -205,8 +207,10 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
             <button class="tombol" data-aksi="ekspor">Ekspor JSON</button>
             <label class="tombol cursor-pointer">Impor JSON<input type="file" accept="application/json,.json" id="impor" class="hidden"></label></div></div>
         <nav class="mx-auto flex max-w-[1600px] gap-1 overflow-x-auto px-4">${TAB.map((t) => `<button data-tab="${t.id === 'grid' ? tabHub : t.id}" class="whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${t.id === ui.tab || (t.id === 'grid' && diHub) ? 'border-[#2347b8] text-[#2347b8]' : 'border-transparent text-slate-500 hover:text-slate-800'}">${t.label}${t.id === 'inspektur' ? badge : ''}</button>`).join('')}</nav></header>
-      <main class="mx-auto max-w-[1600px] px-4 py-4">${galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(galat)}</div>` : ''}${isi}</main>${renderPemilih(ctx)}${renderDlgKegiatan(ctx)}`;
+      <main class="mx-auto max-w-[1600px] px-4 py-4">${galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(galat)}</div>` : ''}${isi}</main>${renderPemilih(ctx)}${renderDlgKegiatan(ctx)}${renderDlgSkema(ctx)}`;
     segarkanPemilih(ctx);
+    const modalSkema = document.getElementById('dlgSkemaIsi');
+    if (modalSkema) modalSkema.scrollTop = gulirModal;
   }
 
   const urungkan = () => {
@@ -277,8 +281,9 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
 
   document.addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement;
-    if (e.key === 'Escape' && (ui.modal || ui.pemilih || ui.dlg)) {
+    if (e.key === 'Escape' && (ui.modal || ui.pemilih || ui.dlg || ui.dlgSkema)) {
       ui.modal = null;
+      ui.dlgSkema = null;
       ui.pemilih = null;
       ui.dlg = null;
       return gambar();

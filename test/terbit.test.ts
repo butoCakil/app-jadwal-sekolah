@@ -326,6 +326,8 @@ describe('halaman publik', () => {
     // skema 10 tanpa pembiasaan: hanya garis istirahat (4)
     const s10 = gambarHalaman(t, { ...K, tab: 'semua', hariSemua: 1, zoom: 'sedang' }, '2026-11-10');
     expect((s10.match(/border-dashed" style="left:/g) ?? []).length).toBe(4);
+    // batas antar hari: garis padat di awal tiap hari + sisi kanan terakhir (tampilan 1 hari = 2 garis)
+    expect((h.match(/border-l-2 border-solid" style="left:/g) ?? []).length).toBe(2);
     // kotak P1 di baris tetap memakai kode
     expect(h).toContain('>P1</td>');
   });

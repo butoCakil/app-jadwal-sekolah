@@ -72,6 +72,8 @@ export interface StatusUI {
   pemilih: Pemilih | null;
   /** modal ubah/tambah kegiatan kalender */
   dlg: DlgKegiatan | null;
+  /** modal ubah satu pola mingguan atau satu skema jam (tab Skema & Kalender) */
+  dlgSkema: { jenis: 'pola' | 'skema'; id: string } | null;
   bebanTerbuka: Set<string>;
   saring: Kategori | 'semua';
 }
