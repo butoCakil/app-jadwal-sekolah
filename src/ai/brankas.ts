@@ -8,6 +8,8 @@ import type { KunciAi } from './rotasi';
 
 export interface IsiBrankas {
   kunci: KunciAi[];
+  /** Token GitHub (fine-grained, hanya Contents: write untuk repo ini) untuk tombol Terapkan; kosong = belum diisi. */
+  token?: string;
 }
 
 export interface BrankasTersimpan {
@@ -60,7 +62,7 @@ export async function bukaBrankas(pin: string, b: BrankasTersimpan): Promise<Isi
     const kunci = await turunkan(pin, dariB64(b.garam), b.iterasi);
     const mentah = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: dariB64(b.iv) }, kunci, dariB64(b.data));
     const j = JSON.parse(dec.decode(mentah)) as IsiBrankas;
-    if (!Array.isArray(j.kunci)) throw new Error('isi tidak sah');
+    if (!Array.isArray(j.kunci) || (j.token !== undefined && typeof j.token !== 'string')) throw new Error('isi tidak sah');
     return j;
   } catch {
     throw new Error('PIN salah atau data brankas rusak.');

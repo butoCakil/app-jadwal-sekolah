@@ -1,8 +1,9 @@
 import type { HasilSusun } from '../mesin/solver';
-import { bacaAi, hapusAi, tulisAi } from '../io/simpan';
-import { bukaBrankas, kunciBrankas, PIN_MINIMAL, samarkan, type BrankasTersimpan } from '../ai/brankas';
+import { bacaAi, tulisAi } from '../io/simpan';
+import { PIN_MINIMAL, samarkan } from '../ai/brankas';
+import { brankasSesi, bukaDenganPin, buatBrankas, hapusBrankasSesi, kunciSesi, muatBrankas, simpanBrankas } from './brankasSesi';
 import { klienGemini } from '../ai/klien';
-import { MODEL_REKOMENDASI, PENGATURAN_BAWAAN, PengaturRotasi, statusKosong, type KunciAi, type PengaturanAi, type StatusRotasi } from '../ai/rotasi';
+import { MODEL_REKOMENDASI, PENGATURAN_BAWAAN, PengaturRotasi, statusKosong, type PengaturanAi, type StatusRotasi } from '../ai/rotasi';
 import { SesiAi, type Giliran } from '../ai/sesi';
 import { rencanakan, terapkanInstruksi, type KonteksInstruksi } from '../ai/instruksi';
 import { fokusInduk, modelWarisan } from '../model/simpul';
@@ -19,11 +20,6 @@ interface StatusAi {
   dimuat: boolean;
   memuat: boolean;
   sub: 'chat' | 'pengaturan';
-  brankas: BrankasTersimpan | null;
-  terbuka: boolean;
-  /** PIN hanya di memori selama tab terbuka (untuk menyimpan ulang brankas). */
-  pin: string;
-  kunci: KunciAi[];
   pengaturan: PengaturanAi;
   rotasi: PengaturRotasi | null;
   sesi: SesiAi;
@@ -34,14 +30,11 @@ interface StatusAi {
   uji: Record<string, string>;
 }
 
+const vs = brankasSesi;
 const st: StatusAi = {
   dimuat: false,
   memuat: false,
   sub: 'chat',
-  brankas: null,
-  terbuka: false,
-  pin: '',
-  kunci: [],
   pengaturan: { ...PENGATURAN_BAWAAN, cadangan: [...PENGATURAN_BAWAAN.cadangan] },
   rotasi: null,
   sesi: new SesiAi({ panggil: (req) => (st.rotasi ? st.rotasi.panggil(req) : Promise.resolve({ ok: false as const, alasan: 'tanpa_kunci' as const, pesan: 'Brankas kunci belum dibuka.' })) }),
@@ -64,7 +57,7 @@ async function muat(k: Konteks): Promise<void> {
   if (st.memuat) return;
   st.memuat = true;
   try {
-    st.brankas = (await bacaAi<BrankasTersimpan>('brankas')) ?? null;
+    await muatBrankas();
     const png = await bacaAi<PengaturanAi>('pengaturan');
     if (png) st.pengaturan = { ...PENGATURAN_BAWAAN, ...png };
   } catch (e) {
@@ -77,7 +70,7 @@ async function muat(k: Konteks): Promise<void> {
 function buatRotasi(): void {
   st.rotasi = new PengaturRotasi({
     pengaturan: () => st.pengaturan,
-    kunci: () => st.kunci,
+    kunci: () => vs.kunci,
     klien: klienGemini(),
     penyimpan: { baca: async () => (await bacaAi<StatusRotasi>('status')) ?? null, tulis: (s) => tulisAi('status', s) },
   });
@@ -85,10 +78,6 @@ function buatRotasi(): void {
 
 const ringkasHasil = (h: HasilSusun) => `${h.terjadwal} dari ${h.total} JP tertempatkan, ${h.sisa.length} beban belum penuh${h.sisa.length ? ` (${h.sisa.slice(0, 5).map((s) => `${s.jpSisa} JP: ${s.alasan.slice(0, 80)}`).join(' | ')})` : ''}. Hasil belum diterapkan ke jadwal; admin memutuskan.`;
 
-async function simpanBrankas(): Promise<void> {
-  st.brankas = await kunciBrankas(st.pin, { kunci: st.kunci });
-  await tulisAi('brankas', st.brankas);
-}
 const simpanPengaturan = () => tulisAi('pengaturan', st.pengaturan);
 
 // ------------------------------------------------------------------------------------------------------ tampilan
@@ -160,7 +149,7 @@ function renderChat(k: Konteks): string {
 function renderPengaturan(): string {
   const ringkas = st.rotasi?.ringkas() ?? [];
   const tidakSah = st.rotasi?.status.tidakSah ?? {};
-  const barisKunci = st.kunci
+  const barisKunci = vs.kunci
     .map((x) => `<tr class="border-t border-slate-100"><td class="py-1 pr-2 font-semibold">${esc(x.label)}</td><td class="pr-2 font-mono text-xs text-slate-500">${esc(samarkan(x.nilai))}</td>
       <td class="pr-2 text-xs">${tidakSah[x.id] ? `<span class="lencana bg-red-100 text-red-800" title="${esc(tidakSah[x.id] ?? '')}">ditolak Google</span>` : x.aktif ? '<span class="lencana bg-emerald-100 text-emerald-800">aktif</span>' : '<span class="lencana bg-slate-200 text-slate-700">nonaktif</span>'} ${esc(st.uji[x.id] ?? '')}</td>
       <td class="text-right"><button class="tombol !py-0.5 !text-xs" data-aksi="aiUji" data-id="${esc(x.id)}">Uji</button> <button class="tombol !py-0.5 !text-xs" data-aksi="aiAktif" data-id="${esc(x.id)}">${x.aktif ? 'Nonaktifkan' : 'Aktifkan'}</button> <button class="tombol !py-0.5 !text-xs" data-aksi="aiHapusKunci" data-id="${esc(x.id)}">Hapus</button></td></tr>`)
@@ -195,9 +184,10 @@ export function renderAi(k: Konteks): string {
     void muat(k);
     return '<div class="kartu p-4 text-sm text-slate-500">Memuat…</div>';
   }
-  const banner = `${st.info ? `<div class="mb-3 rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800">${esc(st.info)}</div>` : ''}${!st.terbuka && st.galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(st.galat)}</div>` : ''}`;
-  if (!st.brankas) return `${banner}${formBuat()}`;
-  if (!st.terbuka) return `${banner}${formBuka()}`;
+  const banner = `${st.info ? `<div class="mb-3 rounded-lg bg-emerald-50 p-2 text-sm text-emerald-800">${esc(st.info)}</div>` : ''}${!vs.terbuka && st.galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(st.galat)}</div>` : ''}`;
+  selaraskan();
+  if (!vs.brankas) return `${banner}${formBuat()}`;
+  if (!vs.terbuka) return `${banner}${formBuka()}`;
   const sub = (id: 'chat' | 'pengaturan', teks: string) => `<button class="tombol ${st.sub === id ? '!bg-[#2347b8] !text-white' : ''}" data-aksi="aiSub" data-sub="${id}">${teks}</button>`;
   return `<div class="mb-3 flex items-center gap-2"><h2 class="text-lg font-bold">Asisten AI</h2><span class="ml-auto"></span>${sub('chat', 'Percakapan')}${sub('pengaturan', 'Pengaturan')}</div>${banner}${st.sub === 'chat' ? renderChat(k) : renderPengaturan()}`;
 }
@@ -209,13 +199,20 @@ const gulir = () => requestAnimationFrame(() => {
 
 // --------------------------------------------------------------------------------------------------- aksi
 
-async function bukaDengan(k: Konteks, pin: string, brankas: BrankasTersimpan): Promise<void> {
-  const isi = await bukaBrankas(pin, brankas);
-  st.pin = pin;
-  st.kunci = isi.kunci;
-  st.terbuka = true;
-  buatRotasi();
-  pasangPengamatSusun((h) => st.sesi.catatHasilSusun(ringkasHasil(h)));
+/** Brankas bisa dibuka dari tab Terapkan; sinkronkan rotasi dan pengamat bila perlu (dan buang bila sudah dikunci di sana). */
+function selaraskan(): void {
+  if (vs.terbuka && !st.rotasi) {
+    buatRotasi();
+    pasangPengamatSusun((h) => st.sesi.catatHasilSusun(ringkasHasil(h)));
+  } else if (!vs.terbuka && st.rotasi) {
+    st.rotasi = null;
+    pasangPengamatSusun(null);
+  }
+}
+
+async function bukaDengan(k: Konteks, pin: string): Promise<void> {
+  await bukaDenganPin(pin);
+  selaraskan();
   st.galat = '';
   k.gambar();
 }
@@ -279,38 +276,27 @@ export function klikAi(k: Konteks, el: HTMLElement): boolean {
         if (pin.length < PIN_MINIMAL) throw new Error(`PIN minimal ${PIN_MINIMAL} karakter.`);
         if (pin !== nilai('aiPin2')) throw new Error('Kedua PIN tidak sama.');
         if (kunci.length < 20) throw new Error('Kunci API terlalu pendek.');
-        st.kunci = [{ id: `k${Date.now().toString(36)}`, label: nilai('aiLabel').trim() || 'Kunci 1', nilai: kunci, aktif: true }];
-        st.pin = pin;
-        await simpanBrankas();
+        await buatBrankas(pin, { kunci: [{ id: `k${Date.now().toString(36)}`, label: nilai('aiLabel').trim() || 'Kunci 1', nilai: kunci, aktif: true }] });
         await simpanPengaturan();
-        await bukaDengan(k, pin, st.brankas as BrankasTersimpan);
+        selaraskan();
         st.info = 'Brankas dibuat. Kunci tersimpan terenkripsi di peramban ini.';
         k.gambar();
       });
       return true;
     case 'aiBuka':
-      lakukan(async () => bukaDengan(k, nilai('aiPin'), st.brankas as BrankasTersimpan));
+      lakukan(async () => bukaDengan(k, nilai('aiPin')));
       return true;
     case 'aiKunci':
-      st.terbuka = false;
-      st.pin = '';
-      st.kunci = [];
-      st.rotasi = null;
-      pasangPengamatSusun(null);
+      kunciSesi();
+      selaraskan();
       st.info = 'Brankas dikunci.';
       k.gambar();
       return true;
     case 'aiHapusBrankas':
-      if (!confirm('Brankas dan semua kunci API di peramban ini akan dihapus. Lanjutkan?')) return true;
+      if (!confirm('Brankas, semua kunci API, dan token GitHub di peramban ini akan dihapus. Lanjutkan?')) return true;
       lakukan(async () => {
-        await hapusAi('brankas');
-        await hapusAi('status');
-        st.brankas = null;
-        st.terbuka = false;
-        st.pin = '';
-        st.kunci = [];
-        st.rotasi = null;
-        pasangPengamatSusun(null);
+        await hapusBrankasSesi();
+        selaraskan();
         st.info = 'Brankas dihapus.';
         k.gambar();
       });
@@ -350,8 +336,8 @@ export function klikAi(k: Konteks, el: HTMLElement): boolean {
       lakukan(async () => {
         const kunci = nilai('aiKunciBaru').trim();
         if (kunci.length < 20) throw new Error('Kunci API terlalu pendek.');
-        if (st.kunci.some((x) => x.nilai === kunci)) throw new Error('Kunci itu sudah ada.');
-        st.kunci = [...st.kunci, { id: `k${Date.now().toString(36)}`, label: nilai('aiLabel').trim() || `Kunci ${st.kunci.length + 1}`, nilai: kunci, aktif: true }];
+        if (vs.kunci.some((x) => x.nilai === kunci)) throw new Error('Kunci itu sudah ada.');
+        vs.kunci = [...vs.kunci, { id: `k${Date.now().toString(36)}`, label: nilai('aiLabel').trim() || `Kunci ${vs.kunci.length + 1}`, nilai: kunci, aktif: true }];
         await simpanBrankas();
         st.galat = '';
         k.gambar();
@@ -360,14 +346,14 @@ export function klikAi(k: Konteks, el: HTMLElement): boolean {
     case 'aiHapusKunci':
       if (!confirm('Hapus kunci ini dari brankas?')) return true;
       lakukan(async () => {
-        st.kunci = st.kunci.filter((x) => x.id !== el.dataset.id);
+        vs.kunci = vs.kunci.filter((x) => x.id !== el.dataset.id);
         await simpanBrankas();
         k.gambar();
       });
       return true;
     case 'aiAktif':
       lakukan(async () => {
-        const x = st.kunci.find((y) => y.id === el.dataset.id);
+        const x = vs.kunci.find((y) => y.id === el.dataset.id);
         if (x) {
           x.aktif = !x.aktif;
           if (x.aktif && st.rotasi) delete st.rotasi.status.tidakSah[x.id];
@@ -378,7 +364,7 @@ export function klikAi(k: Konteks, el: HTMLElement): boolean {
       return true;
     case 'aiUji':
       lakukan(async () => {
-        const x = st.kunci.find((y) => y.id === el.dataset.id);
+        const x = vs.kunci.find((y) => y.id === el.dataset.id);
         if (!x) return;
         st.uji[x.id] = 'menguji…';
         k.gambar();
@@ -421,7 +407,7 @@ export function klikAi(k: Konteks, el: HTMLElement): boolean {
       lakukan(async () => {
         const baru = nilai('aiPinBaru');
         if (baru.length < PIN_MINIMAL) throw new Error(`PIN minimal ${PIN_MINIMAL} karakter.`);
-        st.pin = baru;
+        vs.pin = baru;
         await simpanBrankas();
         st.info = 'PIN diganti.';
         st.galat = '';
@@ -448,9 +434,9 @@ export function tombolAi(k: Konteks, e: KeyboardEvent): boolean {
     void kirim(k);
     return true;
   }
-  if (t.id === 'aiPin' && e.key === 'Enter' && st.brankas && !st.terbuka) {
+  if (t.id === 'aiPin' && e.key === 'Enter' && vs.brankas && !vs.terbuka) {
     e.preventDefault();
-    void bukaDengan(k, (t as HTMLInputElement).value, st.brankas).catch((err) => {
+    void bukaDengan(k, (t as HTMLInputElement).value).catch((err) => {
       st.galat = err instanceof Error ? err.message : String(err);
       k.gambar();
     });
