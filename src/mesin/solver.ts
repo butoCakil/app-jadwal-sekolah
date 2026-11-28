@@ -56,6 +56,8 @@ export interface OpsiSusun {
    * walau `batasMs` belum habis. `batasMs` tetap menjadi batas atas.
    */
   sabarMs?: number;
+  /** Sertakan salinan jadwal terbaik sementara pada laporan kemajuan (paling sering tiap 1,5 detik), agar penyusunan bisa dihentikan dan hasil terbaiknya dipakai. */
+  sertakanSlot?: boolean;
   benih?: number;
   kemajuan?: (m: Kemajuan) => void;
 }
@@ -66,6 +68,8 @@ export interface Kemajuan {
   total: number;
   biaya: number;
   ms: number;
+  /** jadwal sementara (hanya bila `sertakanSlot`) */
+  slots?: Slot[];
 }
 
 export interface Sisa {
@@ -803,8 +807,12 @@ export function susun(p: Proyek, opsi: OpsiSusun): HasilSusun {
 function susunSekali(p: Proyek, opsi: OpsiSusun & { prioritasLunak?: boolean }): HasilSusun {
   const t0 = Date.now();
   const batas = opsi.batasMs ?? 8000;
-  const laporan = (tahap: Kemajuan['tahap'], m: Mesin) =>
-    opsi.kemajuan?.({ tahap, terjadwal: m.total - m.jpBelum(), total: m.total, biaya: Math.round(m.biayaTotal()), ms: Date.now() - t0 });
+  let terakhirSlot = 0;
+  const laporan = (tahap: Kemajuan['tahap'], m: Mesin) => {
+    const sertakan = !!opsi.sertakanSlot && tahap !== 'selesai' && Date.now() - terakhirSlot > 1500;
+    if (sertakan) terakhirSlot = Date.now();
+    opsi.kemajuan?.({ tahap, terjadwal: m.total - m.jpBelum(), total: m.total, biaya: Math.round(m.biayaTotal()), ms: Date.now() - t0, ...(sertakan ? { slots: m.hasilSlot() } : {}) });
+  };
 
   // --- tahap awal: beberapa kali penempatan serakah dengan urutan acak, ambil yang terbaik
   const dasar = new Mesin(p, opsi);

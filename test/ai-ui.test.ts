@@ -33,6 +33,7 @@ function buatKonteks() {
     ganti() {},
     ke: vi.fn(),
     urungkan: vi.fn(),
+    terapkanSlotsDi: vi.fn(() => ({ ok: true, baruTerdampak: [] })),
   } as unknown as Konteks;
   return { k, p, gambar };
 }
@@ -124,27 +125,99 @@ describe('jendela Asisten AI: alur dari brankas sampai usulan diterapkan', () =>
   }, 30000);
 });
 
-describe('jendela Asisten AI: sasaran percakapan', () => {
-  it('menyusun jadwal berjalan pada semester yang dipilih di chat, bukan tampilan di belakang', async () => {
-    const { k, p } = buatKonteks();
+/** Pekerja palsu: meniru solver (kemajuan dengan jadwal sementara, lalu hasil) tanpa menjalankan solver. */
+class PekerjaPalsu {
+  static skenario: 'selesai' | 'menggantung' = 'selesai';
+  static terakhir: PekerjaPalsu | null = null;
+  onmessage: ((e: { data: unknown }) => void) | null = null;
+  onerror: ((e: { message: string }) => void) | null = null;
+  dihentikan = false;
+  pesan: unknown;
+  constructor() {
+    PekerjaPalsu.terakhir = this;
+  }
+  postMessage(pesan: unknown): void {
+    this.pesan = pesan;
+    const slot = (n: number) => ({ id: `s${n}`, bebanId: 'b-palsu', hari: 0, jam: n, ruangId: '' });
+    setTimeout(() => !this.dihentikan && this.onmessage?.({ data: { jenis: 'kemajuan', m: { tahap: 'perbaiki', terjadwal: 2, total: 3, biaya: 40, ms: 100, slots: [slot(1), slot(2)] } } }), 20);
+    if (PekerjaPalsu.skenario === 'selesai')
+      setTimeout(() => !this.dihentikan && this.onmessage?.({ data: { jenis: 'hasil', h: { slots: [slot(1), slot(2), slot(3)], sisa: [], terjadwal: 3, total: 3, biaya: 30, peringatan: [], ms: 500 } } }), 60);
+  }
+  terminate(): void {
+    this.dihentikan = true;
+  }
+}
+
+describe('jendela Asisten AI: penyusunan di dalam chat', () => {
+  const kirimSusun = async (k: Konteks, p: ReturnType<typeof buatKonteks>['p']) => {
     const genap = p.semesters?.[1];
-    expect(genap).toBeDefined();
-    // keadaan modul masih dari tes sebelumnya (kunci sempat ditandai tidak sah): catatan batas direset
     renderAi(k);
     klikAi(k, tombol('aiResetStatus'));
     await new Promise((r) => setTimeout(r, 50));
     klikAi(k, tombol('aiBaru'));
     ubahAi(k, { id: 'aiSasaran', value: `sem:${genap?.id}` } as never);
-    expect(renderAi(k)).toContain('jadwal induk Genap');
     vi.stubGlobal('fetch', vi.fn(async () => balasanGemini({ jawaban: 'Menyusun semester genap.', instruksi: [{ op: 'susun', cara: 'nol' }] })));
     nilaiForm.aiTeks = 'mulai susun jadwal semester genap';
     klikAi(k, tombol('aiKirim'));
     await tunggu(() => renderAi(k).includes('data-aksi="aiTerapkan"'));
-    expect(renderAi(k)).toContain('Otomatis');
-    const id = /data-aksi="aiTerapkan" data-id="(\d+)"/.exec(renderAi(k))?.[1] as string;
-    expect(k.ui.fokus).toBe('auto'); // tampilan di belakang masih menurut tanggal
+    return { genap, id: /data-aksi="aiTerapkan" data-id="(\d+)"/.exec(renderAi(k))?.[1] as string };
+  };
+
+  it('berjalan pada semester pilihan chat, tampil di chat, diterapkan tanpa pindah halaman, bisa diurungkan', async () => {
+    vi.stubGlobal('Worker', PekerjaPalsu);
+    PekerjaPalsu.skenario = 'selesai';
+    const { k, p } = buatKonteks();
+    const { genap, id } = await kirimSusun(k, p);
+    expect(renderAi(k)).toContain('jadwal induk Genap');
+    expect(k.ui.fokus).toBe('auto'); // tampilan di belakang tidak berubah
     klikAi(k, tombol('aiTerapkan', { id }));
-    expect(k.ui.fokus).toBe(`sem:${genap?.id}`);
-    expect(k.ke).toHaveBeenCalledWith('susun');
+    expect(renderAi(k)).toContain('Penyusunan otomatis');
+    expect(k.ke).not.toHaveBeenCalledWith('susun');
+    expect(k.ui.fokus).toBe('auto');
+    const pesan = PekerjaPalsu.terakhir?.pesan as { sabarMs?: number; batasMs: number; sertakanSlot?: boolean };
+    expect(pesan.sertakanSlot).toBe(true);
+    expect(pesan.sabarMs).toBe(15000); // otomatis
+    await tunggu(() => renderAi(k).includes('Terapkan jadwal ini'));
+    expect(renderAi(k)).toContain('3 dari 3 JP');
+    expect(renderAi(k)).toContain('Semua JP tertempatkan');
+
+    klikAi(k, tombol('aiSusunTerapkan', { id }));
+    const panggilan = (k.terapkanSlotsDi as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as unknown as [string, string, unknown[]];
+    expect(panggilan[0]).toBe(`sem:${genap?.id}`);
+    expect(panggilan[2]).toHaveLength(3);
+    expect(renderAi(k)).toContain('Jadwal diterapkan');
+    expect(renderAi(k)).toContain('data-aksi="aiSusunUrungkan"');
+    klikAi(k, tombol('aiSusunUrungkan', { id }));
+    expect(k.urungkan).toHaveBeenCalledTimes(1);
+    expect(renderAi(k)).toContain('data-aksi="aiSusunTerapkan"'); // bisa diterapkan lagi
+  }, 30000);
+
+  it('Hentikan memakai jadwal terbaik sementara; hasil yang usang karena data berubah tidak bisa diterapkan', async () => {
+    vi.stubGlobal('Worker', PekerjaPalsu);
+    PekerjaPalsu.skenario = 'menggantung';
+    const { k, p } = buatKonteks();
+    const { id } = await kirimSusun(k, p);
+    klikAi(k, tombol('aiTerapkan', { id }));
+    await new Promise((r) => setTimeout(r, 120));
+    klikAi(k, tombol('aiSusunHenti', { id }));
+    expect(PekerjaPalsu.terakhir?.dihentikan).toBe(true);
+    const html = renderAi(k);
+    expect(html).toContain('2 dari 3 JP');
+    expect(html).toContain('dihentikan lebih awal');
+    expect(html).toContain('Terapkan jadwal ini');
+    // data berubah di luar chat sebelum diterapkan
+    p.master.guru[0]!.kode = 'ZZZ';
+    expect(renderAi(k)).toContain('tidak cocok');
+    expect(renderAi(k)).toMatch(/data-aksi="aiSusunTerapkan"[^>]*disabled/);
+    klikAi(k, tombol('aiSusunTerapkan', { id }));
+    expect(k.terapkanSlotsDi).not.toHaveBeenCalled();
+  }, 30000);
+
+  it('tanpa pekerja latar: kegagalan dilaporkan di chat, bukan diam', async () => {
+    vi.stubGlobal('Worker', undefined);
+    const { k, p } = buatKonteks();
+    const { id } = await kirimSusun(k, p);
+    klikAi(k, tombol('aiTerapkan', { id }));
+    expect(renderAi(k)).toContain('Pekerja latar tidak bisa dibuat');
   }, 30000);
 });

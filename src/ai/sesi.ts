@@ -21,6 +21,11 @@ export interface Rencana {
   diputuskan?: number;
   /** nomor instruksi yang tidak diterapkan (admin memilih sebagian) */
   dikecualikan?: number[];
+  /** ringkasan hasil penyusunan otomatis yang dijalankan dari usulan ini */
+  susunRingkas?: string;
+  /** keputusan admin atas hasil penyusunan */
+  susunStatus?: 'diterapkan' | 'dibuang' | 'diurungkan';
+  susunDiputuskan?: number;
 }
 
 export interface Giliran {
@@ -134,6 +139,11 @@ export class SesiAi {
       g.rencana.diputuskan = Date.now();
     }
     this.catatan.push('[Catatan sistem] Admin MENGURUNGKAN perubahan dari usulan Anda sebelumnya; data kembali seperti sebelum diterapkan.');
+  }
+
+  /** Catatan sistem bebas untuk AI pada pesan berikutnya (mis. hasil penyusunan diterapkan atau diurungkan). */
+  catatSistem(teks: string): void {
+    this.catatan.push(`[Catatan sistem] ${teks}`);
   }
 
   catatHasilSusun(ringkas: string): void {

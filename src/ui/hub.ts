@@ -38,7 +38,7 @@ function statusWaktu(mulai: string, selesai: string, hariIni: string): { teks: s
 }
 
 /** Tanggal acuan yang masuk akal untuk fokus: di dalam kegiatan (hari berlaku), atau di dalam semester di luar kegiatan. */
-function tanggalUntukFokus(p: Proyek, fokus: Fokus, sekarang: string): string {
+export function tanggalUntukFokus(p: Proyek, fokus: Fokus, sekarang: string): string {
   const n = jumlahHariKerja(p);
   const g = kegiatanFokus(p, fokus);
   if (g) {

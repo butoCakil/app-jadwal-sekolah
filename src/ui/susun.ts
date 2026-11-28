@@ -1,9 +1,11 @@
 import { ruangDiluarPrioritas, type HasilSusun, type Kemajuan } from '../mesin/solver';
-import type { Beban, Slot } from '../model/tipe';
+import type { Beban, Proyek, Slot } from '../model/tipe';
+import type { AturanPekan } from '../model/aturanKegiatan';
+import type { Fokus } from '../model/simpul';
 import { esc } from './util';
 import { polaUntukTanggal } from '../model/kalender';
 import { kalenderFokus, modelWarisan, terdampak, versiSemester } from '../model/simpul';
-import type { Konteks } from './konteks';
+import type { Konteks, Turunan } from './konteks';
 
 type Mode = 'nol' | 'lengkapi' | 'induk';
 interface Status {
@@ -19,7 +21,7 @@ interface Status {
   galat: string;
 }
 const st: Status = { mode: 'nol', detik: 0, lunak: true, jalan: false, kemajuan: null, hasil: null, bebanHasil: [], galat: '' };
-let pekerja: Worker | null = null;
+let pekerja: PekerjaSusun | null = null;
 
 const bar = (m: Kemajuan | null) => {
   const pct = m && m.total ? Math.round((m.terjadwal / m.total) * 100) : 0;
@@ -110,67 +112,136 @@ export function pasangPengamatSusun(fn: ((h: HasilSusun) => void) | null): void 
   pengamat = fn;
 }
 
-/** Menjalankan penyusunan di pekerja latar sesuai pilihan saat ini. */
-export function mulaiSusun(k: Konteks): boolean {
-  st.galat = '';
-  st.hasil = null;
-  st.kemajuan = null;
-  st.jalan = true;
-  const kloning = structuredClone(k.p);
-  const tdk = k.turunan.rombelTidakAktif;
-  const g = k.turunan.periode;
-  const rombelBeban = new Map(k.p.beban.map((b) => [b.id, b.rombelId]));
+/** Pesan untuk pekerja latar solver. */
+export interface PesanSusun {
+  p: Proyek;
+  skemaPerHari: (string | null)[];
+  tetap: Slot[];
+  awal: Slot[] | undefined;
+  aturan: AturanPekan;
+  kedalaman: number;
+  prioritasLunak: boolean | 'bilaPerlu';
+  batasMs: number;
+  sabarMs?: number;
+  sertakanSlot?: boolean;
+}
+
+export interface PilihanSusun {
+  mode: Mode;
+  /** 0 = otomatis (berhenti bila tidak membaik) */
+  detik: number;
+  lunak: boolean;
+  sertakanSlot?: boolean;
+}
+
+/**
+ * Menyiapkan penyusunan untuk satu sasaran (turunan `t` pada `fokus` dan `tanggal`) tanpa menyentuh tampilan:
+ * beban yang dipakai, slot tetap, jadwal awal, dan pesan untuk pekerja.
+ */
+export function siapkanSusun(p: Proyek, t: Turunan, fokus: Fokus, tanggal: string, o: PilihanSusun): { pesan: PesanSusun; beban: Beban[]; mode: Mode } {
+  const kloning = structuredClone(p);
+  const tdk = t.rombelTidakAktif;
+  const g = t.periode;
+  const kegiatan = !!g && modelWarisan(g);
+  const mode: Mode = o.mode === 'induk' && !kegiatan ? 'nol' : o.mode;
+  const rombelBeban = new Map(p.beban.map((b) => [b.id, b.rombelId]));
   // pada kegiatan model warisan, kelas yang ikut induk tidak disusun ulang: jadwalnya dipertahankan sebagai slot tetap
-  const ikutInduk = (sl: Slot) => !!g && modelWarisan(g) && !terdampak(g, rombelBeban.get(sl.bebanId) ?? '');
+  const ikutInduk = (sl: Slot) => !!g && kegiatan && !terdampak(g, rombelBeban.get(sl.bebanId) ?? '');
   // rombel tidak aktif (PKL) tidak ikut disusun
-  kloning.beban = structuredClone(k.turunan.beban).filter((b) => !tdk.has(b.rombelId));
-  st.bebanHasil = kloning.beban;
-  const tetap: Slot[] = st.mode === 'lengkapi' ? k.turunan.slots : k.turunan.slots.filter(ikutInduk);
+  kloning.beban = structuredClone(t.beban).filter((b) => !tdk.has(b.rombelId));
+  const tetap: Slot[] = mode === 'lengkapi' ? t.slots : t.slots.filter(ikutInduk);
   // mulai dari jadwal induk: beban kegiatan yang menggantikan beban induk memakai slot induknya; hanya kelas terdampak
   let awal: Slot[] | undefined;
-  if (st.mode === 'induk' && g && modelWarisan(g)) {
+  if (mode === 'induk' && g && kegiatan) {
     const peta = new Map(kloning.beban.map((b) => [b.asal ?? b.id, b.id]));
-    awal = (versiSemester(k.p, k.turunan.semester)?.slots ?? []).flatMap((sl) => {
+    awal = (versiSemester(p, t.semester)?.slots ?? []).flatMap((sl) => {
       const id = peta.get(sl.bebanId);
       return id && terdampak(g, rombelBeban.get(id) ?? '') ? [{ ...sl, bebanId: id }] : [];
     });
   }
   for (const v of kloning.versi) v.slots = [];
-  const polaSusun = polaUntukTanggal(k.ui.tanggal, { ...k.p, kalender: kalenderFokus(k.p, k.ui.fokus) }).pola;
+  const skemaPerHari = polaUntukTanggal(tanggal, { ...p, kalender: kalenderFokus(p, fokus) }).pola;
+  const pesan: PesanSusun = {
+    p: kloning,
+    skemaPerHari,
+    tetap,
+    awal,
+    aturan: t.aturan,
+    kedalaman: 3,
+    prioritasLunak: o.lunak ? (kegiatan ? true : 'bilaPerlu') : false,
+    batasMs: o.detik ? o.detik * 1000 : 240_000,
+    ...(o.detik ? {} : { sabarMs: 15_000 }),
+    ...(o.sertakanSlot ? { sertakanSlot: true } : {}),
+  };
+  return { pesan, beban: kloning.beban, mode };
+}
+
+export interface PekerjaSusun {
+  batal(): void;
+}
+
+/** Menjalankan solver di pekerja latar. Mengembalikan null (dan memanggil `galat`) bila pekerja tidak bisa dibuat. */
+export function jalankanPekerja(pesan: PesanSusun, cb: { kemajuan(m: Kemajuan): void; hasil(h: HasilSusun): void; galat(pesan: string): void }): PekerjaSusun | null {
+  let w: Worker;
   try {
-    pekerja = new Worker(new URL('../mesin/solver.worker.ts', import.meta.url), { type: 'module' });
+    w = new Worker(new URL('../mesin/solver.worker.ts', import.meta.url), { type: 'module' });
   } catch (e) {
-    st.jalan = false;
-    st.galat = `Pekerja latar tidak bisa dibuat: ${e instanceof Error ? e.message : String(e)}`;
-    k.gambar();
-    return true;
+    cb.galat(`Pekerja latar tidak bisa dibuat: ${e instanceof Error ? e.message : String(e)}`);
+    return null;
   }
-  const w = pekerja;
+  let selesai = false;
+  const tutup = () => {
+    selesai = true;
+    w.terminate();
+  };
   w.onmessage = (e: MessageEvent<{ jenis: string; m?: Kemajuan; h?: HasilSusun; pesan?: string }>) => {
-    if (pekerja !== w) return;
-    if (e.data.jenis === 'kemajuan' && e.data.m) {
-      st.kemajuan = e.data.m;
-      const kotak = document.getElementById('kemajuanSusun');
-      if (kotak) kotak.innerHTML = bar(st.kemajuan);
-    } else {
-      st.jalan = false;
-      if (e.data.jenis === 'hasil' && e.data.h) {
-        st.hasil = e.data.h;
-        pengamat?.(e.data.h);
-      } else st.galat = e.data.pesan ?? 'Penyusunan gagal.';
-      w.terminate();
-      pekerja = null;
-      k.gambar();
+    if (selesai) return;
+    if (e.data.jenis === 'kemajuan' && e.data.m) cb.kemajuan(e.data.m);
+    else {
+      tutup();
+      if (e.data.jenis === 'hasil' && e.data.h) cb.hasil(e.data.h);
+      else cb.galat(e.data.pesan ?? 'Penyusunan gagal.');
     }
   };
   w.onerror = (e) => {
-    st.jalan = false;
-    st.galat = `Penyusunan gagal: ${e.message}`;
-    w.terminate();
-    pekerja = null;
-    k.gambar();
+    if (selesai) return;
+    tutup();
+    cb.galat(`Penyusunan gagal: ${e.message}`);
   };
-  w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, awal, aturan: k.turunan.aturan, kedalaman: 3, prioritasLunak: st.lunak ? (g && modelWarisan(g) ? true : 'bilaPerlu') : false, batasMs: st.detik ? st.detik * 1000 : 240_000, ...(st.detik ? {} : { sabarMs: 15_000 }) });
+  w.postMessage(pesan);
+  return { batal: () => { if (!selesai) tutup(); } };
+}
+
+/** Menjalankan penyusunan di pekerja latar sesuai pilihan saat ini (tab Susun Otomatis). */
+export function mulaiSusun(k: Konteks): boolean {
+  st.galat = '';
+  st.hasil = null;
+  st.kemajuan = null;
+  st.jalan = true;
+  const { pesan, beban } = siapkanSusun(k.p, k.turunan, k.ui.fokus, k.ui.tanggal, { mode: st.mode, detik: st.detik, lunak: st.lunak });
+  st.bebanHasil = beban;
+  const sendiri = jalankanPekerja(pesan, {
+    kemajuan: (m) => {
+      st.kemajuan = m;
+      const kotak = document.getElementById('kemajuanSusun');
+      if (kotak) kotak.innerHTML = bar(st.kemajuan);
+    },
+    hasil: (h) => {
+      st.jalan = false;
+      st.hasil = h;
+      pekerja = null;
+      pengamat?.(h);
+      k.gambar();
+    },
+    galat: (pesanGalat) => {
+      st.jalan = false;
+      st.galat = pesanGalat;
+      pekerja = null;
+      k.gambar();
+    },
+  });
+  pekerja = sendiri;
+  if (!sendiri) st.jalan = false;
   k.gambar();
   return true;
 }
@@ -180,7 +251,7 @@ export function klikSusun(k: Konteks, el: HTMLElement): boolean {
     case 'susunMulai':
       return mulaiSusun(k);
     case 'susunBatal':
-      pekerja?.terminate();
+      pekerja?.batal();
       pekerja = null;
       st.jalan = false;
       k.gambar();

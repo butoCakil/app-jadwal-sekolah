@@ -119,4 +119,6 @@ export interface Konteks {
   ke(tab: Tab): void;
   /** Membatalkan perubahan terakhir (sama dengan tombol Undo). */
   urungkan(): void;
+  /** Mengganti jadwal pada sasaran tertentu (fokus + tanggal acuan) tanpa memindahkan tampilan; dicatat untuk Undo. */
+  terapkanSlotsDi(fokus: Fokus, tanggal: string, slots: Slot[]): { ok: true; baruTerdampak: string[] } | { ok: false; pesan: string };
 }

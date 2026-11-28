@@ -157,6 +157,19 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     urungkan() {
       urungkan();
     },
+    terapkanSlotsDi(fokus, tanggal, slots) {
+      // seperti ubahSlots, tetapi pada sasaran tertentu (bukan tampilan yang sedang dibuka); tampilan tidak berpindah
+      const t = hitungTurunan(p, tanggal, fokus);
+      const uji = structuredClone(p);
+      const h = alihkanPerubahan(uji, t.pekan, slots, fokus);
+      if (!h.ok) return { ok: false, pesan: h.pesan ?? 'Perubahan ditolak.' };
+      riwayat.catat(p);
+      p = uji;
+      galat = periksaProyek();
+      simpanTertunda();
+      gambar();
+      return { ok: true, baruTerdampak: h.baruTerdampak.map((id) => p.master.rombel.find((r) => r.id === id)?.kode ?? id) };
+    },
     ke(tab) {
       // Jadwal Berlangsung selalu menurut tanggal; halaman Periode & Jadwal memulihkan sasaran terakhirnya
       if (tab === 'langsung' && ui.fokus !== 'auto') {

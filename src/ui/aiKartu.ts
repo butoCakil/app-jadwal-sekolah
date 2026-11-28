@@ -58,7 +58,7 @@ const panah = (teks: string) => esc(teks).replace(/ → /g, ' <span class="font-
 
 function uraianSusun(ins: Extract<Instruksi, { op: 'susun' }>): string {
   const cara = ins.cara === 'nol' ? 'dari nol' : ins.cara === 'induk' ? 'mulai dari jadwal induk' : 'melengkapi jadwal yang ada';
-  return `Menjalankan Susun Otomatis (${cara}${ins.detik ? `, ${ins.detik} detik` : ''}). Hasilnya tetap harus Anda terapkan sendiri di tab Susun Otomatis.`;
+  return `Menjalankan Susun Otomatis (${cara}${ins.detik ? `, ${ins.detik} detik` : ''}). Penyusunan berjalan di jendela ini; hasilnya tetap Anda tinjau dan terapkan sendiri.`;
 }
 
 export interface OpsiKartu {

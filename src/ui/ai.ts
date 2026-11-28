@@ -1,4 +1,3 @@
-import type { HasilSusun } from '../mesin/solver';
 import { bacaAi, tulisAi } from '../io/simpan';
 import { PIN_MINIMAL, samarkan } from '../ai/brankas';
 import { aturIngat, brankasSesi, bukaDenganPin, buatBrankas, gantiPin, hapusBrankasSesi, kunciSesi, muatBrankas, PILIHAN_INGAT_HARI, simpanBrankas } from './brankasSesi';
@@ -8,10 +7,16 @@ import { SesiAi, type Giliran } from '../ai/sesi';
 import { rencanakan, terapkanInstruksi, type KonteksInstruksi } from '../ai/instruksi';
 import { batuNisan, daftarAktif, gabungPercakapan, jumlahMenunggu, judulTampil, percakapanBaru, type Percakapan, type SasaranAi } from '../ai/percakapan';
 import { sinkronkanAi } from '../ai/sinkronAi';
-import { daftarSemester, fokusInduk, fokusSemester, modelWarisan, semesterKegiatan } from '../model/simpul';
-import { bukaSimpul } from './hub';
-import { aturSusun, mulaiSusun, pasangPengamatSusun } from './susun';
-import { esc } from './util';
+import { daftarSemester, fokusInduk, fokusSemester, semesterKegiatan } from '../model/simpul';
+import { bukaSimpul, tanggalUntukFokus } from './hub';
+import { ruangDiluarPrioritas } from '../mesin/solver';
+import { jalankanPekerja, pasangPengamatSusun, siapkanSusun, type PekerjaSusun } from './susun';
+import { hitungTurunan } from './turunan';
+import type { Beban, Slot } from '../model/tipe';
+import type { Fokus } from '../model/simpul';
+import type { HasilSusun, Kemajuan } from '../mesin/solver';
+import type { Instruksi } from '../ai/instruksi';
+import { esc, isoLokal } from './util';
 import { IKON, logoAi } from './aiLogo';
 import { formatTeks, kartuUsulan } from './aiKartu';
 import type { Konteks } from './konteks';
@@ -393,7 +398,8 @@ function giliranHtml(g: Giliran, terakhir: boolean): string {
   const kartu = g.rencana
     ? kartuUsulan(g, { dikecualikan: st.dikecualikan.get(g.id) ?? new Set(), bisaUrungkan: st.terakhir?.id === g.id && !!kRef && JSON.stringify(kRef.p) === st.terakhir.snap, waktu: jam })
     : '';
-  return `<div class="flex items-start gap-2">${logoAi(24, 'mt-1 shrink-0')}<div class="min-w-0 max-w-[92%]"><div class="rounded-2xl rounded-tl-sm border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm"><div class="break-words">${formatTeks(g.teks)}</div>${tanya}${tb}${kartu}${galat}</div><div class="mt-0.5 text-[10px] text-slate-400">${g.waktu ? `${jam(g.waktu)} · ` : ''}${esc(g.sumber ?? '')}</div></div></div>${waktu ? '' : ''}`;
+  const susun = kRef ? panelSusun(kRef, g) : '';
+  return `<div class="flex items-start gap-2">${logoAi(24, 'mt-1 shrink-0')}<div class="min-w-0 max-w-[92%]"><div class="rounded-2xl rounded-tl-sm border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm"><div class="break-words">${formatTeks(g.teks)}</div>${tanya}${tb}${kartu}${susun}${galat}</div><div class="mt-0.5 text-[10px] text-slate-400">${g.waktu ? `${jam(g.waktu)} · ` : ''}${esc(g.sumber ?? '')}</div></div></div>${waktu ? '' : ''}`;
 }
 
 function renderChat(k: Konteks): string {
@@ -481,6 +487,7 @@ function renderPengaturan(): string {
 
 /** Isi jendela (kepala dan badan) menurut keadaan sekarang; dipakai juga oleh uji. */
 export function renderAi(k: Konteks): string {
+  kRef = k;
   if (!st.dimuat) {
     void muat(k);
     return '<div class="p-4 text-sm text-slate-500">Memuat…</div>';
@@ -497,8 +504,8 @@ export function renderAi(k: Konteks): string {
 }
 
 function balon(): string {
-  const menunggu = jumlahMenunggu(aktif());
-  return `<button class="pointer-events-auto fixed bottom-4 right-4 z-[70] grid h-14 w-14 place-items-center rounded-full bg-[#0d1e33] shadow-xl ring-2 ring-white hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2347b8] ${st.kirim ? 'animate-pulse' : ''}" data-aksi="aiBalon" title="Asisten Jadwal" aria-label="Buka Asisten Jadwal">${logoAi(46)}${menunggu ? `<span class="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-amber-400 px-1 text-[11px] font-bold text-slate-900 ring-2 ring-white">${menunggu}</span>` : ''}</button>`;
+  const menunggu = jumlahMenunggu(aktif()) + kerjaMenunggu();
+  return `<button class="pointer-events-auto fixed bottom-4 right-4 z-[70] grid h-14 w-14 place-items-center rounded-full bg-[#0d1e33] shadow-xl ring-2 ring-white hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2347b8] ${st.kirim || kerjaJalan() ? 'animate-pulse' : ''}" data-aksi="aiBalon" title="Asisten Jadwal" aria-label="Buka Asisten Jadwal">${logoAi(46)}${menunggu ? `<span class="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-amber-400 px-1 text-[11px] font-bold text-slate-900 ring-2 ring-white">${menunggu}</span>` : ''}</button>`;
 }
 
 function jendela(k: Konteks): string {
@@ -633,27 +640,242 @@ function terapkan(k: Konteks, g: Giliran): void {
     gambarAi();
     return;
   }
-  k.ubah((p) => void terapkanInstruksi(p, ktx, pilih));
+  const adaDataBerubah = pilih.some((x) => x.op !== 'susun');
+  if (adaDataBerubah) k.ubah((p) => void terapkanInstruksi(p, ktx, pilih));
   st.sesi.catatDiterapkan(g, cek, [...dik]);
   st.sesi.segarkanPotret(k.p, ktx);
-  st.terakhir = { id: g.id, snap: JSON.stringify(k.p) };
+  st.terakhir = adaDataBerubah ? { id: g.id, snap: JSON.stringify(k.p) } : null;
   st.dikecualikan.delete(g.id);
   tandaiUbah();
   k.lapor(cek.perubahan.length ? `Diterapkan: ${cek.perubahan.length} perubahan.` : 'Diterapkan.');
-  if (cek.susun) {
-    // penyusunan berjalan pada sasaran percakapan (bukan tampilan di belakang): pindah fokus dulu, lalu hitung ulang turunan
-    const sasaran = ktx.kegiatanId ?? (ktx.semesterId ? fokusSemester(ktx.semesterId) : null);
-    if (sasaran) bukaSimpul(k, sasaran, 'susun');
-    else k.ke('susun');
-    const kegiatanAktif = !!k.turunan.periode && modelWarisan(k.turunan.periode) && !fokusInduk(k.ui.fokus);
-    aturSusun(cek.susun, kegiatanAktif);
-    if (layarKecil()) {
-      st.buka = false;
-      simpanPrefJendela();
-    }
-    mulaiSusun(k);
-  }
+  const susun = pilih.find((x): x is Extract<Instruksi, { op: 'susun' }> => x.op === 'susun');
+  if (cek.susun && susun) mulaiSusunChat(k, g, ktx, susun);
   gambarAi();
+}
+
+// ---------------------------------------------------------------------------------- penyusunan di dalam chat
+
+interface KerjaSusun {
+  fase: 'jalan' | 'selesai' | 'galat' | 'diterapkan' | 'dibuang';
+  pid: string;
+  gid: number;
+  fokus: Fokus;
+  tanggal: string;
+  label: string;
+  snapData: string;
+  snapSesudah?: string;
+  kemajuan: Kemajuan | null;
+  terbaik: { slots: Slot[]; nilai: number; terjadwal: number; total: number; biaya: number } | null;
+  hasil: HasilSusun | null;
+  dihentikan: boolean;
+  beban: Beban[];
+  galat: string;
+  pekerja: PekerjaSusun | null;
+  mulai: number;
+}
+const kerja = new Map<string, KerjaSusun>();
+const kunciKerja = (gid: number, pid = st.aktifId) => `${pid}:${gid}`;
+const kerjaJalan = (): boolean => [...kerja.values()].some((x) => x.fase === 'jalan');
+const kerjaMenunggu = (): number => [...kerja.values()].filter((x) => x.fase === 'selesai').length;
+
+/** Menggulir daftar chat agar panel penyusunan terakhir terlihat dari atasnya (hasil baru tidak tersembunyi di bawah). */
+function tampilkanPanelSusun(): void {
+  if (typeof document === 'undefined' || !document.querySelectorAll) return;
+  const semua = document.querySelectorAll('[data-panel-susun]');
+  (semua[semua.length - 1] as HTMLElement | undefined)?.scrollIntoView?.({ block: 'start' });
+}
+
+function cariGiliran(kj: KerjaSusun): Giliran | undefined {
+  if (kj.pid === st.aktifId) return st.sesi.tampil.find((x) => x.id === kj.gid);
+  return st.daftar.find((c) => c.id === kj.pid)?.tampil.find((x) => x.id === kj.gid);
+}
+
+/** Mengubah catatan penyusunan pada usulan asal dan menyimpannya (juga bila percakapan itu sedang tidak dibuka). */
+function catatRencana(kj: KerjaSusun, f: (r: NonNullable<Giliran['rencana']>) => void): void {
+  const g = cariGiliran(kj);
+  if (g?.rencana) f(g.rencana);
+  if (kj.pid === st.aktifId) tandaiUbah();
+  else {
+    const c = st.daftar.find((x) => x.id === kj.pid);
+    if (c) c.diubah = Date.now();
+    simpanSegera();
+  }
+}
+
+function ringkasSusun(h: Pick<HasilSusun, 'terjadwal' | 'total' | 'sisa'>, dihentikan = false): string {
+  return `${h.terjadwal} dari ${h.total} JP tertempatkan, ${h.sisa.length} beban belum penuh${dihentikan ? ' (dihentikan lebih awal)' : ''}`;
+}
+
+function mulaiSusunChat(k: Konteks, g: Giliran, ktx: KonteksInstruksi, op: Extract<Instruksi, { op: 'susun' }>): void {
+  if (kerjaJalan()) {
+    st.galat = 'Penyusunan lain masih berjalan. Tunggu selesai atau hentikan dulu.';
+    return;
+  }
+  const fokus: Fokus = ktx.kegiatanId ?? (ktx.semesterId ? fokusSemester(ktx.semesterId) : k.ui.fokus);
+  const tanggal = fokus === 'auto' ? k.ui.tanggal : tanggalUntukFokus(k.p, fokus, isoLokal(new Date()));
+  const t = hitungTurunan(k.p, tanggal, fokus);
+  const kj: KerjaSusun = { fase: 'jalan', pid: st.aktifId, gid: g.id, fokus, tanggal, label: labelKtx(k, ktx), snapData: JSON.stringify(k.p), kemajuan: null, terbaik: null, hasil: null, dihentikan: false, beban: [], galat: '', pekerja: null, mulai: Date.now() };
+  kerja.set(kunciKerja(g.id), kj);
+  if (t.beban.filter((b) => !b.nonTatapMuka).length === 0) {
+    kj.fase = 'galat';
+    kj.galat = 'Tidak ada beban tatap muka pada sasaran ini, jadi tidak ada yang disusun.';
+    return;
+  }
+  const { pesan, beban } = siapkanSusun(k.p, t, fokus, tanggal, { mode: op.cara ?? 'lengkapi', detik: op.detik ?? 0, lunak: op.lunak ?? true, sertakanSlot: true });
+  kj.beban = beban;
+  const sendiri = jalankanPekerja(pesan, {
+    kemajuan: (m) => {
+      kj.kemajuan = m;
+      if (m.slots) {
+        const nilai = (m.total - m.terjadwal) * 1000 + m.biaya;
+        if (!kj.terbaik || nilai < kj.terbaik.nilai) kj.terbaik = { slots: m.slots, nilai, terjadwal: m.terjadwal, total: m.total, biaya: m.biaya };
+      }
+      const kotak = typeof document !== 'undefined' ? document.getElementById('aiKemajuan') : null;
+      if (kotak) kotak.innerHTML = batangSusun(kj);
+    },
+    hasil: (h) => {
+      kj.fase = 'selesai';
+      kj.hasil = h;
+      kj.pekerja = null;
+      const ringkas = ringkasSusun(h);
+      if (kj.pid === st.aktifId) st.sesi.catatHasilSusun(ringkas);
+      catatRencana(kj, (r) => {
+        r.susunRingkas = ringkas;
+      });
+      gambarAi();
+      tampilkanPanelSusun();
+    },
+    galat: (pesanGalat) => {
+      kj.fase = 'galat';
+      kj.galat = pesanGalat;
+      kj.pekerja = null;
+      gambarAi();
+      tampilkanPanelSusun();
+    },
+  });
+  if (kj.fase === 'jalan') kj.pekerja = sendiri;
+}
+
+/** Menghentikan penyusunan dan memakai jadwal terbaik sementara. */
+function hentikanSusun(kj: KerjaSusun): void {
+  if (kj.fase !== 'jalan') return;
+  kj.pekerja?.batal();
+  kj.pekerja = null;
+  const b = kj.terbaik;
+  if (!b) {
+    kj.fase = 'galat';
+    kj.galat = 'Dihentikan sebelum ada hasil yang bisa dipakai. Jalankan lagi dan beri waktu sedikit lebih lama.';
+    return;
+  }
+  const hitung = new Map<string, number>();
+  for (const sl of b.slots) hitung.set(sl.bebanId, (hitung.get(sl.bebanId) ?? 0) + 1);
+  const sisa = kj.beban
+    .filter((x) => !x.nonTatapMuka)
+    .flatMap((x) => {
+      const kurang = x.jp - (hitung.get(x.id) ?? 0);
+      return kurang > 0 ? [{ bebanId: x.id, jpSisa: kurang, alasan: 'Penyusunan dihentikan sebelum selesai; bisa ditempatkan bila dijalankan lebih lama.' }] : [];
+    });
+  kj.hasil = { slots: b.slots, sisa, terjadwal: b.terjadwal, total: b.total, biaya: b.biaya, peringatan: [], ms: Date.now() - kj.mulai };
+  kj.dihentikan = true;
+  kj.fase = 'selesai';
+  const ringkas = ringkasSusun(kj.hasil, true);
+  if (kj.pid === st.aktifId) st.sesi.catatHasilSusun(ringkas);
+  catatRencana(kj, (r) => {
+    r.susunRingkas = ringkas;
+  });
+}
+
+function terapkanSusun(k: Konteks, kj: KerjaSusun): void {
+  const h = kj.hasil;
+  if (kj.fase !== 'selesai' || !h) return;
+  if (JSON.stringify(k.p) !== kj.snapData) {
+    kj.galat = 'Data berubah sejak penyusunan dimulai, jadi hasil ini tidak diterapkan. Minta asisten menyusun lagi.';
+    return;
+  }
+  const r = k.terapkanSlotsDi(kj.fokus, kj.tanggal, h.slots);
+  if (!r.ok) {
+    kj.galat = r.pesan;
+    return;
+  }
+  kj.fase = 'diterapkan';
+  kj.galat = '';
+  kj.snapSesudah = JSON.stringify(k.p);
+  if (kj.pid === st.aktifId) st.sesi.catatSistem(`Admin MENERAPKAN hasil penyusunan otomatis: ${ringkasSusun(h, kj.dihentikan)}.`);
+  catatRencana(kj, (x) => {
+    x.susunStatus = 'diterapkan';
+    x.susunDiputuskan = Date.now();
+  });
+  k.lapor(`Jadwal diterapkan: ${h.terjadwal} dari ${h.total} JP${h.sisa.length ? `, ${h.sisa.length} beban belum penuh` : ''}.`);
+  if (r.baruTerdampak.length) k.lapor(`${r.baruTerdampak.join(', ')} kini punya jadwal khusus untuk kegiatan ini (tidak lagi ikut induk).`);
+}
+
+function urungkanSusun(k: Konteks, kj: KerjaSusun): void {
+  if (kj.fase !== 'diterapkan' || JSON.stringify(k.p) !== kj.snapSesudah) return;
+  k.urungkan();
+  kj.fase = 'selesai';
+  kj.snapSesudah = undefined;
+  if (kj.pid === st.aktifId) st.sesi.catatSistem('Admin MENGURUNGKAN penerapan hasil penyusunan otomatis; jadwal kembali seperti sebelumnya.');
+  catatRencana(kj, (x) => {
+    x.susunStatus = 'diurungkan';
+  });
+  k.lapor('Penerapan hasil penyusunan diurungkan.');
+}
+
+const batangSusun = (kj: KerjaSusun): string => {
+  const m = kj.kemajuan;
+  const pct = m && m.total ? Math.round((m.terjadwal / m.total) * 100) : 0;
+  const detik = ((m?.ms ?? Date.now() - kj.mulai) / 1000).toFixed(0);
+  return `<div class="h-2 overflow-hidden rounded-full bg-slate-200"><div class="h-full bg-emerald-500 transition-all" style="width:${pct}%"></div></div>
+    <div class="mt-1 text-xs text-slate-600">${m ? `${m.terjadwal} dari ${m.total} JP tertempatkan (${pct}%) · ${detik} dtk` : 'Memulai…'}</div>`;
+};
+
+/** Panel penyusunan di bawah kartu usulan: progres, hasil, tombol terapkan, dan urungkan. */
+function panelSusun(k: Konteks, g: Giliran): string {
+  const kj = kerja.get(kunciKerja(g.id));
+  const r = g.rencana;
+  if (!kj) {
+    if (!r?.susunRingkas) return '';
+    const status = r.susunStatus === 'diterapkan' ? ' · hasil diterapkan' : r.susunStatus === 'diurungkan' ? ' · penerapan diurungkan' : r.susunStatus === 'dibuang' ? ' · hasil dibuang' : '';
+    return `<div class="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600"><b>Penyusunan otomatis:</b> ${esc(r.susunRingkas)}${status}</div>`;
+  }
+  const id = g.id;
+  const tombolSekunder = 'rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50';
+  const kepala = `<div class="text-sm font-bold text-slate-900">Penyusunan otomatis · ${esc(kj.label)}</div>`;
+  const bungkus = (isi: string, warna = 'border-violet-200 bg-violet-50/60') => `<div data-panel-susun class="mt-2 rounded-xl border ${warna} p-3">${kepala}${isi}</div>`;
+  if (kj.fase === 'jalan')
+    return bungkus(`<div id="aiKemajuan" class="mt-2">${batangSusun(kj)}</div>
+      <div class="mt-2 flex flex-wrap gap-2"><button class="rounded-lg bg-[#2347b8] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1c3a98]" data-aksi="aiSusunHenti" data-id="${id}">Hentikan dan pakai hasil terbaik</button><button class="${tombolSekunder}" data-aksi="aiSusunBatal" data-id="${id}">Batalkan</button></div>
+      <div class="mt-1.5 text-[11px] text-slate-500">Berhenti sendiri bila sudah tidak membaik. Jendela boleh ditutup; penyusunan tetap berjalan di latar.</div>`);
+  if (kj.fase === 'galat') return bungkus(`<div class="mt-1 rounded-lg bg-red-50 p-2 text-xs text-red-800">${esc(kj.galat)}</div>`, 'border-red-200 bg-red-50/40');
+  if (kj.fase === 'dibuang') return bungkus('<div class="mt-1 text-xs text-slate-600">Hasil dibuang; jadwal tidak berubah.</div>', 'border-slate-200 bg-slate-50');
+  const h = kj.hasil as HasilSusun;
+  const rb = new Map(k.p.master.rombel.map((x) => [x.id, x.kode]));
+  const mp = new Map(k.p.master.mapel.map((x) => [x.id, x.kode]));
+  const gr = new Map(k.p.master.guru.map((x) => [x.id, x.kode]));
+  const bebanById = new Map(kj.beban.map((x) => [x.id, x]));
+  const sisaTampil = h.sisa
+    .map((x) => ({ x, b: bebanById.get(x.bebanId) }))
+    .filter((y) => y.b)
+    .sort((a, b) => (rb.get(a.b?.rombelId ?? '') ?? '').localeCompare(rb.get(b.b?.rombelId ?? '') ?? ''));
+  const sisaHtml = sisaTampil.length
+    ? `<div class="mt-2 text-xs font-semibold text-slate-700">${sisaTampil.length} beban belum penuh (${h.total - h.terjadwal} JP)</div><div class="mt-1 max-h-40 overflow-auto rounded-lg border border-slate-200 bg-white"><table class="w-full text-[11px]">${sisaTampil
+        .slice(0, 12)
+        .map(({ x, b }) => `<tr class="border-t border-slate-100 first:border-0"><td class="px-2 py-1 font-semibold">${esc(rb.get(b?.rombelId ?? '') ?? '?')}</td><td class="px-2 py-1 font-mono">${esc(mp.get(b?.mapelId ?? '') ?? '?')}</td><td class="px-2 py-1 font-mono text-slate-500">${esc(gr.get(b?.guruId ?? '') ?? '?')}</td><td class="px-2 py-1 text-right">${x.jpSisa} JP</td></tr>`)
+        .join('')}</table></div>${sisaTampil.length > 12 ? `<div class="mt-0.5 text-[11px] text-slate-500">…dan ${sisaTampil.length - 12} beban lain. Alasan lengkap ada di tab Susun Otomatis bila dijalankan dari sana.</div>` : ''}`
+    : '<div class="mt-2 rounded-lg bg-emerald-50 p-2 text-xs text-emerald-800">Semua JP tertempatkan.</div>';
+  const pindah = ruangDiluarPrioritas({ ...k.p, beban: kj.beban }, h.slots);
+  const pindahHtml = pindah.length ? `<div class="mt-1 text-[11px] text-amber-800">⚠ ${pindah.length} beban memakai ruang di luar prioritas (${pindah.reduce((a, y) => a + y.jp, 0)} JP); periksa di Grid setelah diterapkan.</div>` : '';
+  const kapasitas = h.peringatan.length ? `<div class="mt-1 rounded-lg border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-900">${h.peringatan.slice(0, 3).map((x) => `<div>${esc(x)}</div>`).join('')}</div>` : '';
+  const ringkasan = `<div class="mt-1 text-sm"><b>${h.terjadwal} dari ${h.total} JP</b> tertempatkan${kj.dihentikan ? ' <span class="text-xs text-slate-500">(dihentikan lebih awal)</span>' : ''}</div><div class="text-[11px] text-slate-500">0 bentrok · ${(h.ms / 1000).toFixed(0)} dtk · biaya kerapian ${h.biaya} (makin kecil makin rapi)</div>`;
+  if (kj.fase === 'diterapkan') {
+    const bisa = JSON.stringify(k.p) === kj.snapSesudah;
+    return bungkus(`${ringkasan}<div class="mt-1"><span class="lencana bg-emerald-100 text-emerald-800">✓ Jadwal diterapkan</span></div>${sisaHtml}${pindahHtml}
+      <div class="mt-2 flex flex-wrap gap-2">${bisa ? `<button class="${tombolSekunder}" data-aksi="aiSusunUrungkan" data-id="${id}">↶ Urungkan penerapan</button>` : ''}<button class="${tombolSekunder}" data-aksi="aiSusunLihat" data-id="${id}">Lihat di Grid</button></div>`, 'border-emerald-200 bg-emerald-50/60');
+  }
+  const usang = JSON.stringify(k.p) !== kj.snapData;
+  return bungkus(`${ringkasan}${kapasitas}${sisaHtml}${pindahHtml}
+    ${kj.galat ? `<div class="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-800">${esc(kj.galat)}</div>` : ''}${usang ? '<div class="mt-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-900">Data berubah sejak penyusunan dimulai; hasil ini sudah tidak cocok dan tidak bisa diterapkan.</div>' : ''}
+    <div class="sticky bottom-0 -mx-3 -mb-3 mt-2 flex flex-wrap items-center gap-2 rounded-b-xl border-t border-violet-200 bg-violet-50 px-3 py-2"><button class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40" data-aksi="aiSusunTerapkan" data-id="${id}" ${usang ? 'disabled' : ''}>Terapkan jadwal ini</button><button class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" data-aksi="aiSusunBuang" data-id="${id}">Buang</button><span class="text-[11px] text-slate-500">Belum ada yang berubah sebelum Anda menerapkan.</span></div>`);
 }
 
 function bukaPercakapan(id: string): void {
@@ -807,6 +1029,41 @@ export function klikAi(k: Konteks, el: HTMLElement): boolean {
       st.terakhir = null;
       tandaiUbah();
       k.lapor('Perubahan dari asisten diurungkan.');
+      gambarAi();
+      return true;
+    }
+    case 'aiSusunHenti':
+    case 'aiSusunBatal':
+    case 'aiSusunTerapkan':
+    case 'aiSusunBuang':
+    case 'aiSusunUrungkan':
+    case 'aiSusunLihat': {
+      const kj = kerja.get(kunciKerja(Number(el.dataset.id)));
+      if (!kj) return true;
+      if (a === 'aiSusunHenti') {
+        hentikanSusun(kj);
+        queueMicrotask(tampilkanPanelSusun);
+      }
+      else if (a === 'aiSusunBatal') {
+        kj.pekerja?.batal();
+        kj.pekerja = null;
+        kj.fase = 'dibuang';
+        catatRencana(kj, (r) => {
+          r.susunRingkas = 'dibatalkan sebelum selesai';
+          r.susunStatus = 'dibuang';
+        });
+      } else if (a === 'aiSusunTerapkan') terapkanSusun(k, kj);
+      else if (a === 'aiSusunBuang') {
+        kj.fase = 'dibuang';
+        catatRencana(kj, (r) => {
+          r.susunStatus = 'dibuang';
+        });
+        if (kj.pid === st.aktifId) st.sesi.catatSistem('Admin MEMBUANG hasil penyusunan otomatis; jadwal tidak berubah.');
+      } else if (a === 'aiSusunUrungkan') urungkanSusun(k, kj);
+      else {
+        bukaSimpul(k, kj.fokus, 'grid');
+        if (layarKecil()) bukaJendela(false);
+      }
       gambarAi();
       return true;
     }
