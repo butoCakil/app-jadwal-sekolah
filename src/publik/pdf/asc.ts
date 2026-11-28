@@ -39,7 +39,7 @@ export function halamanAsc(pen: PenulisPdf, p: Proyek, mode: ModeP, id: string, 
   const s = pen.lebar / 792;
   const m = 28 * s;
   const label = daftarEntitasP(p, mode).find((e) => e.id === id)?.label ?? '';
-  const lm = susunLembar(p, tanggal, mode, id);
+  const lm = susunLembar(p, tanggal, mode, id, { istirahat: 'acuan' });
   const kode = kodeHalaman(p, mode, id, tanggal);
 
   // judul
@@ -49,7 +49,7 @@ export function halamanAsc(pen: PenulisPdf, p: Proyek, mode: ModeP, id: string, 
   pen.teks(JUDUL_MODE[mode], m, m + 12 * s, { ukuran: 8.5 * s, rata: 'kiri', warna: '#334155' });
 
   // kolom
-  const bobot = lm.baris.map((r) => (r.t === 'ist' ? 0.4 : r.t === 'pagi' ? 0.9 : 1));
+  const bobot = lm.baris.map((r) => (r.t === 'ist' ? 0.55 : r.t === 'pagi' ? 0.9 : 1));
   const wLabel = (mode === 'guru' ? 46 : 74) * s;
   const lebarTabel = pen.lebar - 2 * m;
   const unit = (lebarTabel - wLabel) / bobot.reduce((a, b) => a + b, 0);
@@ -71,11 +71,13 @@ export function halamanAsc(pen: PenulisPdf, p: Proyek, mode: ModeP, id: string, 
   // kepala kolom: nomor dan waktu (waktu dari hari pertama yang punya kolom itu)
   const hariAcuan = (ri: number): number => lm.waktu.findIndex((w) => w.has(ri));
   pen.persegi(m, y0, wLabel, tHead, { garis: '#000000', tebal: 0.8 });
+  let nomorIst = 0;
   lm.baris.forEach((r, ri) => {
     const k = { x: kx[ri] as number, y: y0, w: kw[ri] as number, h: tHead };
     pen.persegi(k.x, k.y, k.w, k.h, { garis: '#000000', tebal: 0.8 });
     if (r.t === 'ist') {
-      tulisDi(pen, 'Ist.', k, 'tengah', 9.5 * s, { tebal: true });
+      nomorIst++;
+      tulisDi(pen, `Break ${nomorIst}`, k, 'tengah', 11.9 * s, { tebal: true, pad: 1 });
       return;
     }
     tulisDi(pen, lm.labelBersama[ri] ?? '', { ...k, h: tHead * 0.62 }, 'tengah', 16.4 * s, { tebal: true });
@@ -103,15 +105,10 @@ export function halamanAsc(pen: PenulisPdf, p: Proyek, mode: ModeP, id: string, 
       tulisDi(pen, a ? `${a.kode} · ${ket}` : ket, { x: m + wLabel, y, w: lebar, h: tRow }, 'tengah', 13 * s, { tebal: true, warna: w.fg });
       return;
     }
-    // kotak kosong per kolom (garis dasar), lalu isi
-    lm.baris.forEach((r, ri) => pen.persegi(kx[ri] as number, y, kw[ri] as number, tRow, { isi: r.t === 'ist' ? '#e5e7eb' : undefined, garis: '#000000', tebal: 0.8 }));
+    // kotak kosong per kolom; kolom istirahat abu-abu hanya pada hari yang memang istirahat di sana
+    const istHariIni = new Set(lm.sel.filter((c) => c.hari === hi && c.isi.jenis === 'ist').map((c) => c.r1));
+    lm.baris.forEach((r, ri) => pen.persegi(kx[ri] as number, y, kw[ri] as number, tRow, { isi: r.t === 'ist' && istHariIni.has(ri) ? '#d1d5db' : undefined, garis: '#000000', tebal: 0.8 }));
   });
-  // teks "Istirahat" tegak melintasi seluruh kolom istirahat
-  lm.baris.forEach((r, ri) => {
-    if (r.t !== 'ist') return;
-    pen.teks('ISTIRAHAT', (kx[ri] as number) + (kw[ri] as number) / 2 + 3.5 * s, yTabel + (nHari * tRow) / 2, { ukuran: 9 * s, tebal: true, rata: 'tengah', putar: 90, warna: '#64748b' });
-  });
-
   // isi
   for (const c of lm.sel) {
     const h = lm.hari[c.hari];
@@ -141,11 +138,25 @@ export function halamanAsc(pen: PenulisPdf, p: Proyek, mode: ModeP, id: string, 
     });
   }
 
+  // istirahat hari yang polanya berbeda dari kolom: garis tebal setelah jam itu
+  lm.hari.forEach((h, hi) => {
+    if (h.status !== 'normal') return;
+    for (const ri of lm.istSendiri[hi] as Set<number>) {
+      const x = (kx[ri] as number) + (kw[ri] as number);
+      pen.garis(x, yTabel + hi * tRow, x, yTabel + (hi + 1) * tRow, { warna: '#000000', tebal: 3 * s });
+    }
+  });
+
   // legenda kode dan catatan
   let yb = yTabel + nHari * tRow + 8 * s;
   const beda = lm.hari.filter((h, hi) => h.status === 'normal' && [...(lm.waktu[hi] as Map<number, string>)].some(([ri, w]) => (lm.waktu[hariAcuan(ri)] as Map<number, string>).get(ri) !== w));
-  if (beda.length) {
-    pen.teks(`Catatan: waktu pelajaran hari ${beda.map((h) => h.hari).join(', ')} mengikuti skema ${[...new Set(beda.map((h) => h.skema))].join(', ')} dan berbeda dari kepala kolom.`, m, yb + 7 * s, { ukuran: 7 * s, warna: '#7c2d12' });
+  const bedaIst = lm.hari.filter((_, hi) => (lm.istSendiri[hi] as Set<number>).size > 0);
+  if (beda.length || bedaIst.length) {
+    const teks = [
+      beda.length ? `waktu pelajaran hari ${beda.map((h) => h.hari).join(', ')} mengikuti ${[...new Set(beda.map((h) => h.skema))].join(', ')} dan berbeda dari kepala kolom` : '',
+      bedaIst.length ? `garis tebal = istirahat hari ${bedaIst.map((h) => h.hari).join(', ')} (letaknya berbeda dari kolom Break)` : '',
+    ].filter(Boolean).join('; ');
+    pen.teks(`Catatan: ${teks}.`, m, yb + 7 * s, { ukuran: 7 * s, warna: '#7c2d12' });
     yb += 11 * s;
   }
   gambarLegenda(pen, kode, m, yb, lebarTabel, 6.8 * s, Math.max(0, pen.tinggi - m - 12 * s - yb));

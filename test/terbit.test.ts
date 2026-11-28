@@ -351,6 +351,19 @@ describe('halaman publik', () => {
     expect(kr.alasan.some(([k]) => k === 'PKL')).toBe(true);
   });
 
+  it('lembar aSc: kolom istirahat mengikuti pola hari terbanyak; hari berbeda ditandai, bukan menambah kolom', async () => {
+    const { susunLembar } = await import('../src/publik/lembar');
+    // pekan 26 Okt 2026: Senin sampai Kamis skema 10 (istirahat setelah jam 3 dan 6), Jumat skema 8 (setelah jam 4 dan 7)
+    const gabungan = susunLembar(p, '2026-10-26', 'rombel', id);
+    const acuan = susunLembar(p, '2026-10-26', 'rombel', id, { istirahat: 'acuan' });
+    expect(gabungan.baris.filter((r) => r.t === 'ist').length).toBe(4);
+    expect(acuan.baris.filter((r) => r.t === 'ist').length).toBe(2);
+    expect(acuan.istSendiri[4]!.size).toBe(2);
+    expect(acuan.istSendiri.slice(0, 4).every((s) => s.size === 0)).toBe(true);
+    // pekan dengan pola seragam tidak punya istirahat tersendiri
+    expect(susunLembar(p, '2026-11-02', 'rombel', id, { istirahat: 'acuan' }).baris.filter((r) => r.t === 'ist').length).toBe(2);
+  });
+
   it('tab Semua: satu baris per kelas, semua hari, kepala skema, dan bisa dibatasi satu hari', async () => {
     const { gambarHalaman } = await import('../src/publik/halaman');
     const semua = gambarHalaman(t, { ...K, tab: 'semua' }, '2026-11-10');

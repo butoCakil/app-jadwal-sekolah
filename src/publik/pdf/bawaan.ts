@@ -75,7 +75,9 @@ export function halamanBawaan(pen: PenulisPdf, p: Proyek, mode: ModeP, id: strin
       teks.forEach((t, i) => pen.teks(t, x + wHari / 2, y0 + tHead + 20 * s + i * 10 * s, { ukuran: (i === 0 && a ? 11 : 8) * s, tebal: i === 0 && !!a, rata: 'tengah', warna: w.fg }));
       return;
     }
-    lm.baris.forEach((r, ri) => pen.persegi(x, ry[ri] as number, wHari, rh[ri] as number, { isi: r.t === 'ist' ? '#ecfdf5' : '#ffffff', garis: '#e2e8f0', tebal: 0.5 }));
+    // baris istirahat hijau hanya pada hari yang memang istirahat di situ (pola istirahat tiap skema bisa berbeda)
+    const istHariIni = new Set(lm.sel.filter((c) => c.hari === hi && c.isi.jenis === 'ist').map((c) => c.r1));
+    lm.baris.forEach((r, ri) => pen.persegi(x, ry[ri] as number, wHari, rh[ri] as number, { isi: r.t === 'ist' && istHariIni.has(ri) ? '#ecfdf5' : '#ffffff', garis: '#e2e8f0', tebal: 0.5 }));
   });
 
   // isi

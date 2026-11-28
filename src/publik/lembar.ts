@@ -37,14 +37,28 @@ export interface Lembar {
   labelBersama: (string | null)[];
   /** per hari: indeks baris -> rentang waktu "07.00-07.45" menurut skema hari itu */
   waktu: Map<number, string>[];
+  /** per hari: indeks baris yang diikuti istirahat hari itu padahal tidak ada kolom istirahat di sana (hanya mode 'acuan') */
+  istSendiri: Set<number>[];
 }
 
-export function susunLembar(p: Proyek, tanggal: string, mode: ModeP, id: string): Lembar {
+/**
+ * `istirahat`: 'gabungan' = satu baris istirahat untuk setiap posisi istirahat yang dipakai hari mana pun (istirahat tiap hari sejajar);
+ * 'acuan' = hanya posisi istirahat pola hari yang paling umum pada pekan itu (seperti aSc timetable: satu pola kolom per halaman);
+ * istirahat hari yang berbeda dicatat di `istSendiri` (indeks baris sebelum garis istirahat) untuk digambar sebagai garis tebal.
+ */
+export function susunLembar(p: Proyek, tanggal: string, mode: ModeP, id: string, o: { istirahat?: 'gabungan' | 'acuan' } = {}): Lembar {
   const pk = jadwalPekanP(p, tanggal, mode, id);
   const hari = pk.hari;
   const adaPagi = hari.some((h) => h.elemen.some((e) => e.jenis === 'nonKbm'));
   const maks = Math.max(0, ...hari.flatMap((h) => h.elemen.map((e) => (e.jenis === 'blok' || e.jenis === 'kosong' ? e.b : 0))));
-  const istSetelah = new Set(hari.flatMap((h) => h.elemen.flatMap((e) => (e.jenis === 'istirahat' ? [e.setelah] : []))));
+  const tandaIst = (h: HariP): string => h.elemen.flatMap((e) => (e.jenis === 'istirahat' ? [e.setelah] : [])).join(',');
+  let istSetelah = new Set(hari.flatMap((h) => h.elemen.flatMap((e) => (e.jenis === 'istirahat' ? [e.setelah] : []))));
+  if (o.istirahat === 'acuan') {
+    const hitung = new Map<string, number>();
+    for (const h of hari) if (h.status === 'normal') hitung.set(tandaIst(h), (hitung.get(tandaIst(h)) ?? 0) + 1);
+    const acuan = [...hitung.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (acuan !== undefined) istSetelah = new Set(acuan === '' ? [] : acuan.split(',').map(Number));
+  }
   const baris: BarisLembar[] = [];
   if (adaPagi) baris.push({ t: 'pagi', n: 0 });
   if (istSetelah.has(0)) baris.push({ t: 'ist', n: 0 });
@@ -57,11 +71,14 @@ export function susunLembar(p: Proyek, tanggal: string, mode: ModeP, id: string)
   const sel: SelLembar[] = [];
   const nomorPoster: Map<number, string>[] = [];
   const waktu: Map<number, string>[] = [];
+  const istSendiri: Set<number>[] = [];
   hari.forEach((h, hi) => {
     const nomor = new Map<number, string>();
     nomorPoster.push(nomor);
     const wk = new Map<number, string>();
     waktu.push(wk);
+    const sendiri = new Set<number>();
+    istSendiri.push(sendiri);
     if (h.status !== 'normal') return;
     let terakhir = 0;
     for (const c of h.kolom) {
@@ -85,6 +102,10 @@ export function susunLembar(p: Proyek, tanggal: string, mode: ModeP, id: string)
       } else if (e.jenis === 'istirahat') {
         const r = idx('ist', e.setelah);
         if (r >= 0) sel.push({ hari: hi, r1: r, r2: r, isi: { jenis: 'ist', nama: e.nama } });
+        else {
+          const dasar = e.setelah === 0 ? idx('pagi', 0) : idx('jam', e.setelah);
+          if (dasar >= 0) sendiri.add(dasar);
+        }
       } else {
         const r1 = idx('jam', e.a);
         const r2 = idx('jam', e.b);
@@ -96,5 +117,5 @@ export function susunLembar(p: Proyek, tanggal: string, mode: ModeP, id: string)
 
   let no = 0;
   const labelBersama = baris.map((r) => (r.t === 'ist' ? null : String(++no)));
-  return { senin: pk.senin, hari, baris, sel, nomorPoster, labelBersama, waktu };
+  return { senin: pk.senin, hari, baris, sel, nomorPoster, labelBersama, waktu, istSendiri };
 }
