@@ -39,6 +39,12 @@ export interface PemanggilAi {
 /** Perbaikan otomatis: bila validator menolak usulan, AI diberi satu kesempatan memperbaiki sebelum admin melihatnya. */
 export const MAKS_PERBAIKAN = 1;
 
+/** Tanggal hari ini menurut jam perangkat, "YYYY-MM-DD". */
+export function tanggalLokal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export class SesiAi {
   readonly riwayat: PesanAi[] = [];
   readonly tampil: Giliran[] = [];
@@ -46,7 +52,11 @@ export class SesiAi {
   private potret: Potret | null = null;
   private urut = 0;
 
-  constructor(private readonly pemanggil: PemanggilAi) {}
+  /** `hariIni` dipakai AI sebagai acuan "besok" atau "pekan depan"; diberikan dari luar agar tes tetap deterministik. */
+  constructor(
+    private readonly pemanggil: PemanggilAi,
+    private readonly hariIni: () => string = tanggalLokal,
+  ) {}
 
   private tambah(g: Omit<Giliran, 'id'>): Giliran {
     const baru: Giliran = { ...g, id: ++this.urut };
@@ -92,7 +102,7 @@ export class SesiAi {
     const pengantar = this.catatan.length ? `${this.catatan.join('\n')}\n\n` : '';
     const pesanAdmin = `${pengantar}${teks}`;
     const dasar: PesanAi[] = [...this.riwayat];
-    let kirimKe: PesanAi[] = [...dasar, { peran: 'user', teks: `${pesanAdmin}\n\nDATA (terbaru):\n${ringkasData(p, ktx)}` }];
+    let kirimKe: PesanAi[] = [...dasar, { peran: 'user', teks: `${pesanAdmin}\n\nDATA (terbaru):\n${ringkasData(p, ktx, this.hariIni())}` }];
 
     let balasan: BalasanAi | null = null;
     let hasil: (HasilTerapkan & { proyek?: Proyek }) | null = null;

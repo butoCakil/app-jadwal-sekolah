@@ -91,6 +91,21 @@ describe('tab Asisten AI: alur dari brankas sampai usulan diterapkan', () => {
     const terakhir = badan.contents.at(-1).parts[0].text as string;
     expect(terakhir).toContain('Admin MENERAPKAN usulan Anda');
     expect(badan.contents.length).toBe(3);
+
+    // kalender: data kegiatan ikut terkirim, usulan geser tampil dengan tanggal berhari, dan diterapkan ke kalender
+    const kegUkk = () => p.kalender.find((x) => x.id === 'k-ukk');
+    fetchPalsu.mockImplementationOnce(async () => balasanGemini({ jawaban: 'UKK digeser satu pekan.', instruksi: [{ op: 'geserKegiatan', kegiatan: 'k-ukk', hari: 7 }] }));
+    nilaiForm.aiTeks = 'UKK diundur 1 minggu';
+    klikAi(k, tombol('aiKirim'));
+    await tunggu(() => renderAi(k).includes('Sen 2026-11-30 – Jum 2026-12-04'));
+    const badan3 = JSON.parse(String((fetchPalsu.mock.calls[2] as unknown as [string, RequestInit])[1].body));
+    const data3 = badan3.contents.at(-1).parts[0].text as string;
+    expect(data3).toContain('k-ukk | Sen 2026-11-23 – Jum 2026-11-27 | kegiatan:UKK');
+    expect(data3).toMatch(/Hari ini: \w{3} \d{4}-\d{2}-\d{2}\./);
+    expect(kegUkk()?.mulai).toBe('2026-11-23');
+    const idGeser = /data-aksi="aiTerapkan" data-id="(\d+)"/.exec(renderAi(k))?.[1] as string;
+    klikAi(k, tombol('aiTerapkan', { id: idGeser }));
+    expect(kegUkk()).toMatchObject({ mulai: '2026-11-30', selesai: '2026-12-04' });
   }, 30000);
 
   it('kunci ditolak Google: dilaporkan jelas dan kunci ditandai tidak sah', async () => {

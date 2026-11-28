@@ -1,6 +1,7 @@
 import type { Aturan, Beban, Kegiatan, Proyek, Semester } from '../model/tipe';
 import { NAMA_HARI } from '../model/tipe';
 import { kategoriMapel } from '../model/kategoriMapel';
+import { DAFTAR_OP_KALENDER, terapkanKalender, uraiKalender, type OpKalender } from './kalenderAi';
 import { bebanInduk, bebanKegiatan, bebanUntukDiubah, hapusBebanKegiatan, jadikanTerdampak, modelWarisan, semesterKegiatan, tandaBebanInduk, daftarSemester } from '../model/simpul';
 
 /**
@@ -29,9 +30,10 @@ export type Instruksi =
   | { op: 'guruTidakTersedia'; guru: string; hari: string[]; jam?: number[] }
   | { op: 'ruangTerlarang'; rombel?: string; jurusan?: string; ruang: string[] }
   | { op: 'kunciRuang'; ruang: string[]; hari?: string[]; mulai?: string; selesai?: string }
-  | { op: 'susun'; cara?: 'nol' | 'lengkapi' | 'induk'; detik?: number; lunak?: boolean };
+  | { op: 'susun'; cara?: 'nol' | 'lengkapi' | 'induk'; detik?: number; lunak?: boolean }
+  | OpKalender;
 
-export const DAFTAR_OP = ['ubahJp', 'hapusBeban', 'tambahBeban', 'ruangBeban', 'guruTidakTersedia', 'ruangTerlarang', 'kunciRuang', 'susun'] as const;
+export const DAFTAR_OP = ['ubahJp', 'hapusBeban', 'tambahBeban', 'ruangBeban', 'guruTidakTersedia', 'ruangTerlarang', 'kunciRuang', 'susun', ...DAFTAR_OP_KALENDER] as const;
 
 /** Di mana instruksi diterapkan: kegiatan (bila diisi) atau induk semester. */
 export interface KonteksInstruksi {
@@ -160,6 +162,14 @@ export function uraiInstruksi(mentah: unknown): { instruksi: Instruksi[]; galat:
         else if (x.detik !== undefined && !(typeof x.detik === 'number' && x.detik >= 1 && x.detik <= 120)) galat.push(`${t} (susun): detik harus 1 sampai 120.`);
         else if (x.lunak !== undefined && typeof x.lunak !== 'boolean') galat.push(`${t} (susun): lunak harus true atau false.`);
         else hasil.push({ op: 'susun', ...(x.cara ? { cara: x.cara } : {}), ...(typeof x.detik === 'number' ? { detik: x.detik } : {}), ...(typeof x.lunak === 'boolean' ? { lunak: x.lunak } : {}) });
+        break;
+      }
+      case 'tambahKegiatan':
+      case 'ubahKegiatan':
+      case 'geserKegiatan':
+      case 'hapusKegiatan': {
+        const k = uraiKalender(x, t, galat);
+        if (k) hasil.push(k);
         break;
       }
       default:
@@ -474,6 +484,12 @@ export function terapkanInstruksi(p: Proyek, ktx: KonteksInstruksi, daftar: Inst
         hasil.perubahan.push({ teks: `Ruang dikunci selama ${g.nama}: ${ins.ruang.join(', ')}${ins.hari?.length ? ` (${ins.hari.join(', ')})` : ''}${ins.mulai ? ` ${ins.mulai}–${ins.selesai}` : ''}` });
         break;
       }
+      case 'tambahKegiatan':
+      case 'ubahKegiatan':
+      case 'geserKegiatan':
+      case 'hapusKegiatan':
+        terapkanKalender(p, ins, t, hasil);
+        break;
       case 'susun':
         if (ins.cara === 'induk' && !(g && warisan)) return void hasil.galat.push(`${t}: cara "induk" (mulai dari jadwal induk) hanya untuk kegiatan; pada jadwal induk pakai "nol" atau "lengkapi".`);
         hasil.susun = { ...(ins.cara ? { cara: ins.cara } : {}), ...(ins.detik ? { detik: ins.detik } : {}), ...(ins.lunak !== undefined ? { lunak: ins.lunak } : {}) };

@@ -511,6 +511,27 @@ Masukan Benny setelah melihat di ponsel dan perubahannya:
 - **Diuji:** 20 tes baru (banding, gabungan tiga arah, alur dengan GitHub palsu termasuk dua perangkat dan balapan penulisan, bolak-balik cadangan, bawaan) dan satu uji peramban penuh dengan GitHub palsu (spanduk, repo kosong, brankas, kirim, bentrok, gabung, muat ulang, ekspor, bawaan) tanpa galat halaman.
 - **Belum:** tidak ada pemeriksaan otomatis bahwa GitHub berubah saat aplikasi dibuka (sinkron hanya saat tombol ditekan); sinkron tidak mencakup dataset tersimpan (hanya draf, dataset ikut paket cadangan).
 
+### 11.5t Perbaikan kecil dan Asisten AI untuk kalender (28 Nov 2026, sore)
+
+**Kolom istirahat publik.** Pada tab Semua, Per pekan, dan Per hari, istirahat kini kolom kuning penuh (amber-100, ikon cangkir pada kepala) seperti grid admin, bukan lagi garis putus-putus hijau yang nyaris tak terlihat. Lebarnya 0,4 dari bobot kolom JP. Cetak PDF belum diubah.
+
+**Perbaikan PIN modal Sinkron.** PIN dibaca sebelum modal digambar ulang (sebelumnya terbaca kosong sehingga dianggap salah).
+
+**Asisten AI: kalender.** Asisten tetap hanya mengusulkan instruksi terstruktur; kode memvalidasi dan admin menyetujui. Tambahan:
+
+| Operasi | Fungsi |
+|---|---|
+| `tambahKegiatan` | Kegiatan baru (punya versi jadwal kosong sendiri, kelas ikut induk, kelas tidak aktif semester dipertahankan, `tidakAktif` menambah kelas/tingkat) atau agenda (`agenda:true`, tidak mengubah jadwal). `selesai` kosong = satu hari. |
+| `ubahKegiatan` | Mengubah nama, jenis, tanggal, untuk, hari berlaku, catatan, daftar kelas tidak aktif. Tidak menggeser tugas mengawas. Jenis libur tidak boleh ditukar dengan non-libur. |
+| `geserKegiatan` | `hari` (7 = diundur satu pekan) atau `mulai` (+ `selesai`). Kode menghitung tanggal; tugas mengawas ikut digeser; jadwal khusus (versi) ikut karena terikat pada kegiatan. Peringatan bila bukan kelipatan 7 hari, pindah semester, atau melewati batas semester. |
+| `hapusKegiatan` | Menghapus kegiatan atau agenda; peringatan bila jadwal khusus atau tugas mengawas ikut terbuang. |
+
+Kegiatan dirujuk lewat id (disukai) atau nama persis; nama yang hanya cocok sebagian harus unik, selain itu dilaporkan ambigu beserta id kandidat (tidak ditebak). Semua operasi kalender berlaku di konteks mana pun dan semua-atau-tidak-sama-sekali, sama seperti operasi beban. Implementasi: `src/ai/kalenderAi.ts`.
+
+**Menjawab dari data.** `ringkasData` kini memuat daftar semester dan seluruh kalender (id, tanggal berhari "Sen 2026-11-30", jenis, nama, untuk, hari, kelasTidakAktif bila beda dari dasar semester, jumlah pengawas/ruangKunci/slot jadwal khusus) serta "Hari ini" dari jam perangkat. Nama hari dihitung kode agar AI tidak menebak. Aturan prompt baru: pertanyaan dijawab dari data tanpa instruksi, dan acara yang tidak jelas memengaruhi KBM atau tidak ditanyakan balik. Perubahan kalender yang dibuat admin di luar chat ikut dilaporkan ke AI lewat potret.
+
+**Batas yang disengaja.** Kegiatan yang baru dibuat belum bisa dipakai instruksi beban/kunci ruang pada usulan yang sama (terapkan dulu, lalu atur). Pola jam khusus kegiatan belum bisa dipilih lewat AI (atur dari tab Kalender).
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?

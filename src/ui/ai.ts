@@ -133,11 +133,12 @@ function renderChat(k: Konteks): string {
   const contoh = g
     ? ['Gandakan jam MTK, BI, dan ENG untuk kelas XII', 'Kurangi mapel kejuruan XII TE jadi 2 JP lalu susun dari jadwal induk', 'Kunci lab G1 dan G2 pada hari Senin jam 07:00 sampai 10:00']
     : ['Jadikan PRE kelas XII TE 1 enam JP', 'Guru BEN tidak tersedia Senin jam 1 dan 2', 'Kelas jurusan TE tidak boleh memakai ruang G3'];
+  const contohKalender = ['Kapan ASAS dimulai dan kelas apa saja yang libur saat itu?', 'Tanggal 5 Desember ada rapat dinas', 'UKK diundur 1 minggu', 'Buat kegiatan ASTS dari 7 sampai 11 Desember, kelas XII tidak aktif'];
   const riwayat = st.sesi.tampil.length
     ? st.sesi.tampil.map(giliranHtml).join('')
-    : `<div class="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">Tulis permintaan dalam bahasa sehari-hari. Asisten mengusulkan perubahan data (JP, ruang, aturan) dan, bila diminta, menjalankan penyusunan. <b>Tidak ada yang berubah sebelum Anda menekan Terapkan.</b>${contoh.map((c) => `<div class="mt-1"><button class="text-left text-[#2347b8] underline" data-aksi="aiContoh" data-teks="${esc(c)}">${esc(c)}</button></div>`).join('')}</div>`;
+    : `<div class="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">Tulis permintaan dalam bahasa sehari-hari. Asisten menjawab pertanyaan dari data yang tersimpan (jadwal, kalender, kegiatan), mengusulkan perubahan data (JP, ruang, aturan, kegiatan dan agenda kalender) dan, bila diminta, menjalankan penyusunan. <b>Tidak ada yang berubah sebelum Anda menekan Terapkan.</b>${[...contoh, ...contohKalender].map((c) => `<div class="mt-1"><button class="text-left text-[#2347b8] underline" data-aksi="aiContoh" data-teks="${esc(c)}">${esc(c)}</button></div>`).join('')}</div>`;
   return `<div class="kartu p-4">
-    <div class="mb-2 flex flex-wrap items-center gap-2 text-sm"><span class="text-slate-600">Perubahan diterapkan pada <b>${esc(sasaran)}</b>.</span><span class="ml-auto"></span>
+    <div class="mb-2 flex flex-wrap items-center gap-2 text-sm"><span class="text-slate-600">Perubahan beban dan aturan diterapkan pada <b>${esc(sasaran)}</b>; perubahan kalender berlaku untuk seluruh tahun.</span><span class="ml-auto"></span>
       <button class="tombol !text-xs" data-aksi="aiBaru" ${st.sesi.tampil.length ? '' : 'disabled'}>Percakapan baru</button></div>
     <div id="aiRiwayat" class="max-h-[55vh] min-h-[160px] space-y-3 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3">${riwayat}${st.kirim ? '<div class="text-sm text-slate-500">Asisten sedang berpikir…</div>' : ''}</div>
     ${st.galat ? `<div class="mt-2 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(st.galat)}</div>` : ''}
