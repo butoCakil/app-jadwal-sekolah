@@ -1,7 +1,7 @@
 {
  "format": "jadwal-smkn-bansari-ai",
  "versi": 1,
- "disimpan": "2026-11-28T12:02:21.542Z",
+ "disimpan": "2026-11-28T12:03:38.794Z",
  "pengaturan": {
   "nilai": {
    "model": "gemini-3.5-flash-lite",
@@ -23,7 +23,7 @@
    "id": "pmx0aq4832ym",
    "judul": "",
    "dibuat": 1795863441891,
-   "diubah": 1795867338855,
+   "diubah": 1795867368648,
    "sasaran": {
     "mode": "tetap",
     "semesterId": "genap"
