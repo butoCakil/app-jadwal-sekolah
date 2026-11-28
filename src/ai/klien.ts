@@ -8,7 +8,7 @@
  * sibuk = model kelebihan beban atau gangguan sementara (500 sampai 504, jaringan putus, batas waktu);
  * model = model tidak tersedia untuk kunci/akun ini (404).
  */
-export type GalatAi = 'menit' | 'harian' | 'kunci' | 'sibuk' | 'model' | 'lain';
+export type GalatAi = 'menit' | 'harian' | 'kunci' | 'sibuk' | 'jaringan' | 'model' | 'lain';
 
 /** Batas kuota yang dilaporkan Google pada balasan 429 (QuotaFailure.violations). */
 export interface BatasTerdeteksi {
@@ -118,10 +118,11 @@ export function klienGemini(ambil: Ambil = (u, i) => fetch(u, i), suhu = 0.2): K
         const keluar = (j.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? '').join('');
         return { ok: true, teks: keluar, token: { masuk: j.usageMetadata?.promptTokenCount ?? 0, keluar: j.usageMetadata?.candidatesTokenCount ?? 0 } };
       } catch (e) {
-        // batas waktu atau jaringan putus: gangguan sementara seperti 503
+        // batas waktu: gangguan sementara seperti 503. Jaringan putus (permintaan tak sampai ke Google): jenis sendiri,
+        // bukan salah kunci atau model, sehingga tidak ada yang dijeda.
         const pesan = String((e as Error).message).slice(0, 300);
         const waktuHabis = /abort|timeout|timed out/i.test(pesan);
-        return { ok: false, jenis: 'sibuk', status: 0, pesan: waktuHabis ? `Google tidak menjawab dalam batas waktu (${pesan})` : pesan };
+        return waktuHabis ? { ok: false, jenis: 'sibuk', status: 0, pesan: `Google tidak menjawab dalam batas waktu (${pesan})` } : { ok: false, jenis: 'jaringan', status: 0, pesan };
       }
     },
     async daftarModel(kunci) {

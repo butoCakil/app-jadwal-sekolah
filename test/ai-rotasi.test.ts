@@ -6,7 +6,7 @@ const REQ: PermintaanAi = { sistem: 'aturan', pesan: [{ peran: 'user', teks: 'ha
 const kunci = (...id: string[]): KunciAi[] => id.map((x) => ({ id: x, label: `Kunci ${x}`, nilai: `rahasia-${x}`, aktif: true }));
 const png = (model: string, cadangan: string[], rpm = 15, rpd = 500): PengaturanAi => ({ model, cadangan, rpm, rpd });
 const ok = (teks = '{}'): HasilPanggilAi => ({ ok: true, teks, token: { masuk: 10, keluar: 5 } });
-const gagal = (jenis: 'menit' | 'harian' | 'kunci' | 'sibuk' | 'model' | 'lain', status: number, extra: Partial<Extract<HasilPanggilAi, { ok: false }>> = {}): HasilPanggilAi => ({ ok: false, jenis, status, pesan: `galat ${status}`, ...extra });
+const gagal = (jenis: 'menit' | 'harian' | 'kunci' | 'sibuk' | 'jaringan' | 'model' | 'lain', status: number, extra: Partial<Extract<HasilPanggilAi, { ok: false }>> = {}): HasilPanggilAi => ({ ok: false, jenis, status, pesan: `galat ${status}`, ...extra });
 
 /** Klien palsu: skrip jawaban per pasangan `rahasia|model`, atau fungsi; mencatat urutan panggilan. */
 function klienPalsu(skrip: (kunci: string, model: string, n: number) => HasilPanggilAi) {
@@ -180,9 +180,24 @@ describe('AI: klien Gemini', () => {
     expect(await cek(404, { error: { message: 'no model' } })).toMatchObject({ jenis: 'model' });
     expect(await cek(503, 'x')).toMatchObject({ jenis: 'sibuk' });
     const putus = await klienGemini(async () => { throw new Error('Failed to fetch'); }).hasilkan('k', 'm', REQ);
-    expect(putus).toMatchObject({ ok: false, jenis: 'sibuk', status: 0 });
+    expect(putus).toMatchObject({ ok: false, jenis: 'jaringan', status: 0 });
+    const lama = await klienGemini(async () => { throw new Error('The operation was aborted due to timeout'); }).hasilkan('k', 'm', REQ);
+    expect(lama).toMatchObject({ ok: false, jenis: 'sibuk', status: 0 });
     expect(pilahGalat(429, 'per day')).toBe('harian');
     expect(uraiKuota('bukan json')).toEqual({ batas: [] });
+  });
+
+  it('jaringan putus: berhenti seketika dengan pesan jelas, tanpa menjeda kunci dan tanpa mencoba pasangan lain', async () => {
+    let putus = true;
+    const { r, panggilan, tidurLog } = dasar({ skrip: () => (putus ? gagal('jaringan', 0, { pesan: 'Failed to fetch' }) : ok()) });
+    const h = await r.panggil(REQ);
+    expect(h).toMatchObject({ ok: false, alasan: 'galat' });
+    expect(!h.ok && h.pesan).toContain('Tidak bisa menghubungi Google');
+    expect(!h.ok && h.pesan).not.toContain('batas per menit');
+    expect(panggilan).toHaveLength(1);
+    expect(tidurLog).toEqual([]);
+    putus = false; // sinyal pulih: langsung bisa dicoba lagi tanpa menunggu jeda
+    expect((await r.panggil(REQ)).ok).toBe(true);
   });
 
   it('daftar model hanya yang mendukung generateContent', async () => {

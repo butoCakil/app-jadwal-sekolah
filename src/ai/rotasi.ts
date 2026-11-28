@@ -236,6 +236,11 @@ export class PengaturRotasi {
       }
       this.catatGalat(kunci, model, h.status, h.pesan);
       galatTerakhir = `${h.status}: ${h.pesan}`;
+      if (h.jenis === 'jaringan') {
+        // permintaan tidak sampai ke Google: bukan salah kunci atau model, jadi tidak ada yang dijeda dan tidak perlu mencoba pasangan lain
+        await this.simpan();
+        return { ok: false, alasan: 'galat', pesan: `Tidak bisa menghubungi Google. Periksa koneksi internet Anda, lalu coba lagi. (${h.pesan})` };
+      }
       if (h.jenis === 'harian' || h.jenis === 'menit') {
         this.catatBatas(s, h.batas ?? []);
         if (h.jenis === 'harian') s.habisSampai = resetKuotaBerikut(new Date(this.kini()));
