@@ -8,7 +8,8 @@ import { SesiAi, type Giliran } from '../ai/sesi';
 import { rencanakan, terapkanInstruksi, type KonteksInstruksi } from '../ai/instruksi';
 import { batuNisan, daftarAktif, gabungPercakapan, jumlahMenunggu, judulTampil, percakapanBaru, type Percakapan, type SasaranAi } from '../ai/percakapan';
 import { sinkronkanAi } from '../ai/sinkronAi';
-import { daftarSemester, fokusInduk, modelWarisan, semesterKegiatan } from '../model/simpul';
+import { daftarSemester, fokusInduk, fokusSemester, modelWarisan, semesterKegiatan } from '../model/simpul';
+import { bukaSimpul } from './hub';
 import { aturSusun, mulaiSusun, pasangPengamatSusun } from './susun';
 import { esc } from './util';
 import { IKON, logoAi } from './aiLogo';
@@ -640,9 +641,12 @@ function terapkan(k: Konteks, g: Giliran): void {
   tandaiUbah();
   k.lapor(cek.perubahan.length ? `Diterapkan: ${cek.perubahan.length} perubahan.` : 'Diterapkan.');
   if (cek.susun) {
+    // penyusunan berjalan pada sasaran percakapan (bukan tampilan di belakang): pindah fokus dulu, lalu hitung ulang turunan
+    const sasaran = ktx.kegiatanId ?? (ktx.semesterId ? fokusSemester(ktx.semesterId) : null);
+    if (sasaran) bukaSimpul(k, sasaran, 'susun');
+    else k.ke('susun');
     const kegiatanAktif = !!k.turunan.periode && modelWarisan(k.turunan.periode) && !fokusInduk(k.ui.fokus);
     aturSusun(cek.susun, kegiatanAktif);
-    k.ke('susun');
     if (layarKecil()) {
       st.buka = false;
       simpanPrefJendela();

@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { proyekSekolah } from '../src/model/sekolahData';
 import { hitungTurunan } from '../src/ui/turunan';
-import { klikAi, renderAi } from '../src/ui/ai';
+import { klikAi, renderAi, ubahAi } from '../src/ui/ai';
 import type { Konteks, StatusUI } from '../src/ui/konteks';
 import { bebanInduk } from '../src/model/simpul';
 
@@ -121,5 +121,30 @@ describe('jendela Asisten AI: alur dari brankas sampai usulan diterapkan', () =>
     klikAi(k, tombol('aiSub', { sub: 'pengaturan' }));
     expect(renderAi(k)).toContain('tidak sah');
     expect(renderAi(k)).toContain('API key not valid');
+  }, 30000);
+});
+
+describe('jendela Asisten AI: sasaran percakapan', () => {
+  it('menyusun jadwal berjalan pada semester yang dipilih di chat, bukan tampilan di belakang', async () => {
+    const { k, p } = buatKonteks();
+    const genap = p.semesters?.[1];
+    expect(genap).toBeDefined();
+    // keadaan modul masih dari tes sebelumnya (kunci sempat ditandai tidak sah): catatan batas direset
+    renderAi(k);
+    klikAi(k, tombol('aiResetStatus'));
+    await new Promise((r) => setTimeout(r, 50));
+    klikAi(k, tombol('aiBaru'));
+    ubahAi(k, { id: 'aiSasaran', value: `sem:${genap?.id}` } as never);
+    expect(renderAi(k)).toContain('jadwal induk Genap');
+    vi.stubGlobal('fetch', vi.fn(async () => balasanGemini({ jawaban: 'Menyusun semester genap.', instruksi: [{ op: 'susun', cara: 'nol' }] })));
+    nilaiForm.aiTeks = 'mulai susun jadwal semester genap';
+    klikAi(k, tombol('aiKirim'));
+    await tunggu(() => renderAi(k).includes('data-aksi="aiTerapkan"'));
+    expect(renderAi(k)).toContain('Otomatis');
+    const id = /data-aksi="aiTerapkan" data-id="(\d+)"/.exec(renderAi(k))?.[1] as string;
+    expect(k.ui.fokus).toBe('auto'); // tampilan di belakang masih menurut tanggal
+    klikAi(k, tombol('aiTerapkan', { id }));
+    expect(k.ui.fokus).toBe(`sem:${genap?.id}`);
+    expect(k.ke).toHaveBeenCalledWith('susun');
   }, 30000);
 });

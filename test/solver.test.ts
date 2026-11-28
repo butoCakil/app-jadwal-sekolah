@@ -99,3 +99,29 @@ describe('susun (data sekolah, jadwal reguler aSc Gasal 2026)', () => {
     expect(h.total - h.terjadwal).toBeLessThanOrEqual(12);
   }, 20000);
 });
+
+describe('susun: batas waktu keras dan mode otomatis', () => {
+  it('batas waktu tidak jauh terlewati walau satu putaran penempatan lebih lama dari batas', () => {
+    const p = proyekSekolah('tahun');
+    const sem = p.semesters?.[1];
+    expect(sem).toBeDefined();
+    const kl = structuredClone(p);
+    kl.beban = structuredClone(p.beban.filter((b) => b.versiId === sem?.versiId && !b.nonTatapMuka));
+    for (const v of kl.versi) v.slots = [];
+    const t0 = Date.now();
+    const h = susun(kl, { skemaPerHari: kl.polaReguler, kedalaman: 3, prioritasLunak: 'bilaPerlu', batasMs: 1500 });
+    const lama = Date.now() - t0;
+    expect(lama).toBeLessThan(1500 + 4000);
+    expect(h.total).toBeGreaterThan(0);
+    expect(pelanggaran(kl, h.slots)).toEqual([]);
+  }, 30000);
+
+  it('mode otomatis berhenti sendiri bila tidak membaik, jauh sebelum batas atas', () => {
+    const p = kosong(proyekContoh());
+    const t0 = Date.now();
+    const h = susun(p, { skemaPerHari: p.polaReguler, batasMs: 120000, sabarMs: 700 });
+    expect(Date.now() - t0).toBeLessThan(20000);
+    expect(h.terjadwal).toBe(h.total);
+    expect(pelanggaran(p, h.slots)).toEqual([]);
+  }, 60000);
+});

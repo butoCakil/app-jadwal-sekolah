@@ -49,8 +49,13 @@ export interface OpsiSusun {
   biayaRuangCadangan?: number;
   /** Kedalaman rantai geser saat menempatkan pertemuan yang buntu (1 = menggeser penghalang langsung). Bawaan 1. */
   kedalaman?: number;
-  /** Batas waktu total (milidetik). Bawaan 8000. */
+  /** Batas waktu total (milidetik), keras: tidak dilewati (kecuali satu langkah terakhir). Bawaan 8000. */
   batasMs?: number;
+  /**
+   * Mode otomatis: berhenti bila selama sekian milidetik tidak ada perbaikan (JP tertempatkan bertambah atau biaya turun),
+   * walau `batasMs` belum habis. `batasMs` tetap menjadi batas atas.
+   */
+  sabarMs?: number;
   benih?: number;
   kemajuan?: (m: Kemajuan) => void;
 }
@@ -788,8 +793,10 @@ export function susun(p: Proyek, opsi: OpsiSusun): HasilSusun {
   const t0 = Date.now();
   const batas = opsi.batasMs ?? 8000;
   const ketat = susunSekali(p, { ...opsi, prioritasLunak: false, batasMs: batas * 0.6 });
-  if (ketat.sisa.length === 0) return { ...ketat, ms: Date.now() - t0 };
-  const lunak = susunSekali(p, { ...opsi, prioritasLunak: true, biayaRuangCadangan: opsi.biayaRuangCadangan ?? 60, awal: ketat.slots, batasMs: Math.max(500, batas - (Date.now() - t0)) });
+  // tahap kedua hanya bila masih ada JP yang tidak muat dan waktu tersisa; tidak pernah melewati batas total
+  const sisaWaktu = batas - (Date.now() - t0);
+  if (ketat.sisa.length === 0 || sisaWaktu < 200) return { ...ketat, ms: Date.now() - t0 };
+  const lunak = susunSekali(p, { ...opsi, prioritasLunak: true, biayaRuangCadangan: opsi.biayaRuangCadangan ?? 60, awal: ketat.slots, batasMs: sisaWaktu });
   return { ...(lunak.terjadwal > ketat.terjadwal ? lunak : ketat), ms: Date.now() - t0 };
 }
 
@@ -809,15 +816,26 @@ function susunSekali(p: Proyek, opsi: OpsiSusun & { prioritasLunak?: boolean }):
 
   let terbaik: Potret[] | null = null;
   let nilaiTerbaik = Infinity;
-  const awalMs = Math.max(300, batas * 0.3);
+  const otomatis = !!opsi.sabarMs;
+  const awalMs = otomatis ? 0 : Math.max(300, batas * 0.3);
+  const maksPutaran = otomatis ? 3 : 40;
+  const lewat = () => Date.now() - t0 >= batas;
   let putaran = 0;
-  while (putaran < 2 || (Date.now() - t0 < awalMs && putaran < 40)) {
+  let laporAwal = 0;
+  // putaran pertama selalu dikerjakan; putaran berikutnya hanya selama masih dalam jatah awal. Batas keras dicek di tiap penempatan.
+  while (putaran < 1 || (putaran < maksPutaran && Date.now() - t0 < awalMs) || (otomatis && putaran < 2 && !lewat())) {
     putaran += 1;
     const m = new Mesin(p, opsi);
     const daftar = [...m.chunks].sort((a, b) => sulit(b) - sulit(a) + (rnd() - 0.5) * (putaran === 1 ? 0 : 160));
     for (const c of daftar) {
       if (c.hari >= 0) continue; // sudah tertempatkan dari jadwal awal
+      if (lewat() && putaran > 1) break;
       if (!m.usahakan(c, rnd)) { /* tetap belum; dilaporkan di akhir */ }
+      if (Date.now() - laporAwal > 400) {
+        laporAwal = Date.now();
+        laporan('awal', m);
+      }
+      if (lewat()) break;
     }
     const nilai = m.jpBelum() * 1000 + m.biayaTotal();
     if (nilai < nilaiTerbaik) {
@@ -825,6 +843,7 @@ function susunSekali(p: Proyek, opsi: OpsiSusun & { prioritasLunak?: boolean }):
       terbaik = m.potret();
     }
     laporan('awal', m);
+    if (lewat()) break;
   }
 
   // --- perbaikan: tempatkan ulang chunk acak pada tempat terbaiknya (tidak pernah memburuk)
@@ -832,7 +851,9 @@ function susunSekali(p: Proyek, opsi: OpsiSusun & { prioritasLunak?: boolean }):
   m.muatPotret(terbaik ?? []);
   let langkah = 0;
   let terakhirLapor = Date.now();
-  while (Date.now() - t0 < batas) {
+  let nilaiMembaik = m.jpBelum() * 1000 + m.biayaTotal();
+  let waktuMembaik = Date.now();
+  while (!lewat()) {
     langkah += 1;
     const belum = m.belum();
     if (belum.length > 0 && langkah % 25 === 0) {
@@ -854,6 +875,13 @@ function susunSekali(p: Proyek, opsi: OpsiSusun & { prioritasLunak?: boolean }):
     if (Date.now() - terakhirLapor > 250) {
       terakhirLapor = Date.now();
       laporan('perbaiki', m);
+      if (opsi.sabarMs) {
+        const nilai = m.jpBelum() * 1000 + m.biayaTotal();
+        if (nilai < nilaiMembaik - 1e-9) {
+          nilaiMembaik = nilai;
+          waktuMembaik = Date.now();
+        } else if (Date.now() - waktuMembaik > opsi.sabarMs) break;
+      }
     }
     if (langkah > 400000) break;
   }

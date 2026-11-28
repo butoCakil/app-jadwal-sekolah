@@ -13,6 +13,7 @@ interface Masuk {
   biayaRuangCadangan?: number;
   aturan?: AturanPekan;
   batasMs: number;
+  sabarMs?: number;
   benih?: number;
 }
 const w = globalThis as unknown as { onmessage: ((e: MessageEvent<Masuk>) => void) | null; postMessage(m: unknown): void };

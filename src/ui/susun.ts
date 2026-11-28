@@ -18,7 +18,7 @@ interface Status {
   bebanHasil: Beban[];
   galat: string;
 }
-const st: Status = { mode: 'nol', detik: 10, lunak: true, jalan: false, kemajuan: null, hasil: null, bebanHasil: [], galat: '' };
+const st: Status = { mode: 'nol', detik: 0, lunak: true, jalan: false, kemajuan: null, hasil: null, bebanHasil: [], galat: '' };
 let pekerja: Worker | null = null;
 
 const bar = (m: Kemajuan | null) => {
@@ -41,8 +41,8 @@ export function renderSusun(k: Konteks): string {
         <label class="mt-2 flex items-start gap-2"><input type="radio" name="modeSusun" value="lengkapi" ${st.mode === 'lengkapi' ? 'checked' : ''}><span><b>Lengkapi</b><br><span class="text-xs text-slate-500">Mempertahankan slot yang sudah ada, hanya mengisi sisa JP.</span></span></label>
         ${kegiatanAktif ? `<label class="mt-2 flex items-start gap-2"><input type="radio" name="modeSusun" value="induk" ${st.mode === 'induk' ? 'checked' : ''}><span><b>Mulai dari jadwal induk</b><br><span class="text-xs text-slate-500">Kelas terdampak mulai dari jadwal induknya; hanya pertemuan yang melanggar aturan kegiatan (ruang terkunci, pengawas) yang digeser, sisanya diusahakan tetap.</span></span></label>` : ''}</fieldset>
       <fieldset class="rounded-lg border border-slate-200 p-3 text-sm"><legend class="px-1 text-xs font-semibold text-slate-500">Waktu menyusun</legend>
-        <select id="detikSusun" class="isian">${[5, 10, 20, 40].map((d) => `<option value="${d}" ${st.detik === d ? 'selected' : ''}>${d} detik</option>`).join('')}</select>
-        <div class="mt-2 text-xs text-slate-500">Lebih lama = jadwal lebih rapi (lebih sedikit jam kosong di tengah hari). Jumlah JP yang muat biasanya sudah tercapai di detik pertama.</div>
+        <select id="detikSusun" class="isian">${[0, 10, 20, 40, 120].map((d) => `<option value="${d}" ${st.detik === d ? 'selected' : ''}>${d === 0 ? 'Otomatis (sampai tidak membaik)' : `${d} detik`}</option>`).join('')}</select>
+        <div class="mt-2 text-xs text-slate-500">${st.detik === 0 ? 'Berhenti sendiri bila selama 15 detik tidak ada perbaikan (paling lama 4 menit). Di ponsel penyusunan bisa lebih lambat daripada di komputer.' : 'Batas waktu keras: penyusunan berhenti pada waktu itu dengan hasil terbaik yang sudah ada.'} Lebih lama = jadwal lebih rapi (lebih sedikit jam kosong di tengah hari).</div>
         <label class="mt-3 flex items-start gap-2"><input type="checkbox" id="lunakSusun" ${st.lunak ? 'checked' : ''}><span><b>Ruang prioritas boleh diganti</b><br><span class="text-xs text-slate-500">${kegiatanAktif ? 'Pada kegiatan, ruang prioritas hanya pilihan utama: bila penuh atau terkunci, dipakai ruang lain yang diizinkan.' : 'Pada jadwal reguler, ruang prioritas dijaga ketat: ruang lain dipakai hanya bila tanpa itu ada JP yang tidak muat.'} Ruang terlarang tetap tidak dipakai. Matikan agar ruang prioritas wajib.</span></span></label></fieldset></div>`;
   let bagian = '';
   if (st.jalan) {
@@ -170,7 +170,7 @@ export function mulaiSusun(k: Konteks): boolean {
     pekerja = null;
     k.gambar();
   };
-  w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, awal, aturan: k.turunan.aturan, kedalaman: 3, prioritasLunak: st.lunak ? (g && modelWarisan(g) ? true : 'bilaPerlu') : false, batasMs: st.detik * 1000 });
+  w.postMessage({ p: kloning, skemaPerHari: polaSusun, tetap, awal, aturan: k.turunan.aturan, kedalaman: 3, prioritasLunak: st.lunak ? (g && modelWarisan(g) ? true : 'bilaPerlu') : false, batasMs: st.detik ? st.detik * 1000 : 240_000, ...(st.detik ? {} : { sabarMs: 15_000 }) });
   k.gambar();
   return true;
 }

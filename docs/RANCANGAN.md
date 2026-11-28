@@ -550,6 +550,8 @@ Tab "Asisten AI" dihapus. Gantinya **balon bulat berlogo** di pojok kanan bawah 
 
 Teknis: `src/ui/ai.ts` (jendela, aksi), `aiKartu.ts` (kartu usulan, murni), `aiLogo.ts`, `src/ai/percakapan.ts` (model, gabung, berkas), `sinkronAi.ts`, `brankasSesi.ts`/`brankas.ts` (ingat di perangkat). Awalan aksi `ai*` tetap. Tes: `brankas-ingat`, `ai-percakapan`, `ai-kartu`, `ai-ui`, `cadangan`; diuji juga di peramban pada viewport 390×844 dan 1440×900 dengan Gemini dan GitHub palsu (buat brankas, kirim, terapkan sebagian, urungkan, sinkron, muat ulang tanpa PIN).
 
+**Perbaikan setelah dicoba di ponsel (28 Nov, 17.35).** (1) Tombol Terapkan pada usulan `susun` membuka Susun Otomatis lewat tampilan di belakang, bukan sasaran yang dipilih di chat (Genap tampil sebagai Gasal); kini fokus dipindah ke sasaran percakapan (`bukaSimpul`) sebelum penyusunan dimulai. (2) Batas waktu solver tidak keras: putaran penempatan awal minimal dua kali dan tahap kedua `bilaPerlu` minimal 500 ms tanpa cek waktu di dalamnya, sehingga di ponsel 20 detik bisa menjadi 60 detik dan progres tampak macet. Kini batas dicek di tiap penempatan (hanya putaran pertama yang wajib selesai), tahap kedua dilewati bila waktu hampir habis, dan progres dilaporkan tiap 0,4 detik. Pada data Genap di komputer: 20,1 detik untuk batas 20 detik. (3) Pilihan waktu baru **Otomatis** (bawaan, `sabarMs`): berhenti sendiri bila 15 detik tanpa perbaikan, paling lama 4 menit; pilihan 10/20/40/120 detik menjadi batas keras. Penyusunan dari AI tidak lagi memaksa 20 detik.
+
 **Belum:** daftar tunda tetap (denah ruang, keterangan publik per kegiatan, editor alasan tanpa KBM, ruang kunci TKA/UKK, preferensi berbobot, hosting/CNAME). Bubble belum bisa digeser posisinya.
 
 ### 11.6 Pertanyaan terbuka
