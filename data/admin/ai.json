@@ -1,0 +1,22 @@
+{
+ "format": "jadwal-smkn-bansari-ai",
+ "versi": 1,
+ "disimpan": "2026-11-28T10:26:45.748Z",
+ "pengaturan": {
+  "nilai": {
+   "model": "gemini-3.5-flash-lite",
+   "cadangan": [
+    "gemini-3.1-flash-lite",
+    "gemini-3.8-flash",
+    "gemini-3.6-flash",
+    "gemini-3-flash",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite"
+   ],
+   "rpm": 15,
+   "rpd": 500
+  },
+  "diubah": 0
+ },
+ "percakapan": []
+}
