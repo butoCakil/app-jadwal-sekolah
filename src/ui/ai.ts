@@ -150,18 +150,19 @@ function renderPengaturan(): string {
   const ringkas = st.rotasi?.ringkas() ?? [];
   const tidakSah = st.rotasi?.status.tidakSah ?? {};
   const barisKunci = vs.kunci
-    .map((x) => `<tr class="border-t border-slate-100"><td class="py-1 pr-2 font-semibold">${esc(x.label)}</td><td class="pr-2 font-mono text-xs text-slate-500">${esc(samarkan(x.nilai))}</td>
-      <td class="pr-2 text-xs">${tidakSah[x.id] ? `<span class="lencana bg-red-100 text-red-800" title="${esc(tidakSah[x.id] ?? '')}">ditolak Google</span>` : x.aktif ? '<span class="lencana bg-emerald-100 text-emerald-800">aktif</span>' : '<span class="lencana bg-slate-200 text-slate-700">nonaktif</span>'} ${esc(st.uji[x.id] ?? '')}</td>
-      <td class="text-right"><button class="tombol !py-0.5 !text-xs" data-aksi="aiUji" data-id="${esc(x.id)}">Uji</button> <button class="tombol !py-0.5 !text-xs" data-aksi="aiAktif" data-id="${esc(x.id)}">${x.aktif ? 'Nonaktifkan' : 'Aktifkan'}</button> <button class="tombol !py-0.5 !text-xs" data-aksi="aiHapusKunci" data-id="${esc(x.id)}">Hapus</button></td></tr>`)
+    .map((x) => `<div class="border-t border-slate-100 py-2 text-sm">
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1"><span class="min-w-0 max-w-full break-words font-semibold">${esc(x.label)}</span><span class="font-mono text-xs text-slate-500">${esc(samarkan(x.nilai))}</span>${tidakSah[x.id] ? `<span class="lencana bg-red-100 text-red-800" title="${esc(tidakSah[x.id] ?? '')}">ditolak Google</span>` : x.aktif ? '<span class="lencana bg-emerald-100 text-emerald-800">aktif</span>' : '<span class="lencana bg-slate-200 text-slate-700">nonaktif</span>'}</div>
+      ${st.uji[x.id] ? `<div class="mt-0.5 break-words text-xs text-slate-600">${esc(st.uji[x.id] ?? '')}</div>` : ''}
+      <div class="mt-1.5 flex flex-wrap gap-1.5"><button class="tombol !py-0.5 !text-xs" data-aksi="aiUji" data-id="${esc(x.id)}">Uji</button><button class="tombol !py-0.5 !text-xs" data-aksi="aiAktif" data-id="${esc(x.id)}">${x.aktif ? 'Nonaktifkan' : 'Aktifkan'}</button><button class="tombol !py-0.5 !text-xs" data-aksi="aiHapusKunci" data-id="${esc(x.id)}">Hapus</button></div></div>`)
     .join('');
   const pakai = ringkas
     .map((r) => `<tr class="border-t border-slate-100"><td class="py-0.5 pr-2">${esc(r.label)}</td><td class="pr-2 font-mono text-xs">${esc(r.model)}</td><td class="pr-2 text-right">${r.permintaanHariIni} / ${r.batasHarian}</td><td class="pr-2 text-right">${r.semenitTerakhir}</td><td class="text-xs">${[r.habis ? 'habis hari ini' : '', r.jeda ? 'jeda' : '', r.tidakTersedia ? 'model tidak tersedia' : ''].filter(Boolean).join(', ') || 'siap'}</td></tr>`)
     .join('');
   const galat = (st.rotasi?.status.galat ?? []).slice(0, 5).map((g) => `<div>${esc(new Date(g.t).toLocaleTimeString('id-ID'))} · ${esc(g.kunci)} · ${esc(g.model)} · ${g.status}: ${esc(g.pesan)}</div>`).join('');
   return `<div class="grid gap-4 lg:grid-cols-2">
-    <div class="kartu p-4"><h3 class="mb-2 font-bold">Kunci API</h3>
-      <table class="w-full text-sm"><tbody>${barisKunci || '<tr><td class="text-slate-500">Belum ada kunci.</td></tr>'}</tbody></table>
-      <div class="mt-3 grid gap-2 border-t border-slate-100 pt-3 sm:grid-cols-[1fr_2fr_auto]"><input id="aiLabel" class="isian" placeholder="Label"><input id="aiKunciBaru" type="password" class="isian" placeholder="Kunci API Gemini" autocomplete="off"><button class="tombol" data-aksi="aiTambahKunci">Tambah</button></div>
+    <div class="kartu min-w-0 p-4"><h3 class="mb-2 font-bold">Kunci API</h3>
+      <div>${barisKunci || '<p class="text-sm text-slate-500">Belum ada kunci.</p>'}</div>
+      <div class="mt-3 grid min-w-0 gap-2 border-t border-slate-100 pt-3 sm:grid-cols-[1fr_2fr_auto]"><input id="aiLabel" class="isian min-w-0" placeholder="Label"><input id="aiKunciBaru" type="password" class="isian min-w-0" placeholder="Kunci API Gemini" autocomplete="off"><button class="tombol" data-aksi="aiTambahKunci">Tambah</button></div>
       <p class="mt-1 text-xs text-slate-500">Banyak kunci dari akun berbeda memperbesar jatah gratis: model utama dicoba di semua kunci dulu sebelum turun ke model cadangan.</p></div>
     <div class="kartu p-4"><h3 class="mb-2 font-bold">Model dan batas</h3>
       <label class="text-sm">Model utama<input id="aiModel" list="aiDaftarModel" class="isian mt-1 w-full" value="${esc(st.pengaturan.model)}"></label>

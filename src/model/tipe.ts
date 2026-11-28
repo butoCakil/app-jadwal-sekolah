@@ -35,6 +35,13 @@ export interface PolaBernama {
 
 export type JenisKegiatan = 'TKA' | 'PKL' | 'ASAS' | 'ASAJ' | 'UKK' | 'ujian' | 'upacara' | 'rapor' | 'libur' | 'lain';
 
+/** Alasan kelas tidak belajar di sekolah (mis. PKL, UKK): singkatan untuk tabel dan nama lengkap untuk keterangan. */
+export interface KeteranganKelas {
+  kode: string;
+  nama: string;
+}
+export type KeteranganTingkat = Partial<Record<'X' | 'XI' | 'XII', KeteranganKelas>>;
+
 export interface Kegiatan {
   id: string;
   nama: string;
@@ -46,6 +53,8 @@ export interface Kegiatan {
   /** Format lama (pola tertanam); dipindah ke `polaLain` saat data dimuat. */
   pola?: PolaMinggu;
   rombelTidakAktif: string[];
+  /** Alasan rombel tidak aktif per tingkat selama kegiatan ini (mis. kelas XII = UKK); dipakai halaman publik. Tingkat tanpa alasan memakai alasan semester. */
+  keteranganTingkat?: KeteranganTingkat;
   /** Versi jadwal yang dipakai pada periode ini (kosong = reguler) */
   versiId?: string;
   /**
@@ -106,6 +115,8 @@ export interface Semester {
   selesai: string;
   /** Rombel tidak aktif di luar kegiatan (mis. PKL sepanjang semester). */
   rombelTidakAktif: string[];
+  /** Alasan rombel tidak aktif per tingkat di luar kegiatan (mis. kelas XI = PKL). */
+  keteranganTingkat?: KeteranganTingkat;
   /** Versi jadwal reguler semester ini; beban induknya bertanda versiId ini. Kosong = versi reguler pertama. */
   versiId?: string;
 }

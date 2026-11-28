@@ -1,6 +1,6 @@
 // Logika tampilan publik (tanpa DOM, bisa diuji): jadwal satu hari, satu pekan, dan matriks semua kelas/guru/ruang.
 
-import type { Beban, Kegiatan, Proyek, Skema } from '../model/tipe';
+import type { Beban, Kegiatan, KeteranganTingkat, Proyek, Skema } from '../model/tipe';
 import { NAMA_HARI } from '../model/tipe';
 import { dalamRentang, hariPekan, skemaUntukTanggal } from '../model/kalender';
 import { hitungSkema } from '../model/skema';
@@ -48,6 +48,8 @@ export interface HariP {
   status: StatusHari;
   /** keterangan status (nama libur, alasan tidak aktif) */
   keterangan: string;
+  /** alasan kelas tidak belajar di sekolah (hanya status tidakAktif): singkatan dan nama lengkap */
+  alasan?: { kode: string; nama: string };
   /** kegiatan yang mengatur hari itu (TKA, ASAS, ...), bila ada */
   kegiatan?: { nama: string; jenis: string };
   agenda: { nama: string; jenis: string; untuk?: string }[];
@@ -98,6 +100,9 @@ interface InfoHari {
   skema?: Skema;
   jp?: JadwalPekan;
   tdk: Set<string>;
+  /** alasan tidak aktif per tingkat pada hari itu (kegiatan lebih dulu, lalu semester) */
+  ket: KeteranganTingkat;
+  kegiatan?: Kegiatan;
 }
 interface Cache {
   hari: Map<string, InfoHari>;
@@ -106,6 +111,7 @@ interface Cache {
   mapel: Map<string, { nama: string; kode: string }>;
   guru: Map<string, { nama: string; kode: string }>;
   rombel: Map<string, string>;
+  tingkat: Map<string, string>;
   ruang: Map<string, { kode: string; nama: string }>;
 }
 const CACHE = new WeakMap<Proyek, Cache>();
@@ -119,6 +125,7 @@ function cache(p: Proyek): Cache {
       mapel: new Map(p.master.mapel.map((m) => [m.id, { nama: m.nama, kode: m.kode }])),
       guru: new Map(p.master.guru.map((g) => [g.id, { nama: g.nama, kode: g.kode }])),
       rombel: new Map(p.master.rombel.map((r) => [r.id, r.kode])),
+      tingkat: new Map(p.master.rombel.map((r) => [r.id, r.tingkat])),
       ruang: new Map(p.master.ruang.map((r) => [r.id, { kode: r.kode, nama: r.nama }])),
     };
     CACHE.set(p, c);
@@ -144,7 +151,7 @@ function hitungInfo(p: Proyek, tanggal: string, c: Cache): InfoHari {
   const n = p.polaReguler.length;
   const h = hariPekan(tanggal);
   const agenda = p.kalender.filter((g) => g.agenda && dalamRentang(tanggal, g.mulai, g.selesai)).map((g) => ({ nama: g.nama, jenis: g.jenis, ...(g.untuk ? { untuk: g.untuk } : {}) }));
-  const tanpa = (d: HariP): InfoHari => ({ dasar: { ...d, agenda }, tdk: new Set() });
+  const tanpa = (d: HariP): InfoHari => ({ dasar: { ...d, agenda }, tdk: new Set(), ket: {} });
   if (h >= n) return tanpa(kosongHari(tanggal, 'akhirPekan', 'Akhir pekan'));
   const info = skemaUntukTanggal(tanggal, p);
   if (info.alasan === 'libur') return tanpa(kosongHari(tanggal, 'libur', info.kegiatanLibur ?? 'Libur'));
@@ -163,9 +170,9 @@ function hitungInfo(p: Proyek, tanggal: string, c: Cache): InfoHari {
     ...(sem ? { semester: sem.nama } : {}),
     ...(g ? { kegiatan: { nama: g.nama, jenis: g.jenis } } : {}),
   };
-  if (!g && !sem) return { dasar: { ...dasar, status: 'diluarSemester', keterangan: 'Di luar semester berjalan' }, tdk: new Set() };
+  if (!g && !sem) return { dasar: { ...dasar, status: 'diluarSemester', keterangan: 'Di luar semester berjalan' }, tdk: new Set(), ket: {} };
   const skema = p.skema.find((s) => s.id === info.skemaId);
-  if (!skema) return { dasar: { ...dasar, status: 'libur', keterangan: 'Tidak ada KBM' }, tdk: new Set() };
+  if (!skema) return { dasar: { ...dasar, status: 'libur', keterangan: 'Tidak ada KBM' }, tdk: new Set(), ket: {} };
   const kolom: KolomP[] = hitungSkema(skema).map((r) => ({
     tipe: r.nomorKbm === null ? 'istirahat' : r.nomorKbm === 0 ? 'nonKbm' : 'kbm',
     label: r.label,
@@ -175,7 +182,7 @@ function hitungInfo(p: Proyek, tanggal: string, c: Cache): InfoHari {
     nama: r.baris.kegiatan,
     ...(r.nomorKbm === 0 ? { kode: kodeNonKbm(r.baris.kegiatan) } : {}),
   }));
-  return { dasar: { ...dasar, skema: skema.nama, warna: skema.warna, kolom }, skema, jp, tdk: tidakAktifPada(p, g, sem) };
+  return { dasar: { ...dasar, skema: skema.nama, warna: skema.warna, kolom }, skema, jp, tdk: tidakAktifPada(p, g, sem), ket: { ...(sem?.keteranganTingkat ?? {}), ...(g?.keteranganTingkat ?? {}) }, ...(g ? { kegiatan: g } : {}) };
 }
 
 /** Jadwal satu hari untuk satu kelas/guru/ruang. */
@@ -185,7 +192,9 @@ export function jadwalHariP(p: Proyek, tanggal: string, mode: ModeP, id: string)
   const dasar = info.dasar;
   if (dasar.status !== 'normal' || !info.skema || !info.jp) return dasar;
   if (mode === 'rombel' && info.tdk.has(id)) {
-    return { ...dasar, status: 'tidakAktif', keterangan: dasar.kegiatan ? `Tidak ada KBM di sekolah (${dasar.kegiatan.nama})` : 'Tidak ada KBM di sekolah' };
+    const dari = info.ket[c.tingkat.get(id) as 'X' | 'XI' | 'XII'];
+    const alasan = dari ?? (info.kegiatan ? { kode: info.kegiatan.jenis, nama: info.kegiatan.nama } : { kode: 'Lain', nama: 'Tidak belajar di sekolah' });
+    return { ...dasar, status: 'tidakAktif', alasan, keterangan: `${alasan.nama}${info.kegiatan && info.kegiatan.nama !== alasan.nama ? ` (${info.kegiatan.nama})` : ''}` };
   }
   const h = hariPekan(tanggal);
   const milik = info.jp.slots.filter((s) => {

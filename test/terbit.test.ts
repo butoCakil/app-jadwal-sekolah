@@ -278,4 +278,39 @@ describe('halaman publik', () => {
     expect(kodeNonKbm('Upacara bendera')).toBe('UPC');
     expect(kodeNonKbm('Literasi')).toBe('LIT');
   });
+
+  it('kelas tanpa KBM menampilkan alasan masing-masing (PKL, UKK, ASAS, ASAJ), bukan "tdk. KBM" seragam', () => {
+    const alasan = (tgl: string, kode: string) => jadwalHariP(p, tgl, 'rombel', rombel(kode));
+    // pekan ASAS/ASAJ (30 Nov 2026): X = ASAS, XII = ASAJ, XI (lima kelas PKL) = PKL
+    const x = alasan('2026-12-01', 'X TE 1');
+    expect(x.status).toBe('tidakAktif');
+    expect(x.alasan?.kode).toBe('ASAS');
+    expect(alasan('2026-12-01', 'XII TE 1').alasan?.kode).toBe('ASAJ');
+    expect(alasan('2026-12-01', 'XI AT 3').alasan).toEqual({ kode: 'PKL', nama: 'Praktik Kerja Lapangan' });
+    // pekan UKK (23 Nov): kelas XII = UKK, kelas XI yang PKL tetap PKL
+    expect(alasan('2026-11-24', 'XII TE 1').alasan?.kode).toBe('UKK');
+    expect(alasan('2026-11-24', 'XI AT 3').alasan?.kode).toBe('PKL');
+    // kelas yang masih belajar tidak punya alasan
+    expect(alasan('2026-11-10', 'X TE 1').alasan).toBeUndefined();
+  });
+
+  it('tab Semua: kotak memuat kode mapel, guru, ruang, dan ada legenda kode di bawah tabel', async () => {
+    const { gambarHalaman } = await import('../src/publik/halaman');
+    const h = gambarHalaman(t, { ...K, tab: 'semua', zoom: 'sedang' }, '2026-11-10');
+    const e = jadwalHariP(p, '2026-11-10', 'rombel', rombel('X TE 1')).elemen.find((x) => x.jenis === 'blok');
+    expect(e && e.jenis === 'blok').toBe(true);
+    if (e && e.jenis === 'blok') {
+      const it = e.item[0]!;
+      expect(h).toMatch(new RegExp(`>${it.mapel.kode}</span><span class="[^"]*">${it.guru[0]!.kode}</span>`));
+      // legenda: nama mapel, nama guru, dan nama ruang dijelaskan
+      expect(h).toContain(it.mapel.nama);
+      expect(h).toContain(it.guru[0]!.nama);
+    }
+    expect(h).toContain('Isi kotak dari atas: kode mapel, kode guru, kode ruang');
+    // pekan ASAS: legenda alasan tampil dan teks seragam lama hilang
+    const asas = gambarHalaman(t, { ...K, tab: 'semua' }, '2026-12-01');
+    expect(asas).toContain('Kelas tidak ada KBM di sekolah');
+    expect(asas).toContain('Praktik Kerja Lapangan');
+    expect(asas).not.toContain('tdk. KBM');
+  });
 });

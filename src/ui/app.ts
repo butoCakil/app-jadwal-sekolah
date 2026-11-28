@@ -194,11 +194,11 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       : ui.tab === 'terapkan' ? renderTerapkan(ctx)
       : renderSkemaTab(ctx);
     akar.innerHTML = `<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div class="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-2.5">
-          <div class="flex items-center gap-3"><div class="grid h-10 w-10 place-items-center rounded-xl bg-[#0d1e33]"><svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="12" width="4" height="8" rx="1.5" fill="#f5b21a"/><rect x="9" y="7" width="4" height="13" rx="1.5" fill="#157f6e"/><rect x="16" y="2" width="4" height="18" rx="1.5" fill="#2347b8"/></svg></div>
-            <div><div class="text-[11px] font-semibold tracking-widest text-amber-600">SMK NEGERI BANSARI</div><div class="text-base font-bold leading-tight">Jadwal Pelajaran <span class="text-xs font-normal text-slate-500">· ${esc(p.nama)}</span></div></div></div>
-          <div class="ml-2">${status}</div>
-          <div class="ml-auto flex flex-wrap items-center gap-2">
+        <div class="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2 sm:py-2.5">
+          <div class="flex min-w-0 items-center gap-3"><div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0d1e33] sm:h-10 sm:w-10"><svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="12" width="4" height="8" rx="1.5" fill="#f5b21a"/><rect x="9" y="7" width="4" height="13" rx="1.5" fill="#157f6e"/><rect x="16" y="2" width="4" height="18" rx="1.5" fill="#2347b8"/></svg></div>
+            <div class="min-w-0"><div class="hidden text-[11px] font-semibold tracking-widest text-amber-600 sm:block">SMK NEGERI BANSARI</div><div class="truncate text-base font-bold leading-tight">Jadwal Pelajaran <span class="text-xs font-normal text-slate-500">· ${esc(p.nama)}</span></div></div></div>
+          <div class="sm:ml-2">${status}</div>
+          <div class="flex w-full items-center gap-1.5 overflow-x-auto sm:ml-auto sm:w-auto sm:flex-wrap sm:gap-2 sm:overflow-visible [&>*]:shrink-0 [&>*]:whitespace-nowrap">
             <a class="tombol" href="#/" title="Lihat halaman publik">Halaman publik</a>
             <button class="tombol disabled:opacity-40" data-aksi="undo" ${riwayat.bisaUndo() ? '' : 'disabled'} title="Urungkan (Ctrl+Z)">↶ Urungkan</button>
             <button class="tombol disabled:opacity-40" data-aksi="redo" ${riwayat.bisaRedo() ? '' : 'disabled'} title="Ulangi (Ctrl+Y)">↷ Ulangi</button>

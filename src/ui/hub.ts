@@ -371,29 +371,44 @@ export function renderHub(k: Konteks): string {
 }
 
 /** Tab Jadwal Berlangsung: jadwal yang berlaku menurut tanggal (gabungan induk dan kegiatan), selebar layar. Calon tampilan publik. */
+/** "Sen–Jum" untuk hari berurutan, "Sen, Rab" untuk yang terpisah; kosong bila mencakup semua hari pekan. */
+function rentangHari(idx: number[], semua: number): string {
+  if (idx.length === semua) return '';
+  const nm = (i: number) => (NAMA_HARI[i] ?? '').slice(0, 3);
+  const berurutan = idx.every((x, j) => j === 0 || x === (idx[j - 1] as number) + 1);
+  return berurutan && idx.length > 1 ? `${nm(idx[0] as number)}–${nm(idx[idx.length - 1] as number)}` : idx.map(nm).join(', ');
+}
+
 export function renderLangsung(k: Konteks): string {
   const p = k.p;
   const t = k.turunan;
-  const hariIni = isoLokal(new Date());
-  const chip = t.hari
-    .map((h, i) => {
-      const g = t.pekan.kegiatanHari[i];
-      const s = g ? semesterKegiatan(p, g) : semesterPada(p, h.tgl);
-      const libur = h.info.alasan === 'libur';
-      const label = libur ? `libur: ${h.info.kegiatanLibur ?? ''}` : g ? g.nama : s ? `${s.nama} (reguler)` : 'di luar semester';
-      const warna = libur ? 'bg-red-100 text-red-800' : g ? WARNA_JENIS[g.jenis].chip : 'bg-slate-100 text-slate-600';
-      return `<button class="lencana ${warna} max-w-[15rem] truncate ${h.tgl === hariIni ? 'ring-2 ring-[#2347b8]/50' : ''}" ${g ? `data-aksi="simpul" data-fokus="${esc(g.id)}"` : s ? `data-aksi="simpul" data-fokus="${esc(fokusSemester(s.id))}"` : ''} title="${esc(`${NAMA_HARI[i]} ${tgl(h.tgl)}: ${label}. Klik untuk mengubah di Periode & Jadwal.`)}"><b>${NAMA_HARI[i]?.slice(0, 3)}</b>&nbsp;${esc(label)}</button>`;
+  // satu lencana per kegiatan/keadaan berbeda dalam pekan (bukan per hari)
+  const kelompok = new Map<string, { label: string; warna: string; fokus: string; hari: number[]; judul: string }>();
+  t.hari.forEach((h, i) => {
+    const g = t.pekan.kegiatanHari[i];
+    const s = g ? semesterKegiatan(p, g) : semesterPada(p, h.tgl);
+    const libur = h.info.alasan === 'libur';
+    const label = libur ? `Libur: ${h.info.kegiatanLibur ?? ''}` : g ? g.nama : s ? `${s.nama} (reguler)` : 'Di luar semester';
+    const kunci = libur ? `libur|${label}` : g ? `g|${g.id}` : `s|${s?.id ?? '-'}`;
+    const ada = kelompok.get(kunci);
+    if (ada) ada.hari.push(i);
+    else kelompok.set(kunci, { label, warna: libur ? 'bg-red-100 text-red-800' : g ? WARNA_JENIS[g.jenis].chip : 'bg-slate-100 text-slate-600', fokus: g ? g.id : s ? fokusSemester(s.id) : '', hari: [i], judul: label });
+  });
+  const chip = [...kelompok.values()]
+    .map((c) => {
+      const r = rentangHari(c.hari, t.hari.length);
+      return `<button class="lencana ${c.warna} max-w-[16rem] truncate" ${c.fokus ? `data-aksi="simpul" data-fokus="${esc(c.fokus)}"` : ''} title="${esc(`${c.judul}${r ? ` (${r})` : ''}. Klik untuk mengubah di Periode & Jadwal.`)}">${esc(c.label)}${r ? ` <span class="opacity-70">· ${esc(r)}</span>` : ''}</button>`;
     })
     .join('');
-  const agenda = t.hari
-    .map((h, i) => {
-      const xs = p.kalender.filter((g) => g.agenda && dalamRentang(h.tgl, g.mulai, g.selesai));
-      return xs.length ? `<span class="text-xs text-slate-600"><b>${NAMA_HARI[i]?.slice(0, 3)}:</b> ${xs.map((g) => `<span class="lencana ${WARNA_JENIS[g.jenis].chip} !py-0" title="${esc(`${g.jenis}${g.untuk ? ` · untuk ${g.untuk}` : ''}`)}">${esc(g.nama)}${g.untuk && g.untuk !== 'semua' ? ` (${esc(g.untuk)})` : ''}</span>`).join(' ')}</span>` : '';
-    })
-    .filter(Boolean);
-  const barisAgenda = agenda.length ? `<div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-slate-50 px-3 py-1.5"><span class="text-[11px] font-semibold text-slate-500">AGENDA</span>${agenda.join('')}</div>` : '';
+  // agenda: daftar unik untuk pekan ini, dilipat agar tidak memenuhi layar
+  const agendaPekan = new Map<string, Kegiatan>();
+  for (const h of t.hari) for (const g of p.kalender) if (g.agenda && dalamRentang(h.tgl, g.mulai, g.selesai)) agendaPekan.set(g.id, g);
+  const barisAgenda = agendaPekan.size
+    ? `<details class="mb-3 rounded-lg bg-slate-50 px-3 py-1.5 text-xs text-slate-600"><summary class="cursor-pointer select-none font-semibold text-slate-500">Agenda pekan ini (${agendaPekan.size})</summary><div class="mt-1.5 flex flex-wrap gap-1.5 pb-1">${[...agendaPekan.values()].map((g) => `<span class="lencana ${WARNA_JENIS[g.jenis].chip} !py-0" title="${esc(`${g.jenis}${g.untuk ? ` · untuk ${g.untuk}` : ''}`)}">${esc(g.nama)}${g.untuk && g.untuk !== 'semua' ? ` (${esc(g.untuk)})` : ''}</span>`).join('')}</div></details>`
+    : '';
   return `<div class="mb-2 flex flex-wrap items-center gap-2"><span class="text-lg font-semibold">Jadwal berlangsung</span><span class="text-sm text-slate-500">pekan ${esc(tgl(t.senin))}</span>
-      <button class="tombol !py-0.5 !text-xs" data-aksi="pekanIni">Pekan ini</button><div class="flex flex-wrap gap-1.5">${chip}</div></div>
+      <button class="tombol !py-0.5 !text-xs" data-aksi="pekanIni">Pekan ini</button></div>
+    <div class="mb-2 flex flex-wrap gap-1.5">${chip}</div>
     ${barisAgenda}${renderGrid(k)}${renderModal(k)}`;
 }
 

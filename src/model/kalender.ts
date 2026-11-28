@@ -1,4 +1,4 @@
-import type { Kegiatan, PolaBernama, PolaMinggu, Proyek, Rombel, Skema, VersiJadwal } from './tipe';
+import type { Kegiatan, KeteranganTingkat, PolaBernama, PolaMinggu, Proyek, Rombel, Skema, VersiJadwal } from './tipe';
 import { kapasitasKbm } from './skema';
 
 /** Hari dalam pekan dari tanggal ISO: 0 = Senin .. 6 = Minggu. Memakai UTC agar tidak terpengaruh zona waktu. */
@@ -97,6 +97,33 @@ export function ubahJumlahHari(p: Proyek, n: number): void {
   for (const k of p.kalender) if (k.pola) k.pola = sesuaikan(k.pola);
 }
 
+const KET = {
+  PKL: { kode: 'PKL', nama: 'Praktik Kerja Lapangan' },
+  UKK: { kode: 'UKK', nama: 'Uji Kompetensi Keahlian' },
+  ASAS: { kode: 'ASAS', nama: 'Asesmen Sumatif Akhir Semester' },
+  ASAJ: { kode: 'ASAJ', nama: 'Asesmen Sumatif Akhir Jenjang' },
+};
+/** Alasan tidak aktif data sekolah bawaan (menurut nama kegiatan dan keterangan Benny: kelas XI PKL sepanjang Gasal). Hanya mengisi yang belum ada. */
+const KETERANGAN_KEGIATAN: Record<string, KeteranganTingkat> = {
+  'k-asaj': { XII: KET.ASAJ },
+  'k-ukk': { XII: KET.UKK },
+  'k-asas': { X: KET.ASAS, XII: KET.ASAJ },
+  'k-pkl-xii-gasal': { XII: KET.PKL },
+  'k-pkl-xii-genap': { XII: KET.PKL },
+};
+const KETERANGAN_SEMESTER: Record<string, KeteranganTingkat> = { gasal: { XI: KET.PKL } };
+
+function lengkapiKeterangan(p: Proyek): void {
+  for (const k of p.kalender) {
+    const t = KETERANGAN_KEGIATAN[k.id];
+    if (t && !k.keteranganTingkat) k.keteranganTingkat = structuredClone(t);
+  }
+  for (const s of p.semesters ?? []) {
+    const t = KETERANGAN_SEMESTER[s.id];
+    if (t && !s.keteranganTingkat) s.keteranganTingkat = structuredClone(t);
+  }
+}
+
 /** Memindahkan pola tertanam pada kegiatan (format lama) ke daftar pola bernama. Data tanpa format lama tidak diubah. */
 export function migrasiPola<T extends Proyek>(p: T): T {
   for (const k of p.kalender) {
@@ -114,6 +141,7 @@ export function migrasiPola<T extends Proyek>(p: T): T {
     p.semesters = [{ ...p.semester, id: p.semester.id ?? 'sem1', ...(versiReguler(p) ? { versiId: versiReguler(p)!.id } : {}) }];
   }
   delete p.semester;
+  lengkapiKeterangan(p);
   return p;
 }
 

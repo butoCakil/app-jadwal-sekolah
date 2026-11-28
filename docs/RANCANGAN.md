@@ -457,6 +457,13 @@ Masukan Benny setelah melihat di ponsel dan perubahannya:
 - **Alur setelah Terapkan:** commit di main memicu GitHub Actions (tes lalu build lalu deploy); situs memperbarui diri setelah 1 sampai 2 menit. Halaman publik membaca data dengan `no-cache` dan pemeriksa versi (11.5m) menangani kode lama.
 - **Pengujian:** 258 tes (baru: base64 UTF-8 dan SHA blob git, buat dan perbarui berkas, tanpa perubahan, semua kode galat, brankas dengan token, gerbang, alur lengkap tab Terapkan dengan GitHub palsu). Dicoba di Chrome dengan GitHub palsu (PUT berisi pesan, cabang, dan isi terbit). **Belum diuji dengan token GitHub sungguhan** (hanya Benny yang boleh memasukkannya).
 
+### 11.5o Poles UI: alasan tanpa KBM, kode di kotak, ringkas admin (28 Nov 2026)
+
+- **Alasan tidak ada KBM per kelas.** `Kegiatan.keteranganTingkat` dan `Semester.keteranganTingkat` (peta tingkat → `{kode, nama}`) menyimpan alasan, mis. XII = UKK, X = ASAS, XI = PKL. Urutan: kegiatan lebih dulu, lalu semester; bila tak ada, dipakai jenis kegiatan, lalu "Lain". `migrasiPola` mengisi data sekolah bawaan (k-asaj, k-ukk, k-asas, k-pkl-xii-*, semester Gasal XI = PKL) hanya bila belum ada. Isian ini berasal dari nama kegiatan dan keterangan Benny (kelas XI PKL sampai 12 Des); **belum bisa diubah dari UI admin** (menunggu konfirmasi).
+- **Tab Semua (publik).** Kotak "tdk. KBM" diganti kode alasan berwarna (PKL biru, UKK ungu, ASAS jingga, ASAJ merah muda, TKA hijau). Tiap kotak jadwal memuat tiga baris: mode Kelas = mapel/guru/ruang, mode Guru = kelas/mapel/ruang, mode Ruang = kelas/mapel/guru. Tinggi kotak Sedang 31 px, Besar 40 px. Di bawah tabel ada legenda: alasan, mapel, guru, ruang yang tampil pada tabel.
+- **Admin, Jadwal Berlangsung.** Lencana per hari diganti satu lencana per kegiatan (dengan rentang hari bila tidak sepekan penuh); agenda dilipat menjadi "Agenda pekan ini (N)".
+- **Admin di ponsel.** Header lebih pendek (nama sekolah disembunyikan, tombol satu baris yang bisa digeser); kartu Kunci API memakai baris yang membungkus sehingga tombol tidak terpotong.
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?

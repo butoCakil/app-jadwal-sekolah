@@ -257,6 +257,72 @@ function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
 
 // ------------------------------------------------------------------ tab Semua: matriks semua kelas/guru/ruang
 
+const WARNA_ALASAN: Record<string, { bg: string; fg: string }> = {
+  PKL: { bg: '#e0f2fe', fg: '#075985' },
+  UKK: { bg: '#ede9fe', fg: '#5b21b6' },
+  ASAS: { bg: '#ffedd5', fg: '#9a3412' },
+  ASAJ: { bg: '#fce7f3', fg: '#9d174d' },
+  TKA: { bg: '#dcfce7', fg: '#166534' },
+};
+function warnaAlasan(kode: string): { bg: string; fg: string } {
+  return WARNA_ALASAN[kode] ?? { bg: '#fef3c7', fg: '#92400e' };
+}
+
+const JUDUL_BARIS: Record<ModeP, string> = {
+  rombel: 'kode mapel, kode guru, kode ruang',
+  guru: 'kelas, kode mapel, kode ruang',
+  ruang: 'kelas, kode mapel, kode guru',
+};
+
+/** Tiga baris teks pada satu kotak jadwal, sesuai mode tabel. */
+function barisKotak(mode: ModeP, x: ItemP, paralel: boolean): string[] {
+  const rombel = x.rombel.replace(/\s+/g, '');
+  const guru = x.guru.map((g) => g.kode).join('/');
+  const mapel = x.mapel.kode + (paralel ? '+' : '');
+  if (mode === 'rombel') return [mapel, guru, x.ruang];
+  if (mode === 'guru') return [rombel, mapel, x.ruang];
+  return [rombel, mapel, guru];
+}
+
+/** Penjelasan kode yang tampil pada tabel: alasan tidak ada KBM, mapel, guru, ruang. */
+function legendaKode(m: ReturnType<typeof matriksP>, tampil: number[], mode: ModeP): string {
+  const alasan = new Map<string, string>();
+  const mapel = new Map<string, string>();
+  const guru = new Map<string, string>();
+  const ruang = new Map<string, string>();
+  for (const b of m.baris) {
+    for (const i of tampil) {
+      const h = b.hari[i] as HariP;
+      if (h.status === 'tidakAktif' && h.alasan) alasan.set(h.alasan.kode, h.alasan.nama);
+      if (h.status !== 'normal') continue;
+      for (const e of h.elemen) {
+        if (e.jenis !== 'blok') continue;
+        for (const it of e.item) {
+          mapel.set(it.mapel.kode, it.mapel.nama);
+          for (const g of it.guru) guru.set(g.kode, g.nama);
+          if (it.ruang) ruang.set(it.ruang, it.ruangNama && it.ruangNama !== it.ruang ? it.ruangNama : '');
+        }
+      }
+    }
+  }
+  const urut = (mp: Map<string, string>) => [...mp.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const bagian = (judul: string, mp: Map<string, string>, chip?: (k: string) => string) =>
+    mp.size
+      ? `<div class="mt-2"><div class="text-[11px] font-semibold text-slate-600">${judul}</div><div class="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-600">${urut(mp).map(([k, n]) => `<span>${chip ? chip(k) : `<b class="text-slate-800">${esc(k)}</b>`}${n ? ` ${esc(n)}` : ''}</span>`).join('')}</div></div>`
+      : '';
+  const chipAlasan = (k: string) => {
+    const w = warnaAlasan(k);
+    return `<b class="rounded px-1" style="background:${w.bg};color:${w.fg}">${esc(k)}</b> =`;
+  };
+  const alasanNama = new Map([...alasan].map(([k, n]) => [k, n]));
+  const html =
+    bagian('Kelas tidak ada KBM di sekolah', alasanNama, chipAlasan) +
+    bagian('Mapel', mapel) +
+    (mode === 'rombel' || mode === 'ruang' ? bagian('Guru', guru) : '') +
+    (mode === 'rombel' || mode === 'guru' ? bagian('Ruang', ruang) : '');
+  return html ? `<div class="mt-2 rounded-xl border border-slate-200 bg-white px-3 pb-2.5 pt-1">${html}</div>` : '';
+}
+
 function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): string {
   const mode = k.baris;
   const m = matriksP(p, k.tanggal, mode);
@@ -265,11 +331,12 @@ function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): stri
   const bobot = (h: HariP) => (h.status === 'normal' ? h.kolom.reduce((a, c) => a + (c.tipe === 'istirahat' ? 0.3 : 1), 0) : 1.5);
   const jumlahBobot = tampil.reduce((a, i) => a + bobot(m.hari[i] as HariP), 0);
   const pas = (Math.min(lebar, 768) - 32 - lebarLabel) / Math.max(1, jumlahBobot);
-  const dasar = mode === 'rombel' ? 22 : 27;
+  const dasar = mode === 'rombel' ? 28 : 30;
   const jepit = (x: number, a: number, b: number) => Math.max(a, Math.min(b, x));
   const w = k.zoom === 'peta' ? jepit(pas, 3, 44) : k.zoom === 'sedang' ? (k.hariSemua >= 0 ? jepit(pas, dasar, 44) : dasar) : k.hariSemua >= 0 ? jepit(pas * 1.35, dasar + 8, 56) : dasar * 1.5;
-  const tinggi = k.zoom === 'peta' ? 9 : k.zoom === 'sedang' ? 22 : 30;
-  const huruf = w >= 40 ? 11 : w >= 30 ? 10 : w >= 22 ? 9 : 8;
+  const tinggi = k.zoom === 'peta' ? 9 : k.zoom === 'sedang' ? 31 : 40;
+  // tiap kotak memuat 3 baris kode (mapel / guru / ruang), jadi huruf dibatasi oleh tinggi kotak
+  const huruf = Math.min(w >= 40 ? 11 : w >= 30 ? 10 : w >= 22 ? 9 : 8, Math.floor((tinggi - 3) / 3));
   const bacaTeks = w >= 15 && tinggi >= 20;
   const lebarIst = Math.max(2, w * 0.3);
 
@@ -293,7 +360,11 @@ function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): stri
     grupLalu = b.grup || grupLalu;
     const sel = grupHari.map((g) => {
       const h = b.hari[g.i] as HariP;
-      if (h.status === 'tidakAktif') return `<td colspan="${g.jumlah}" class="border-b border-r border-slate-200 text-center text-[8px] text-amber-700" style="height:${tinggi}px;background:repeating-linear-gradient(45deg,#fef3c7,#fef3c7 3px,#fffbeb 3px,#fffbeb 6px)" title="${esc(h.keterangan)}">${bacaTeks ? 'tdk. KBM' : ''}</td>`;
+      if (h.status === 'tidakAktif') {
+        const a = h.alasan as { kode: string; nama: string };
+        const wa = warnaAlasan(a.kode);
+        return `<td colspan="${g.jumlah}" class="border-b border-r border-white text-center font-bold" style="height:${tinggi}px;background:${wa.bg};color:${wa.fg};font-size:${Math.min(huruf, 10)}px" title="${esc(h.keterangan)}">${bacaTeks ? esc(a.kode) : ''}</td>`;
+      }
       if (h.status !== 'normal') return `<td class="border-b border-r border-slate-200 bg-slate-100" style="height:${tinggi}px"></td>`;
       return h.elemen.map((e) => {
         if (e.jenis === 'istirahat') return `<td class="border-b border-r border-slate-200 bg-emerald-50" style="height:${tinggi}px"></td>`;
@@ -301,9 +372,9 @@ function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): stri
         if (e.jenis === 'kosong') return `<td colspan="${e.jp}" class="border-b border-r border-slate-200 bg-white" style="height:${tinggi}px"></td>`;
         const x = e.item[0] as ItemP;
         const c = warnaMapel(x.mapel.kode);
-        const teks = mode === 'rombel' ? x.mapel.kode + (e.item.length > 1 ? '+' : '') : x.rombel.replace(/\s+/g, '');
+        const teks = barisKotak(mode, x, e.item.length > 1).map((t, n) => `<span class="block overflow-hidden tracking-tighter ${n === 0 ? 'font-bold' : 'font-medium'}">${esc(t)}</span>`).join('');
         const tip = e.item.map((y) => `${y.rombel} · ${y.mapel.nama}${y.guru.length ? ` · ${y.guru.map((gg) => gg.nama).join(' & ')}` : ''}${y.ruang ? ` · ${y.ruang}` : ''}`).join('\n');
-        return `<td colspan="${e.jp}" class="cursor-pointer overflow-hidden whitespace-nowrap border-b border-r border-white text-center font-bold" style="height:${tinggi}px;background:${c.bg};border-left:2px solid ${c.garis};font-size:${huruf}px;line-height:1" title="${esc(tip)}" data-aksi="det" data-id="${esc(b.id)}" data-tgl="${g.h.tanggal}" data-a="${e.a}">${bacaTeks ? esc(teks) : ''}</td>`;
+        return `<td colspan="${e.jp}" class="cursor-pointer overflow-hidden whitespace-nowrap border-b border-r border-white text-center" style="height:${tinggi}px;background:${c.bg};border-left:2px solid ${c.garis};font-size:${huruf}px;line-height:1.05" title="${esc(tip)}" data-aksi="det" data-id="${esc(b.id)}" data-tgl="${g.h.tanggal}" data-a="${e.a}">${bacaTeks ? teks : ''}</td>`;
       }).join('');
     }).join('');
     return `<tr><th class="sticky left-0 z-10 overflow-hidden whitespace-nowrap border-b border-r border-slate-200 bg-slate-50 px-1 text-left text-[9px] font-bold text-slate-700 ${pisah}" style="height:${tinggi}px" title="${esc(b.label)}">${esc(b.label)}</th>${sel}</tr>`;
@@ -313,10 +384,11 @@ function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): stri
   const agenda = [...new Map(tampil.flatMap((i) => (m.hari[i] as HariP).agenda).map((a) => [a.nama, a])).values()];
   const kode = [...new Map(tampil.flatMap((i) => (m.hari[i] as HariP).kolom.filter((c) => c.tipe === 'nonKbm').map((c) => [c.kode ?? '', c.nama] as const))).entries()].map(([c, n]) => `<b>${esc(c)}</b> = ${esc(n)}`).join(' · ');
   const info = `${kegiatan.length ? `<div class="mb-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">Pekan ini: <b>${esc(kegiatan.join(', '))}</b></div>` : ''}${agenda.length ? `<div class="mb-2 flex flex-wrap gap-1.5">${agenda.map((a) => `<span class="rounded-full bg-violet-100 px-2.5 py-1 text-xs text-violet-900">${esc(a.nama)}${a.untuk && a.untuk !== 'semua' ? ` · ${esc(a.untuk)}` : ''}</span>`).join('')}</div>` : ''}`;
-  const ket = mode === 'rombel' ? 'Kode di kotak = mapel (tanda + = ada kelompok paralel).' : 'Kode di kotak = kelas.';
+  const ket = `Isi kotak dari atas: ${JUDUL_BARIS[mode]} (tanda + = ada kelompok paralel).`;
+  const legenda = legendaKode(m, tampil, mode);
   return `${info}<div id="matriks" class="overflow-auto rounded-xl border border-slate-200 bg-white" style="max-height:72vh"><table class="border-separate border-spacing-0" style="table-layout:fixed;width:${total.toFixed(0)}px"><colgroup>${cols}</colgroup>
     <thead><tr><th rowspan="2" class="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500" style="height:35px">${NAMA_MODE[mode]}</th>${kepala1}</tr><tr>${kepala2}</tr></thead><tbody>${isi}</tbody></table></div>
-    <p class="mt-2 text-[11px] leading-relaxed text-slate-500">${ket} Jam berurutan dengan guru dan mapel yang sama digabung; kolom sempit hijau = istirahat. Sentuh kotak untuk detail, geser untuk melihat hari lain, atau pilih satu hari / tombol Peta untuk ringkasan.${kode ? ` ${kode}.` : ''}</p>
+    <p class="mt-2 text-[11px] leading-relaxed text-slate-500">${ket} Jam berurutan dengan guru dan mapel yang sama digabung; kolom sempit hijau = istirahat. Sentuh kotak untuk detail, geser untuk melihat hari lain, atau pilih satu hari / tombol Peta untuk ringkasan.${kode ? ` ${kode}.` : ''}</p>${legenda}
     ${m.baris.length === 0 ? '<p class="mt-2 text-sm text-slate-500">Tidak ada data pada pekan ini.</p>' : ''}`;
 }
 
