@@ -5,7 +5,7 @@ import { NAMA_HARI } from '../model/tipe';
 import { hariPekan } from '../model/kalender';
 import { keMenit } from '../model/skema';
 import { bacaTerbit, type Terbit } from '../terbit/format';
-import { bukuCetak } from './cetak';
+import { bukuCetak, rekapCetak } from './cetak';
 import { gambarKalender } from './kalender';
 import { daftarEntitasP, jadwalHariP, jadwalPekanP, matriksP, type ElemenHari, type HariP, type ItemP, type ModeP } from './tampil';
 import { esc, isoLokal, seninPekan, tambahHari, warnaMapel } from '../ui/util';
@@ -337,21 +337,31 @@ function legendaKode(m: ReturnType<typeof matriksP>, tampil: number[], mode: Mod
   return html ? `<div class="mt-2 rounded-xl border border-slate-200 bg-white px-3 pb-2.5 pt-1">${html}</div>` : '';
 }
 
-function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): string {
+/** Ukuran tabel Semua untuk cetak: lebar dan tinggi baris dalam piksel, huruf dalam piksel, dan baris (id) yang dimuat. */
+export interface UkuranCetakSemua {
+  lebar: number;
+  tinggi: number;
+  huruf: number;
+  ids: string[];
+}
+
+/** Matriks semua kelas/guru/ruang x semua hari. `cetak`: hanya tabel dengan lebar pas halaman (tanpa gulir) dan hanya baris `ids`. */
+export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number, cetak?: UkuranCetakSemua): string {
   const mode = k.baris;
-  const m = matriksP(p, k.tanggal, mode);
-  const tampil = m.hari.map((_, i) => i).filter((i) => k.hariSemua < 0 || i === k.hariSemua);
+  const mAsli = matriksP(p, k.tanggal, mode);
+  const m = cetak ? { ...mAsli, baris: mAsli.baris.filter((b) => cetak.ids.includes(b.id)) } : mAsli;
+  const tampil = m.hari.map((_, i) => i).filter((i) => cetak || k.hariSemua < 0 || i === k.hariSemua);
   const lebarLabel = mode === 'rombel' ? 50 : 40;
   const bobot = (h: HariP) => (h.status === 'normal' ? h.kolom.reduce((a, c) => a + (c.tipe === 'istirahat' ? 0.3 : 1), 0) : 1.5);
   const jumlahBobot = tampil.reduce((a, i) => a + bobot(m.hari[i] as HariP), 0);
   const pas = (Math.min(lebar, 768) - 32 - lebarLabel) / Math.max(1, jumlahBobot);
   const dasar = mode === 'rombel' ? 28 : 30;
   const jepit = (x: number, a: number, b: number) => Math.max(a, Math.min(b, x));
-  const w = k.zoom === 'peta' ? jepit(pas, 3, 44) : k.zoom === 'sedang' ? (k.hariSemua >= 0 ? jepit(pas, dasar, 44) : dasar) : k.hariSemua >= 0 ? jepit(pas * 1.35, dasar + 8, 56) : dasar * 1.5;
-  const tinggi = k.zoom === 'peta' ? 9 : k.zoom === 'sedang' ? 31 : 40;
+  const w = cetak ? (cetak.lebar - lebarLabel) / Math.max(1, jumlahBobot) : k.zoom === 'peta' ? jepit(pas, 3, 44) : k.zoom === 'sedang' ? (k.hariSemua >= 0 ? jepit(pas, dasar, 44) : dasar) : k.hariSemua >= 0 ? jepit(pas * 1.35, dasar + 8, 56) : dasar * 1.5;
+  const tinggi = cetak ? cetak.tinggi : k.zoom === 'peta' ? 9 : k.zoom === 'sedang' ? 31 : 40;
   // tiap kotak memuat 3 baris kode (mapel / guru / ruang), jadi huruf dibatasi oleh tinggi kotak
-  const huruf = Math.min(w >= 40 ? 11 : w >= 30 ? 10 : w >= 22 ? 9 : 8, Math.floor((tinggi - 3) / 3));
-  const bacaTeks = w >= 15 && tinggi >= 20;
+  const huruf = cetak ? cetak.huruf : Math.min(w >= 40 ? 11 : w >= 30 ? 10 : w >= 22 ? 9 : 8, Math.floor((tinggi - 3) / 3));
+  const bacaTeks = cetak ? true : w >= 15 && tinggi >= 20;
   const lebarIst = Math.max(2, w * 0.3);
 
   // kolom per hari
@@ -414,6 +424,11 @@ function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number): stri
     return `<tr><th class="sticky left-0 z-10 overflow-hidden whitespace-nowrap border-b border-r border-slate-200 bg-slate-50 px-1 text-left text-[9px] font-bold text-slate-700 ${pisah}" style="height:${tinggi}px" title="${esc(b.label)}">${esc(b.label)}</th>${sel}</tr>`;
   }).join('');
 
+  if (cetak) {
+    // tanpa gulir: kelas "sticky" tidak diperlukan
+    return `<div class="relative" style="width:${total.toFixed(0)}px"><table class="border-separate border-spacing-0" style="table-layout:fixed;width:${total.toFixed(0)}px"><colgroup>${cols}</colgroup>
+    <thead><tr><th rowspan="2" class="border-b border-r border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500" style="height:35px">${NAMA_MODE[mode]}</th>${kepala1}</tr><tr>${kepala2}</tr></thead><tbody>${isi}</tbody></table>${hurufGaris}${hurufBatas}</div>`.replace(/\bsticky /g, '');
+  }
   const kegiatan = [...new Set(tampil.map((i) => (m.hari[i] as HariP).kegiatan?.nama).filter((x): x is string => !!x))];
   const agenda = [...new Map(tampil.flatMap((i) => (m.hari[i] as HariP).agenda).map((a) => [a.nama, a])).values()];
   const kode = [...new Map(tampil.flatMap((i) => (m.hari[i] as HariP).kolom.filter((c) => c.tipe === 'nonKbm').map((c) => [c.kode ?? '', c.nama] as const))).entries()].map(([c, n]) => `<b>${esc(c)}</b> = ${esc(n)}`).join(' · ');
@@ -490,6 +505,7 @@ export function gambarHalaman(t: Terbit, k: Keadaan, hariIni: string, lebar = 39
        ${tombolTgl}
        <div class="flex items-center gap-2"><button data-aksi="hariIni" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">Pekan ini</button>
          <div class="ml-auto flex overflow-hidden rounded-xl border border-slate-300">${segZoom('peta', 'Peta')}${segZoom('sedang', 'Sedang')}${segZoom('besar', 'Besar')}</div></div>
+       <div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-500">Cetak rekap pekan ini:</span><button data-aksi="cetakRekap" data-ukuran="A4" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">A4</button><button data-aksi="cetakRekap" data-ukuran="F4" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">F4</button></div>
        <div class="flex gap-1.5"><button data-aksi="hariSemua" data-i="-1" class="rounded-xl px-2 py-1.5 text-xs font-semibold ${k.hariSemua < 0 ? 'bg-[#0d1e33] text-white' : 'border border-slate-200 bg-white text-slate-700'}">Semua<br>hari</button>${chipHari(true)}</div>`
     : `${barisTab}
        <div class="flex items-center gap-2">${panah('sebelumnya', '‹', `${NAMA_MODE[mode]} sebelumnya`)}<select id="pilih" class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base font-medium" aria-label="Pilih ${NAMA_MODE[mode]}">${pilihan}</select>${panah('berikutnya', '›', `${NAMA_MODE[mode]} berikutnya`)}</div>
@@ -637,6 +653,11 @@ export async function mulaiPublik(akar: HTMLElement, ambil: typeof fetch = fetch
         const ids = d.lingkup === 'semua' ? daftarEntitasP(p, mode).map((e) => e.id) : [k.id];
         const diperbarui = t.diterapkan ? new Date(t.diterapkan).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) : '';
         cetakHalaman(bukuCetak(p, { mode, ids, tanggal: k.tanggal, diperbarui, tabel: (id) => tabelPekan(p, { ...k, tab: mode, id, tata: 'pekan' }, '', true) }));
+        return;
+      }
+      case 'cetakRekap': {
+        const diperbarui = t.diterapkan ? new Date(t.diterapkan).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) : '';
+        cetakHalaman(rekapCetak(p, { mode: k.baris, tanggal: k.tanggal, ukuran: d.ukuran === 'F4' ? 'F4' : 'A4', diperbarui, tabel: (ids, u) => tabelSemua(p, { ...k, tab: 'semua' }, '', u.lebar, { ...u, ids }) }));
         return;
       }
       case 'baris': k.baris = d.mode as ModeP; break;

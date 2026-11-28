@@ -303,6 +303,41 @@ describe('halaman publik', () => {
     for (const [k, n] of kode.guru) expect(p.master.guru.some((g) => g.kode === k && g.nama === n)).toBe(true);
   });
 
+  it('cetak rekap: semua kelas satu halaman A4/F4 + halaman kode; baris banyak dibagi rata', async () => {
+    const { gambarHalaman, tabelSemua } = await import('../src/publik/halaman');
+    const { rekapCetak, kodeRekap, KERTAS } = await import('../src/publik/cetak');
+    const semua = gambarHalaman(t, { ...K, tab: 'semua' }, '2026-11-10');
+    expect(semua).toContain('data-aksi="cetakRekap" data-ukuran="A4"');
+    expect(semua).toContain('data-aksi="cetakRekap" data-ukuran="F4"');
+    expect(gambarHalaman(t, { ...K, tab: 'rombel', id }, '2026-11-10')).not.toContain('data-aksi="cetakRekap"');
+    const KS = { ...K, tab: 'semua' as const };
+    for (const ukuran of ['A4', 'F4'] as const) {
+      const html = rekapCetak(p, { mode: 'rombel', tanggal: '2026-11-10', ukuran, tabel: (ids, u) => tabelSemua(p, { ...KS, baris: 'rombel' }, '', u.lebar, { ...u, ids }) });
+      // 30 kelas muat satu halaman + satu halaman penjelasan kode
+      expect((html.match(/class="halaman-cetak"/g) ?? []).length).toBe(2);
+      expect(html).toContain('Penjelasan kode');
+      expect(html).toContain(`size:${KERTAS[ukuran].mm}`);
+      expect(html).not.toContain('overflow-auto');
+      expect(html).not.toContain('sticky');
+      // tiap kelas tampil sekali
+      for (const r of p.master.rombel) expect(html.split(`>${r.kode}</th>`).length - 1).toBe(1);
+      // lebar tabel tidak melebihi lebar halaman
+      const lebar = Number(/<table[^>]*style="[^"]*width:(\d+)px/.exec(html)![1]);
+      expect(lebar).toBeLessThanOrEqual(KERTAS[ukuran].lebar);
+    }
+    // 61 guru tidak muat satu halaman: dibagi beberapa halaman dengan semua guru tetap tampil sekali
+    const g = rekapCetak(p, { mode: 'guru', tanggal: '2026-11-10', ukuran: 'A4', tabel: (ids, u) => tabelSemua(p, { ...KS, baris: 'guru' }, '', u.lebar, { ...u, ids }) });
+    const halamanRekap = (g.match(/class="halaman-cetak" style/g) ?? []).length;
+    expect(halamanRekap).toBeGreaterThan(1);
+    expect(g).toContain(`Halaman 1 dari ${halamanRekap}`);
+    // kode pada halaman penjelasan sesuai master
+    const kode = kodeRekap(p, '2026-11-10');
+    expect(kode.guru.length).toBeGreaterThan(30);
+    for (const [k, n] of kode.guru) expect(p.master.guru.some((x) => x.kode === k && x.nama === n)).toBe(true);
+    expect(kode.mapel.some(([k]) => k === 'P1')).toBe(true);
+    expect(kode.alasan.some(([k]) => k === 'PKL')).toBe(true);
+  });
+
   it('tab Semua: satu baris per kelas, semua hari, kepala skema, dan bisa dibatasi satu hari', async () => {
     const { gambarHalaman } = await import('../src/publik/halaman');
     const semua = gambarHalaman(t, { ...K, tab: 'semua' }, '2026-11-10');
