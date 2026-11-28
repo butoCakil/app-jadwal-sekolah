@@ -1,4 +1,4 @@
-import type { Kegiatan } from './tipe';
+import type { Kegiatan, PolaMinggu } from './tipe';
 
 /**
  * Kegiatan semester Gasal 2026/2027 dan berkas PDF aSc sumbernya (diekstrak oleh tools/ekstrak-asc-kelas.py ke
@@ -101,3 +101,13 @@ export const DITERIMA_2026: { tanggal: string; jenis: 'pengawas-bentrok'; guru: 
 export const PENYESUAIAN_2026: { versiId: string; rombel: string; mapel: string; hari: number; ruang: string; catatan: string }[] = [
   { versiId: 'v-asas', rombel: 'XI TE 2', mapel: 'PSRT', hari: 3, ruang: 'B3', catatan: 'PSRT XI TE 2 Kamis pindah dari D1 (ruang ujian) ke B3 (keputusan Benny, 27 Nov 2026).' },
 ];
+
+/**
+ * Skema mingguan yang dibuat admin dan ikut menjadi bawaan (diambil dari keadaan terbit 28 Nov 2026), dan pemasangannya pada kegiatan.
+ * Nama empat skema dari PDF aSc kini berawalan "Skema" (dulu "Pola"), diatur di bangunTahun.polaDari.
+ */
+export const POLA_ADMIN_2026: { id: string; nama: string; pola: PolaMinggu }[] = [
+  { id: 'pola_5', nama: 'Skema Tanpa Pembiasaan', pola: ['skema10', 'skema10', 'skema10', 'skema10', 'skema-n8'] },
+  { id: 'pola_6', nama: 'Skema Full Pembiasaan', pola: ['skema11', 'skema11', 'skema11', 'skema11', 'skema9'] },
+];
+export const PASANG_POLA_2026: { kegiatanId: string; polaId: string }[] = [{ kegiatanId: 'k-asas', polaId: 'pola_5' }];

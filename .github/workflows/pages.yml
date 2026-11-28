@@ -2,6 +2,8 @@ name: Deploy ke GitHub Pages
 on:
   push:
     branches: [main]
+    # data kerja admin (sinkron) tidak memengaruhi situs; commit sinkron tidak perlu memicu build
+    paths-ignore: ['data/admin/**']
   workflow_dispatch:
 permissions:
   contents: read

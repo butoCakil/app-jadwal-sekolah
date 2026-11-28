@@ -5,7 +5,7 @@ import { alihkanPerubahan } from '../model/simpul';
 import { proyekContoh } from '../model/contoh';
 import { proyekSekolah, type IdDataSekolah } from '../model/sekolahData';
 import { Riwayat } from '../mesin/riwayat';
-import { dariJson, hapusDraf, keJson, muatDraf, simpanDraf } from '../io/simpan';
+import { amankanDrafRusak, hapusDraf, muatDrafRinci, simpanDraf } from '../io/simpan';
 import type { Konteks, StatusUI, Tab, Turunan } from './konteks';
 import { TAB_HUB } from './konteks';
 import { bilahSasaran, fokusBawaan, jepitTanggal, klikHub, renderHub, renderLangsung, ubahHub } from './hub';
@@ -21,9 +21,12 @@ import { klikAi, masukanAi, renderAi, tombolAi } from './ai';
 import { klikTerapkan, masukanTerapkan, renderTerapkan, ubahTerapkan } from './terapkan';
 import { klikSkema, renderDlgSkema, renderSkemaTab, ubahSkema } from './skemaTab';
 import { klikPemilih, renderPemilih, segarkanPemilih, ubahPemilih } from './pemilih';
+import { klikBawaan, renderBawaan, tutupBawaan } from './bawaan';
+import { klikCadangan, imporBerkas, renderCadangan, tutupCadangan } from './cadangan';
+import { aturKeadaanDraf, klikSinkron, renderSinkron, spandukSinkron, tutupSinkron, ubahSinkron } from './sinkron';
 import { klikDataset, muatDaftarDataset, ubahDataset } from './dataset';
 import { bulanDari, renderDlgKegiatan, tanggalUntukPeriode } from './kalenderTab';
-import { esc, isoLokal, unduh } from './util';
+import { esc, isoLokal } from './util';
 
 const TAB: { id: Tab; label: string }[] = [
   { id: 'langsung', label: 'Jadwal Berlangsung' },
@@ -38,7 +41,11 @@ const TAB: { id: Tab; label: string }[] = [
 ];
 
 export async function mulaiApp(akar: HTMLElement): Promise<void> {
-  let p: Proyek = (await muatDraf().catch(() => null)) ?? proyekSekolah();
+  const keadaanDraf = await muatDrafRinci().catch((): Awaited<ReturnType<typeof muatDrafRinci>> => ({ status: 'kosong' }));
+  // draf yang ada tetapi tidak lolos validasi diamankan dulu: simpan otomatis berikutnya tidak boleh menghapusnya diam-diam
+  if (keadaanDraf.status === 'rusak') await amankanDrafRusak(keadaanDraf.mentah).catch(() => undefined);
+  aturKeadaanDraf(keadaanDraf);
+  let p: Proyek = keadaanDraf.status === 'ok' ? keadaanDraf.proyek : proyekSekolah();
   const awalTanggal = (x: Proyek): string => {
     const aktif = x.kalender.find((g) => g.id === x.periodeAktifId);
     return aktif ? tanggalUntukPeriode(aktif, isoLokal(new Date()), x.polaReguler.length) : isoLokal(new Date());
@@ -195,6 +202,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       : ui.tab === 'terapkan' ? renderTerapkan(ctx)
       : renderSkemaTab(ctx);
     const gulirModal = document.getElementById('dlgSkemaIsi')?.scrollTop ?? 0;
+    const gulirSinkron = document.getElementById('snIsi')?.scrollTop ?? 0;
     akar.innerHTML = `<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div class="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2 sm:py-2.5">
           <div class="flex min-w-0 items-center gap-3"><div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0d1e33] sm:h-10 sm:w-10"><svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="12" width="4" height="8" rx="1.5" fill="#f5b21a"/><rect x="9" y="7" width="4" height="13" rx="1.5" fill="#157f6e"/><rect x="16" y="2" width="4" height="18" rx="1.5" fill="#2347b8"/></svg></div>
@@ -204,13 +212,16 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
             <a class="tombol" href="#/" title="Lihat halaman publik">Halaman publik</a>
             <button class="tombol disabled:opacity-40" data-aksi="undo" ${riwayat.bisaUndo() ? '' : 'disabled'} title="Urungkan (Ctrl+Z)">↶ Urungkan</button>
             <button class="tombol disabled:opacity-40" data-aksi="redo" ${riwayat.bisaRedo() ? '' : 'disabled'} title="Ulangi (Ctrl+Y)">↷ Ulangi</button>
-            <button class="tombol" data-aksi="ekspor">Ekspor JSON</button>
+            <button class="tombol" data-aksi="snBuka" title="Bandingkan dan samakan data admin dengan GitHub">⇅ Sinkron</button>
+            <button class="tombol" data-aksi="cdBuka" title="Unduh cadangan lengkap (draf, dataset, pengaturan AI)">Ekspor JSON</button>
             <label class="tombol cursor-pointer">Impor JSON<input type="file" accept="application/json,.json" id="impor" class="hidden"></label></div></div>
         <nav class="mx-auto flex max-w-[1600px] gap-1 overflow-x-auto px-4">${TAB.map((t) => `<button data-tab="${t.id === 'grid' ? tabHub : t.id}" class="whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${t.id === ui.tab || (t.id === 'grid' && diHub) ? 'border-[#2347b8] text-[#2347b8]' : 'border-transparent text-slate-500 hover:text-slate-800'}">${t.label}${t.id === 'inspektur' ? badge : ''}</button>`).join('')}</nav></header>
-      <main class="mx-auto max-w-[1600px] px-4 py-4">${galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(galat)}</div>` : ''}${isi}</main>${renderPemilih(ctx)}${renderDlgKegiatan(ctx)}${renderDlgSkema(ctx)}`;
+      <main class="mx-auto max-w-[1600px] px-4 py-4">${spandukSinkron()}${galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(galat)}</div>` : ''}${isi}</main>${renderPemilih(ctx)}${renderDlgKegiatan(ctx)}${renderDlgSkema(ctx)}${renderSinkron(ctx)}${renderCadangan()}${renderBawaan()}`;
     segarkanPemilih(ctx);
     const modalSkema = document.getElementById('dlgSkemaIsi');
     if (modalSkema) modalSkema.scrollTop = gulirModal;
+    const modalSinkron = document.getElementById('snIsi');
+    if (modalSinkron) modalSinkron.scrollTop = gulirSinkron;
   }
 
   const urungkan = () => {
@@ -238,7 +249,6 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     switch (el.dataset.aksi) {
       case 'undo': return urungkan();
       case 'redo': return ulangi();
-      case 'ekspor': return unduh(`jadwal-${isoLokal(new Date())}.json`, keJson(p));
       case 'keInspektur': return ctx.ke('inspektur');
       case 'muat': {
         const set = el.dataset.set as IdDataSekolah | 'contoh';
@@ -246,7 +256,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
         return ctx.ganti(set === 'contoh' ? migrasiPola(proyekContoh()) : proyekSekolah(set));
       }
     }
-    void (klikPemilih(ctx, el) || klikHub(ctx, el) || klikDataset(ctx, el) || klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikAi(ctx, el) || klikTerapkan(ctx, el) || klikSkema(ctx, el));
+    void (klikBawaan(ctx, el) || klikCadangan(ctx, el) || klikSinkron(ctx, el) || klikPemilih(ctx, el) || klikHub(ctx, el) || klikDataset(ctx, el) || klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikAi(ctx, el) || klikTerapkan(ctx, el) || klikSkema(ctx, el));
   });
 
   akar.addEventListener('change', (e) => {
@@ -254,9 +264,10 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
     if (el.id === 'impor') {
       const f = el.files?.[0];
       if (!f) return;
-      void f.text().then((teks) => {
-        const h = dariJson(teks);
-        if (h.ok) {
+      void f.text().then(async (teks) => {
+        el.value = '';
+        const h = await imporBerkas(ctx, teks);
+        if (h.jenis === 'proyek') {
           riwayat.catat(p);
           p = h.proyek;
           ui.entitasId = p.master.rombel[0]?.id ?? '';
@@ -265,12 +276,12 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
           ui.bebanRombel = p.master.rombel[0]?.id ?? '';
           galat = '';
           simpanTertunda();
-        } else galat = `Impor ditolak: ${h.galat.join(' | ')}`;
+        } else if (h.jenis === 'galat') galat = `Impor ditolak: ${h.galat}`;
         gambar();
       });
       return;
     }
-    void (ubahPemilih(ctx, el) || ubahHub(ctx, el) || ubahDataset(ctx, el) || ubahGrid(ctx, el) || ubahBeban(ctx, el) || ubahMaster(ctx, el) || ubahImpor(ctx, el) || ubahSusun(ctx, el) || ubahTerapkan(ctx, el) || ubahSkema(ctx, el));
+    void (ubahSinkron(ctx, el) || ubahPemilih(ctx, el) || ubahHub(ctx, el) || ubahDataset(ctx, el) || ubahGrid(ctx, el) || ubahBeban(ctx, el) || ubahMaster(ctx, el) || ubahImpor(ctx, el) || ubahSusun(ctx, el) || ubahTerapkan(ctx, el) || ubahSkema(ctx, el));
   });
 
   akar.addEventListener('input', (e) => {
@@ -281,6 +292,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
 
   document.addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement;
+    if (e.key === 'Escape' && (tutupSinkron() || tutupBawaan() || tutupCadangan())) return gambar();
     if (e.key === 'Escape' && (ui.modal || ui.pemilih || ui.dlg || ui.dlgSkema)) {
       ui.modal = null;
       ui.dlgSkema = null;

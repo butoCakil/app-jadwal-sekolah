@@ -68,7 +68,7 @@ function polaDari(p: Proyek, src: SumberAscKelas, nama: string): string | undefi
   const ada = (p.polaLain ?? []).find((x) => x.pola.join('|') === pola.join('|'));
   if (ada) return ada.id;
   const id = `pola-${(p.polaLain ?? []).length + 1}`;
-  p.polaLain = [...(p.polaLain ?? []), { id, nama: `Pola ${nama}`, pola }];
+  p.polaLain = [...(p.polaLain ?? []), { id, nama: `Skema ${nama}`, pola }];
   return id;
 }
 
@@ -240,4 +240,25 @@ export function bangunTahun(dasar: Proyek, genap: Proyek, src: SumberTahun, seme
   p.master.mapel = p.master.mapel.filter((m) => dipakai.has(m.id));
   p.nama = 'SMK Negeri Bansari - Tahun Pelajaran 2026/2027';
   return { proyek: p, laporan: { peringatan: [...new Set(peringatan)], kegiatan: laporan } };
+}
+
+/**
+ * Skema mingguan buatan admin yang ikut menjadi bawaan (keadaan terbit 28 Nov 2026), beserta pemasangannya pada kegiatan.
+ * Mengembalikan jumlah yang berhasil diterapkan (pola yang sudah ada tidak digandakan; kegiatan yang tidak ditemukan tidak dihitung).
+ */
+export function terapkanPolaAdmin(p: Proyek, pola: { id: string; nama: string; pola: PolaMinggu }[], pasang: { kegiatanId: string; polaId: string }[]): { pola: number; pasang: number } {
+  let nPola = 0;
+  for (const q of pola) {
+    if ((p.polaLain ?? []).some((x) => x.id === q.id)) continue;
+    p.polaLain = [...(p.polaLain ?? []), structuredClone(q)];
+    nPola++;
+  }
+  let nPasang = 0;
+  for (const x of pasang) {
+    const g = p.kalender.find((k) => k.id === x.kegiatanId);
+    if (!g || !(p.polaLain ?? []).some((q) => q.id === x.polaId)) continue;
+    g.polaId = x.polaId;
+    nPasang++;
+  }
+  return { pola: nPola, pasang: nPasang };
 }

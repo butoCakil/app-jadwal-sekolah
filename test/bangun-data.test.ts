@@ -7,9 +7,9 @@ import { kodeGuruSekolah } from '../src/model/sekolah';
 import { bangunGasal, bangunGenap, strukturGasalJadwalTe } from '../src/model/bangunData';
 import { dariJadwalTe, type BerkasJadwalTe } from '../src/io/imporJadwalTe';
 import { bangunTahun } from '../src/model/bangunTahun';
-import { AGENDA_2026, DITERIMA_2026, PENYESUAIAN_2026, PKL_2026, SUMBER_TAHUN_2026, SEMESTER_2026 } from '../src/model/sumberTahun';
+import { AGENDA_2026, DITERIMA_2026, PASANG_POLA_2026, PENYESUAIAN_2026, PKL_2026, POLA_ADMIN_2026, SUMBER_TAHUN_2026, SEMESTER_2026 } from '../src/model/sumberTahun';
 import { terimaKeputusan } from '../src/ui/diterima';
-import { terapkanPenyesuaian } from '../src/model/bangunTahun';
+import { terapkanPenyesuaian, terapkanPolaAdmin } from '../src/model/bangunTahun';
 
 /**
  * Pembangun data sekolah. Dijalankan manual untuk menulis ulang berkasnya:
@@ -32,6 +32,7 @@ describe('bangun data sekolah', () => {
       agenda: AGENDA_2026,
     }, SEMESTER_2026);
     expect(terapkanPenyesuaian(proyek, PENYESUAIAN_2026)).toEqual([4]);
+    expect(terapkanPolaAdmin(proyek, POLA_ADMIN_2026, PASANG_POLA_2026)).toEqual({ pola: 2, pasang: 1 });
     expect(terimaKeputusan(proyek, DITERIMA_2026).every((n) => n > 0)).toBe(true);
     if (process.env.TULIS_DATA) writeFileSync(jalur('../data/sekolah/tahun-2026.json'), JSON.stringify(proyek));
     expect(baca('../data/sekolah/tahun-2026.json')).toEqual(JSON.parse(JSON.stringify(proyek)));

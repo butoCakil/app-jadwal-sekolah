@@ -6,16 +6,18 @@ const NAMA_DB = 'app-jadwal-sekolah';
 const NAMA_STORE = 'draf';
 const STORE_DATASET = 'dataset';
 const STORE_AI = 'ai';
+const STORE_SINKRON = 'sinkron';
 const KUNCI = 'proyek';
 
 function bukaDb(): Promise<IDBDatabase> {
   return new Promise((ok, gagal) => {
-    const req = indexedDB.open(NAMA_DB, 3);
+    const req = indexedDB.open(NAMA_DB, 4);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(NAMA_STORE)) db.createObjectStore(NAMA_STORE);
       if (!db.objectStoreNames.contains(STORE_DATASET)) db.createObjectStore(STORE_DATASET);
       if (!db.objectStoreNames.contains(STORE_AI)) db.createObjectStore(STORE_AI);
+      if (!db.objectStoreNames.contains(STORE_SINKRON)) db.createObjectStore(STORE_SINKRON);
     };
     req.onsuccess = () => ok(req.result);
     req.onerror = () => gagal(req.error);
@@ -50,6 +52,44 @@ export async function muatDraf(): Promise<Proyek | null> {
   return validasiProyek(v).length === 0 ? migrasiPola(v as Proyek) : null;
 }
 
+/** Keadaan draf di peramban: kosong (belum pernah ada), rusak (ada tetapi tidak lolos validasi, tidak boleh ditimpa diam-diam), atau ok. */
+export type KeadaanDraf = { status: 'kosong' } | { status: 'rusak'; galat: string[]; mentah: unknown } | { status: 'ok'; proyek: Proyek };
+
+export async function muatDrafRinci(): Promise<KeadaanDraf> {
+  const v = await jalankan<unknown>('readonly', (s) => s.get(KUNCI));
+  if (v === undefined) return { status: 'kosong' };
+  const galat = validasiProyek(v);
+  return galat.length ? { status: 'rusak', galat, mentah: v } : { status: 'ok', proyek: migrasiPola(v as Proyek) };
+}
+
+/** Menyimpan draf yang rusak ke kunci lain sebelum draf baru ditulis, supaya tidak hilang. */
+export async function amankanDrafRusak(mentah: unknown): Promise<void> {
+  await jalankan('readwrite', (s) => s.put({ disimpan: new Date().toISOString(), mentah }, 'proyek-rusak'));
+}
+
+/** Penanda sinkron di peramban ini: isi berkas admin pada sinkron terakhir (dasar gabungan tiga arah) beserta sha dan waktunya. */
+export interface PenandaSinkron {
+  sha: string;
+  /** isi berkas di GitHub pada sinkron terakhir (teks JSON) */
+  isi: string;
+  /** waktu sinkron terakhir (ISO) */
+  waktu: string;
+}
+export async function bacaSinkron(): Promise<PenandaSinkron | undefined> {
+  return jalankan<PenandaSinkron | undefined>('readonly', (s) => s.get('terakhir') as IDBRequest<PenandaSinkron | undefined>, STORE_SINKRON);
+}
+export async function tulisSinkron(m: PenandaSinkron): Promise<void> {
+  await jalankan('readwrite', (s) => s.put(m, 'terakhir'), STORE_SINKRON);
+}
+export async function hapusSinkron(): Promise<void> {
+  await jalankan('readwrite', (s) => s.delete('terakhir'), STORE_SINKRON);
+}
+
+/** Draf apa adanya (tanpa validasi), untuk cadangan. */
+export async function bacaDrafMentah(): Promise<unknown> {
+  return jalankan<unknown>('readonly', (s) => s.get(KUNCI));
+}
+
 export async function hapusDraf(): Promise<void> {
   await jalankan('readwrite', (s) => s.delete(KUNCI));
 }
@@ -66,6 +106,11 @@ export interface DatasetTersimpan {
 export async function daftarDataset(): Promise<DatasetTersimpan[]> {
   const semua = await jalankan<DatasetTersimpan[]>('readonly', (s) => s.getAll() as IDBRequest<DatasetTersimpan[]>, STORE_DATASET);
   return semua.filter((d) => validasiProyek(d.proyek).length === 0).map((d) => ({ ...d, proyek: migrasiPola(d.proyek) })).sort((a, b) => b.disimpan.localeCompare(a.disimpan));
+}
+
+/** Semua dataset apa adanya (termasuk yang tidak lolos validasi), untuk cadangan. */
+export async function semuaDatasetMentah(): Promise<DatasetTersimpan[]> {
+  return jalankan<DatasetTersimpan[]>('readonly', (s) => s.getAll() as IDBRequest<DatasetTersimpan[]>, STORE_DATASET);
 }
 
 export async function simpanDataset(d: DatasetTersimpan): Promise<void> {
