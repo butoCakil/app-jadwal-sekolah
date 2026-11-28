@@ -227,11 +227,14 @@ export function klikSinkron(k: Konteks, el: HTMLElement): boolean {
       st.terbuka = false;
       k.ke('terapkan');
       return true;
-    case 'snBukaBrankas':
+    case 'snBukaBrankas': {
+      // PIN dibaca sebelum `jalan` menggambar ulang modal (render ulang mengosongkan kolom PIN)
+      const pin = (document.getElementById('snPin') as HTMLInputElement | null)?.value ?? '';
       jalan(async () => {
-        await bukaDenganPin((document.getElementById('snPin') as HTMLInputElement | null)?.value ?? '');
+        await bukaDenganPin(pin);
       });
       return true;
+    }
     case 'snRinci': {
       const b = bagianDari(el.dataset.bagian);
       if (b) {
