@@ -443,7 +443,9 @@ Masukan Benny setelah melihat di ponsel dan perubahannya:
 - Singkatan non-KBM: Pembiasaan = PMB, Upacara = UPC, selain itu tiga huruf pertama; legenda tampil di bawah tabel.
 - **Bawaan pertama kali dibuka:** tab Semua, semua hari, zoom Sedang; setelah itu pilihan terakhir diingat di peramban.
 - Pengujian: 246 tes, dan dilihat di Chrome ukuran ponsel (390 px).
-- **Catatan desain:** baris pelajaran pada tabel per pekan diratakan menurut nomor pelajaran (bukan nomor poster) supaya baris istirahat sejajar antar hari; nomor poster tampil di kepala kolom tab Semua dan di rincian.
+- **Nomor jam di tabel per pekan (revisi 28 Nov, keputusan Benny):** di tampilan publik nomor jam mengikuti poster skema hari itu: pada skema 11 dan 9 pembiasaan adalah jam 1 dan pelajaran pertama jam 2; pada skema 10 pelajaran pertama jam 1. Karena istirahat tiap skema jatuh pada posisi berbeda terhadap nomor poster, baris tetap diratakan menurut urutan pelajaran (supaya istirahat sejajar dan kotak terpotong benar), dan **tiap hari punya lajur nomor kecil sendiri** di kiri kolomnya. Tampilan admin tetap memakai penomoran internal.
+- **Cache versi lama (28 Nov):** GitHub Pages menyimpan index.html di cache peramban beberapa menit, sehingga pengunjung bisa melihat kode lama setelah pembaruan (data terbit tidak terdampak karena `no-cache`). Build menulis `versi.json` (penanda build); halaman membandingkannya dengan penandanya sendiri saat dibuka dan setiap kali kembali terlihat (paling sering tiap 5 menit). Bila berbeda, halaman memuat ulang sekali lewat alamat `?v=<penanda>` (kunci cache baru, hash dipertahankan); bila masih berbeda muncul tombol Muat ulang. Tidak aktif di mode dev. Pilihan tampilan yang tersimpan (kelas, tab, zoom) tidak ikut hilang.
+- **Keputusan Benny (28 Nov):** token GitHub untuk Terapkan disimpan di brankas PIN yang sama dengan kunci Gemini (satu PIN). Urutan: Terapkan, lalu perapian UI, lalu hosting.
 
 ### 11.6 Pertanyaan terbuka
 

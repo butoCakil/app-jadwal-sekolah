@@ -185,26 +185,38 @@ function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
 
   const kepala = hari.map((h) => {
     const bg = h.warna ?? '#64748b';
-    return `<th class="px-0.5 py-1 text-center text-white ${h.tanggal === hariIni ? 'outline outline-2 -outline-offset-2 outline-amber-300' : ''}" style="background:${esc(bg)}"><div class="text-xs font-bold">${esc(h.hari.slice(0, 3))}</div><div class="text-[10px] font-normal opacity-90">${esc(tglPendek(h.tanggal))}</div><div class="text-[9px] font-normal opacity-80">${esc(skemaPendek(h.skema))}</div></th>`;
+    return `<th colspan="2" class="px-0.5 py-1 text-center text-white ${h.tanggal === hariIni ? 'outline outline-2 -outline-offset-2 outline-amber-300' : ''}" style="background:${esc(bg)}"><div class="text-xs font-bold">${esc(h.hari.slice(0, 3))}</div><div class="text-[10px] font-normal opacity-90">${esc(tglPendek(h.tanggal))}</div><div class="text-[9px] font-normal opacity-80">${esc(skemaPendek(h.skema))}</div></th>`;
   }).join('');
 
   const atr = (h: HariP, a: number) => `data-aksi="det" data-tgl="${h.tanggal}" data-a="${a}" data-id="${esc(k.id)}"`;
+  const GUTER = 'border border-white bg-slate-50 p-0 text-center align-middle text-[10px] font-bold tabular-nums text-slate-500';
+  const kosongSel = '<td class="border border-white bg-stone-200/50"></td>';
+  // tiap hari: nomor jam menurut poster skema hari itu (pembiasaan = 1 pada skema 11 dan 9) dan isi kotak
   const kolom = hari.map((h) => {
+    const nomorPoster = new Map<number, string>();
+    for (const c of h.kolom) if (c.tipe === 'kbm' && c.nomor !== null) nomorPoster.set(c.nomor, c.label);
+    const guter = new Map<number, string>();
     const sel = new Map<number, string>();
     const lewat = new Set<number>();
     if (h.status !== 'normal') {
       if (baris.length) {
-        sel.set(0, `<td rowspan="${baris.length}" class="border border-white p-0.5 align-top"><div class="rounded-md border px-0.5 py-2 text-center text-[10px] ${WARNA_STATUS[h.status] ?? ''}">${esc(h.keterangan)}</div></td>`);
+        sel.set(0, `<td colspan="2" rowspan="${baris.length}" class="border border-white p-0.5 align-top"><div class="rounded-md border px-0.5 py-2 text-center text-[10px] ${WARNA_STATUS[h.status] ?? ''}">${esc(h.keterangan)}</div></td>`);
         for (let r = 1; r < baris.length; r++) lewat.add(r);
       }
     } else {
+      baris.forEach((r, ri) => {
+        if (r.t === 'jam') guter.set(ri, `<td class="${GUTER}">${esc(nomorPoster.get(r.n) ?? '')}</td>`);
+      });
       for (const e of h.elemen) {
         if (e.jenis === 'nonKbm') {
           const r = idx('pagi', 0);
-          if (r >= 0) sel.set(r, `<td class="border border-white bg-slate-200 text-center align-middle text-[10px] text-slate-700" title="${esc(`${e.nama} ${e.mulai}–${e.selesai}`)}"><b>${esc(e.kode)}</b></td>`);
+          if (r >= 0) {
+            guter.set(r, `<td class="${GUTER}">${esc(e.label)}</td>`);
+            sel.set(r, `<td class="border border-white bg-slate-200 text-center align-middle text-[10px] text-slate-700" title="${esc(`${e.nama} ${e.mulai}–${e.selesai}`)}"><b>${esc(e.kode)}</b></td>`);
+          }
         } else if (e.jenis === 'istirahat') {
           const r = idx('ist', e.setelah);
-          if (r >= 0) sel.set(r, `<td class="border border-white bg-emerald-100 text-center align-middle text-[9px] text-emerald-800" title="${esc(`${e.nama} ${e.mulai}–${e.selesai}`)}">Istirahat</td>`);
+          if (r >= 0) sel.set(r, `<td colspan="2" class="border border-white bg-emerald-100 text-center align-middle text-[9px] text-emerald-800" title="${esc(`${e.nama} ${e.mulai}–${e.selesai}`)}">Istirahat</td>`);
         } else {
           const r1 = idx('jam', e.a);
           const r2 = idx('jam', e.b);
@@ -219,22 +231,28 @@ function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
         }
       }
     }
-    return { sel, lewat };
+    return { sel, lewat, guter, status: h.status !== 'normal' };
   });
 
-  const labelBaris = (r: (typeof baris)[number]) => (r.t === 'pagi' ? 'Pagi' : r.t === 'ist' ? 'Ist.' : String(r.n));
   const isi = baris.map((r, ri) => {
     const tinggi = r.t === 'ist' ? 20 : r.t === 'pagi' ? 34 : 46;
-    const td = kolom.map((c) => (c.lewat.has(ri) ? '' : (c.sel.get(ri) ?? '<td class="border border-white bg-stone-200/50"></td>'))).join('');
-    return `<tr style="height:${tinggi}px"><th class="sticky left-0 z-10 border border-white bg-slate-50 px-0.5 text-center text-[10px] font-semibold text-slate-500">${labelBaris(r)}</th>${td}</tr>`;
+    const td = kolom.map((c) => {
+      const s = c.sel.get(ri);
+      if (c.status) return c.lewat.has(ri) ? '' : (s ?? '');
+      if (r.t === 'ist') return s ?? `<td colspan="2" class="border border-white bg-stone-200/50"></td>`;
+      // nomor jam selalu tampil; isi kotak dilewati bila tertutup rowspan dari baris di atasnya
+      return `${c.guter.get(ri) ?? `<td class="${GUTER}"></td>`}${c.lewat.has(ri) ? '' : (s ?? kosongSel)}`;
+    }).join('');
+    return `<tr style="height:${tinggi}px">${td}</tr>`;
   }).join('');
 
   const kegiatan = [...new Set(hari.map((h) => h.kegiatan?.nama).filter((x): x is string => !!x))];
   const kode = [...new Map(hari.flatMap((h) => h.elemen.flatMap((e) => (e.jenis === 'nonKbm' ? [[e.kode, e.nama] as const] : [])))).entries()].map(([c, n]) => `<b>${esc(c)}</b> = ${esc(n)}`).join(' · ');
-  const kosongSemua = baris.length === 0 ? '<tr><td colspan="6" class="px-3 py-6 text-center text-sm text-slate-500">Tidak ada KBM pada pekan ini.</td></tr>' : '';
+  const alasan = [...new Set(hari.filter((h) => h.status !== 'normal').map((h) => h.keterangan).filter(Boolean))];
+  const kosongSemua = baris.length === 0 ? `<tr><td colspan="10" class="px-3 py-6 text-center text-sm text-slate-500">Tidak ada KBM pada pekan ini.${alasan.length ? `<div class="mt-1 text-xs">${alasan.map(esc).join(' · ')}</div>` : ''}</td></tr>` : '';
   return `${kegiatan.length ? `<div class="mb-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">Pekan ini: <b>${esc(kegiatan.join(', '))}</b></div>` : ''}
-    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white"><table class="w-full table-fixed border-collapse"><thead><tr><th class="w-8 bg-slate-50 text-[10px] font-semibold text-slate-400">Jam</th>${kepala}</tr></thead><tbody>${isi}${kosongSemua}</tbody></table></div>
-    <p class="mt-2 text-[11px] leading-relaxed text-slate-500">Baris = pelajaran ke-n (tanpa pembiasaan); hari bersekema 11 atau 9 jam punya baris <b>Pagi</b> untuk pembiasaan.${kode ? ` ${kode}.` : ''} Jam berurutan dengan guru dan mapel yang sama digabung; istirahat memotongnya. Sentuh kotak untuk detail.</p>`;
+    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white"><table class="w-full table-fixed border-collapse"><colgroup>${hari.map(() => '<col style="width:6.5%"><col>').join('')}</colgroup><thead><tr>${kepala}</tr></thead><tbody>${isi}${kosongSemua}</tbody></table></div>
+    <p class="mt-2 text-[11px] leading-relaxed text-slate-500">Angka kecil di tiap hari = jam ke- menurut poster skema hari itu (pembiasaan jam 1 pada skema 11 dan 9; pada skema 10 pelajaran pertama jam 1).${kode ? ` ${kode}.` : ''} Jam berurutan dengan guru dan mapel yang sama digabung; istirahat memotongnya. Sentuh kotak untuk detail.</p>`;
 }
 
 // ------------------------------------------------------------------ tab Semua: matriks semua kelas/guru/ruang

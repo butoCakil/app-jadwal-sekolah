@@ -205,13 +205,22 @@ describe('halaman publik', () => {
     expect(await muatTerbit(putus)).toMatchObject({ ok: false });
   });
 
-  it('per pekan berbentuk grid: baris Pagi, istirahat, dan sel digabung (rowspan)', async () => {
+  it('per pekan berbentuk grid: PMB, istirahat, sel digabung (rowspan), nomor jam poster per hari', async () => {
     const { gambarHalaman } = await import('../src/publik/halaman');
     const html = gambarHalaman(t, { ...K, tab: 'rombel', id: rombel('X AT 1'), tanggal: '2026-11-10', tata: 'pekan' }, '2026-11-10');
-    expect(html).toContain('>Pagi<');
     expect(html).toContain('>PMB<');
     expect(html).toContain('Istirahat</td>');
-    expect(html).toContain('Ist.');
+    // nomor jam mengikuti poster tiap hari: skema 11 sampai 11 (pembiasaan = 1), skema 10 sampai 10
+    const nomor = (h: string): string[] => [...h.matchAll(/tabular-nums text-slate-500">([^<]*)<\/td>/g)].map((m) => m[1]!);
+    const semua = nomor(html);
+    // 5 hari x (1 baris Pagi + 10 baris pelajaran): tiap hari punya gutter di setiap baris
+    expect(semua.length).toBe(5 * 11);
+    expect(semua.filter((x) => x === '11').length).toBe(2); // Sen dan Kam (skema 11)
+    expect(semua.filter((x) => x === '10').length).toBe(5 - 1); // skema 9 hanya sampai 9
+    expect(semua.slice(0, 5)).toEqual(['1', '', '', '1', '1']); // baris Pagi: PMB = jam 1 pada skema 11 dan 9
+    expect(semua.slice(5, 10)).toEqual(['2', '1', '1', '2', '2']); // pelajaran pertama
+    expect(html).toContain('text-slate-500">1</td>');
+    expect(html).not.toContain('>Pagi<');
     expect(/rowspan="[2-9]"/.test(html)).toBe(true);
     expect(html).toContain('Skema 11');
     expect(html).toContain('Skema 10');
