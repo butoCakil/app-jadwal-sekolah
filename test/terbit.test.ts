@@ -251,10 +251,17 @@ describe('halaman publik', () => {
     expect(des).toContain('Libur');
     expect(des).not.toContain('data-aksi="kalLihatHari"');
     expect(des).toContain('bg-red-50');
-    // libur menurut kalender akademik pada hari kerja dalam semester (Maulid, 25 Agu) tampil sebagai libur, tanpa tombol jadwal
+    // libur umum dari agenda (Maulid, 25 Agu) = libur, tanpa tombol jadwal; 17 Agu (upacara) hari belajar
     const agu = gambarHalaman(t, { ...K, tab: 'kalender', tanggal: '2026-08-25', bulan: '2026-08' }, '2026-11-28');
-    expect(agu).toContain('menurut kalender akademik');
+    expect(agu).toContain('Maulid Nabi Muhammad SAW');
     expect(agu).not.toContain('data-aksi="kalLihatHari"');
+    const tujuhbelas = gambarHalaman(t, { ...K, tab: 'kalender', tanggal: '2026-08-17', bulan: '2026-08' }, '2026-11-28');
+    expect(tujuhbelas).toContain('data-aksi="kalLihatHari"');
+    // agenda yang sama dengan kegiatan digabung sebagai rincian, bukan baris sendiri
+    expect(h).toContain('Termasuk: TKA');
+    expect(h).toContain('Termasuk: UK3');
+    expect(h).toContain('Termasuk: PSAS');
+    expect(h).not.toContain('>UK3 (uji kompetensi keahlian)</div>');
     // bulan tanpa data tidak membuat galat
     const kosong = gambarHalaman(t, { ...K, tab: 'kalender', tanggal: '2030-01-01', bulan: '2030-01' }, '2026-11-28');
     expect(kosong).toContain('Tidak ada agenda pada bulan ini.');
@@ -267,6 +274,33 @@ describe('halaman publik', () => {
       expect(html).toContain('data-aksi="sebelumnya"');
       expect(html).toContain('data-aksi="berikutnya"');
     }
+  });
+
+  it('cetak: satu halaman per entitas, tombol cetak ada, kode pada halaman dijelaskan', async () => {
+    const { gambarHalaman, tabelPekan } = await import('../src/publik/halaman');
+    const { bukuCetak, kodeHalaman } = await import('../src/publik/cetak');
+    for (const tab of ['rombel', 'guru', 'ruang'] as const) {
+      const html = gambarHalaman(t, { ...K, tab, id: daftarEntitasP(p, tab)[0]!.id }, '2026-11-10');
+      expect(html).toContain('data-aksi="cetak" data-lingkup="satu"');
+      expect(html).toContain('data-aksi="cetak" data-lingkup="semua"');
+    }
+    expect(gambarHalaman(t, { ...K, tab: 'semua' }, '2026-11-10')).not.toContain('data-aksi="cetak"');
+    for (const mode of ['rombel', 'guru', 'ruang'] as const) {
+      const ids = daftarEntitasP(p, mode).map((e) => e.id);
+      const buku = bukuCetak(p, { mode, ids, tanggal: '2026-11-10', diperbarui: '28 Nov 2026', tabel: (i) => tabelPekan(p, { ...K, tab: mode, id: i, tata: 'pekan' }, '', true) });
+      expect((buku.match(/class="halaman-cetak"/g) ?? []).length).toBe(ids.length);
+      // mode cetak: hanya tabel, tanpa kotak pembungkus layar maupun pemilih
+      expect(buku).not.toContain('overflow-x-auto');
+      expect(buku).not.toContain('id="pilih"');
+    }
+    // legenda: kode guru dan ruang pada halaman kelas dijelaskan; jenis yang sama dengan judul tidak diulang
+    const kode = kodeHalaman(p, 'rombel', id, '2026-11-10');
+    expect(kode.mapel.length).toBeGreaterThan(3);
+    expect(kode.guru.length).toBeGreaterThan(3);
+    expect(kode.ruang.length).toBeGreaterThan(0);
+    expect(kodeHalaman(p, 'guru', daftarEntitasP(p, 'guru')[0]!.id, '2026-11-10').guru).toEqual([]);
+    expect(kodeHalaman(p, 'ruang', daftarEntitasP(p, 'ruang')[0]!.id, '2026-11-10').ruang).toEqual([]);
+    for (const [k, n] of kode.guru) expect(p.master.guru.some((g) => g.kode === k && g.nama === n)).toBe(true);
   });
 
   it('tab Semua: satu baris per kelas, semua hari, kepala skema, dan bisa dibatasi satu hari', async () => {

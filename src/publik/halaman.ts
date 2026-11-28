@@ -5,6 +5,7 @@ import { NAMA_HARI } from '../model/tipe';
 import { hariPekan } from '../model/kalender';
 import { keMenit } from '../model/skema';
 import { bacaTerbit, type Terbit } from '../terbit/format';
+import { bukuCetak } from './cetak';
 import { gambarKalender } from './kalender';
 import { daftarEntitasP, jadwalHariP, jadwalPekanP, matriksP, type ElemenHari, type HariP, type ItemP, type ModeP } from './tampil';
 import { esc, isoLokal, seninPekan, tambahHari, warnaMapel } from '../ui/util';
@@ -172,7 +173,8 @@ function isiSel(mode: ModeP, it: ItemP): string {
   return `<b>${esc(it.mapel.kode)}</b>${ruang}<div class="text-[9.5px] text-slate-600">${esc(mode === 'rombel' ? guru : it.rombel)}</div>`;
 }
 
-function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
+/** Tabel satu pekan. `cetak`: hanya tabel, baris dipadatkan agar satu halaman A4 landscape memuat skema 11 jam. */
+export function tabelPekan(p: Proyek, k: Keadaan, hariIni: string, cetak = false): string {
   const mode = k.tab as ModeP;
   const pk = jadwalPekanP(p, k.tanggal, mode, k.id);
   const hari = pk.hari;
@@ -240,7 +242,7 @@ function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
   });
 
   const isi = baris.map((r, ri) => {
-    const tinggi = r.t === 'ist' ? 20 : r.t === 'pagi' ? 34 : 46;
+    const tinggi = cetak ? (r.t === 'ist' ? 14 : r.t === 'pagi' ? 26 : 44) : r.t === 'ist' ? 20 : r.t === 'pagi' ? 34 : 46;
     const td = kolom.map((c) => {
       const s = c.sel.get(ri);
       if (c.status) return c.lewat.has(ri) ? '' : (s ?? '');
@@ -255,6 +257,7 @@ function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
   const kode = [...new Map(hari.flatMap((h) => h.elemen.flatMap((e) => (e.jenis === 'nonKbm' ? [[e.kode, e.nama] as const] : [])))).entries()].map(([c, n]) => `<b>${esc(c)}</b> = ${esc(n)}`).join(' · ');
   const alasan = [...new Set(hari.filter((h) => h.status !== 'normal').map((h) => h.keterangan).filter(Boolean))];
   const kosongSemua = baris.length === 0 ? `<tr><td colspan="10" class="px-3 py-6 text-center text-sm text-slate-500">Tidak ada KBM pada pekan ini.${alasan.length ? `<div class="mt-1 text-xs">${alasan.map(esc).join(' · ')}</div>` : ''}</td></tr>` : '';
+  if (cetak) return `<table class="w-full table-fixed border-collapse"><colgroup>${hari.map(() => '<col style="width:6.5%"><col>').join('')}</colgroup><thead><tr>${kepala}</tr></thead><tbody>${isi}${kosongSemua}</tbody></table>`;
   return `${kegiatan.length ? `<div class="mb-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">Pekan ini: <b>${esc(kegiatan.join(', '))}</b></div>` : ''}
     <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white"><table class="w-full table-fixed border-collapse"><colgroup>${hari.map(() => '<col style="width:6.5%"><col>').join('')}</colgroup><thead><tr>${kepala}</tr></thead><tbody>${isi}${kosongSemua}</tbody></table></div>
     <p class="mt-2 text-[11px] leading-relaxed text-slate-500">Angka kecil di tiap hari = jam ke- menurut poster skema hari itu (pembiasaan jam 1 pada skema 11 dan 9; pada skema 10 pelajaran pertama jam 1).${kode ? ` ${kode}.` : ''} Jam berurutan dengan guru dan mapel yang sama digabung; istirahat memotongnya. Sentuh kotak untuk detail.</p>`;
@@ -493,7 +496,8 @@ export function gambarHalaman(t: Terbit, k: Keadaan, hariIni: string, lebar = 39
        ${tombolTgl}
        <div class="flex items-center gap-2"><button data-aksi="hariIni" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">Hari ini</button>
          <div class="ml-auto flex overflow-hidden rounded-xl border border-slate-300">${segTata('hari', 'Per hari')}${segTata('pekan', 'Per pekan')}</div></div>
-       ${k.tata === 'hari' ? `<div class="flex gap-1.5">${chipHari(false)}</div>` : ''}`;
+       ${k.tata === 'hari' ? `<div class="flex gap-1.5">${chipHari(false)}</div>` : ''}
+       <div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-500">Cetak A4:</span><button data-aksi="cetak" data-lingkup="satu" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">Pekan ini</button><button data-aksi="cetak" data-lingkup="semua" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">Semua ${esc(NAMA_MODE[mode].toLowerCase())}</button></div>`;
 
   const isi = kalender ? gambarKalender(p, k.bulan ?? k.tanggal.slice(0, 7), k.tanggal, hariIni) : semua ? tabelSemua(p, k, hariIni, lebar) : k.tata === 'hari' ? tampilanHari(p, k, hariIni) : tabelPekan(p, k, hariIni);
   const lebarMaks = semua ? 'max-w-5xl' : 'max-w-3xl';
@@ -517,6 +521,24 @@ export async function muatTerbit(ambil: typeof fetch = fetch, alamat = './terbit
   } catch {
     return { ok: false, galat: 'Jadwal tidak bisa dimuat. Periksa koneksi internet, lalu muat ulang halaman.' };
   }
+}
+
+/** Isi wadah cetak lalu buka dialog cetak; wadah dikosongkan setelah selesai. */
+function cetakHalaman(html: string): void {
+  let el = document.getElementById('cetak');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'cetak';
+    document.body.appendChild(el);
+  }
+  const wadah = el;
+  wadah.innerHTML = html;
+  const bersih = () => {
+    wadah.innerHTML = '';
+    window.removeEventListener('afterprint', bersih);
+  };
+  window.addEventListener('afterprint', bersih);
+  window.print();
 }
 
 export async function mulaiPublik(akar: HTMLElement, ambil: typeof fetch = fetch): Promise<void> {
@@ -610,6 +632,13 @@ export async function mulaiPublik(akar: HTMLElement, ambil: typeof fetch = fetch
         gambar();
         window.scrollTo(0, 0);
         return;
+      case 'cetak': {
+        const mode = modeAktif();
+        const ids = d.lingkup === 'semua' ? daftarEntitasP(p, mode).map((e) => e.id) : [k.id];
+        const diperbarui = t.diterapkan ? new Date(t.diterapkan).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) : '';
+        cetakHalaman(bukuCetak(p, { mode, ids, tanggal: k.tanggal, diperbarui, tabel: (id) => tabelPekan(p, { ...k, tab: mode, id, tata: 'pekan' }, '', true) }));
+        return;
+      }
       case 'baris': k.baris = d.mode as ModeP; break;
       case 'zoom': k.zoom = d.zoom as Zoom; break;
       case 'tata': k.tata = d.tata as 'hari' | 'pekan'; break;

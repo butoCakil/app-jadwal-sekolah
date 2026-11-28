@@ -177,6 +177,8 @@ export function periksa(p: Proyek, slots: Slot[], opsi: OpsiPeriksa = {}): Masal
     for (const s of petakanSlot(slots, opsi.skemaPerHari, p.skema).tampungan) {
       const b = bebanById.get(s.bebanId);
       if (!b) continue;
+      // hari tanpa KBM (libur): jadwal reguler yang jatuh di hari itu memang tidak berjalan, bukan masalah
+      if (opsi.skemaPerHari[s.hari] === null) continue;
       hasil.push({ id: `di-luar-kapasitas:${s.id}`, jenis: 'di-luar-kapasitas', kategori: 'kapasitas', pesan: `${deskripsi(b)} di ${waktu(s.hari, s.jam)} tidak muat pada skema pekan ini.`, slotIds: [s.id], bebanId: b.id, rombelId: b.rombelId });
     }
   }

@@ -20,6 +20,14 @@ export function berlakuPada(k: Pick<Kegiatan, 'mulai' | 'selesai' | 'hariBerlaku
   return !k.hariBerlaku?.length || k.hariBerlaku.includes(hariPekan(tanggal));
 }
 
+/**
+ * Agenda libur untuk semua kelas ikut meniadakan KBM pada tanggalnya. Tanggal merah yang siswanya tetap berangkat
+ * (mis. upacara 17 Agustus) tidak berjenis libur, sehingga jadwal tetap berjalan.
+ */
+export function liburUmum(k: Pick<Kegiatan, 'jenis' | 'agenda' | 'untuk'>): boolean {
+  return !!k.agenda && k.jenis === 'libur' && (!k.untuk || k.untuk.trim().toLowerCase() === 'semua');
+}
+
 export type SumberPola = 'manual' | 'kegiatan' | 'reguler';
 
 type DataPola = Pick<Proyek, 'polaReguler' | 'penggantiManual' | 'kalender'> & Partial<Pick<Proyek, 'polaRegulerId' | 'polaRegulerNama' | 'polaLain'>>;
@@ -190,7 +198,7 @@ export interface SkemaHari {
 export function skemaUntukTanggal(tanggal: string, p: DataPola): SkemaHari {
   const h = hariPekan(tanggal);
   if (h >= p.polaReguler.length) return { skemaId: null, alasan: 'akhirPekan' };
-  const libur = p.kalender.find((k) => k.jenis === 'libur' && berlakuPada(k, tanggal));
+  const libur = p.kalender.find((k) => k.jenis === 'libur' && (berlakuPada(k, tanggal) || (liburUmum(k) && dalamRentang(tanggal, k.mulai, k.selesai))));
   if (libur) return { skemaId: null, alasan: 'libur', kegiatanLibur: libur.nama };
   const pt = polaUntukTanggal(tanggal, p);
   const id = pt.pola[h];

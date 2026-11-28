@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { proyekSekolah } from '../src/model/sekolahData';
 import { validasiProyek } from '../src/model/validasi';
-import { versiReguler } from '../src/model/kalender';
+import { liburUmum, versiReguler } from '../src/model/kalender';
 import { adalahPelanggaran } from '../src/mesin/validator';
 import { alihkanPerubahan, bebanKegiatan, bebanUntukDiubah, hapusBebanKegiatan, ikutInduk, kembalikanBeban, terdampak } from '../src/model/simpul';
 import { hitungTurunan } from '../src/ui/turunan';
@@ -133,11 +133,22 @@ describe('data Tahun 2026/2027: dua semester induk dan kegiatan dari PDF aSc', (
     expect(cek('2027-01-04')).toEqual(['k-pkl-xii-genap', 0]);
     expect(cek('2027-04-19')).toEqual(['genap', 0]);
   });
-  it('agenda kalender akademik tidak mengubah jadwal (mis. libur Maulid 25 Agu tetap ada KBM)', () => {
+  it('agenda libur untuk semua kelas meniadakan KBM; tanggal merah yang siswanya berangkat (upacara) tidak', () => {
     const t = hitungTurunan(p, '2026-08-24');
     expect(t.periode).toBeUndefined();
-    expect(t.hari[1]?.info.alasan).toBe('normal');
+    // Maulid (agenda libur, semua kelas) = libur; hari lain pekan itu normal
+    expect(t.hari[1]?.info.alasan).toBe('libur');
+    expect(t.hari[1]?.info.kegiatanLibur).toBe('Maulid Nabi Muhammad SAW');
+    expect(t.hari[0]?.info.alasan).toBe('normal');
+    // slot reguler pada hari libur tetap tersimpan, tetapi tidak dilaporkan sebagai "tidak muat"
     expect(t.slots.length).toBe(1200);
+    expect(t.masalah.some((m) => m.jenis === 'di-luar-kapasitas')).toBe(false);
+    // 17 Agustus berjenis upacara (siswa berangkat): jadwal tetap berjalan
+    expect(hitungTurunan(p, '2026-08-17').hari[0]?.info.alasan).toBe('normal');
+    // libur sebagian kelas (LS1 untuk X dan XI) bukan libur umum
+    expect(liburUmum({ jenis: 'libur', agenda: true, untuk: 'X, XI' })).toBe(false);
+    expect(liburUmum({ jenis: 'libur', agenda: true, untuk: 'semua' })).toBe(true);
+    expect(liburUmum({ jenis: 'upacara', agenda: true, untuk: 'semua' })).toBe(false);
   });
   it('beban Genap terpisah dari Gasal; pola UKK 10,10,11,11,9', () => {
     const gasal = hitungTurunan(p, '2026-12-07').beban.length;
