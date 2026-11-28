@@ -17,7 +17,7 @@ import { klikBeban, ubahBeban } from './beban';
 import { klikMaster, renderMaster, ubahMaster } from './master';
 import { klikImpor, renderImpor, ubahImpor } from './imporExcel';
 import { klikSusun, renderSusun, ubahSusun } from './susun';
-import { klikAi, masukanAi, renderAi, tombolAi } from './ai';
+import { pasangAi, segarkanAi } from './ai';
 import { klikTerapkan, masukanTerapkan, renderTerapkan, ubahTerapkan } from './terapkan';
 import { klikSkema, renderDlgSkema, renderSkemaTab, ubahSkema } from './skemaTab';
 import { klikPemilih, renderPemilih, segarkanPemilih, ubahPemilih } from './pemilih';
@@ -36,7 +36,6 @@ const TAB: { id: Tab; label: string }[] = [
   { id: 'skema', label: 'Skema & Kalender' },
   { id: 'impor', label: 'Impor Excel' },
   { id: 'susun', label: 'Susun Otomatis' },
-  { id: 'ai', label: 'Asisten AI' },
   { id: 'terapkan', label: 'Terapkan' },
 ];
 
@@ -155,6 +154,9 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       gambar();
       if (pesan) lapor(pesan);
     },
+    urungkan() {
+      urungkan();
+    },
     ke(tab) {
       // Jadwal Berlangsung selalu menurut tanggal; halaman Periode & Jadwal memulihkan sasaran terakhirnya
       if (tab === 'langsung' && ui.fokus !== 'auto') {
@@ -198,7 +200,6 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       : ui.tab === 'master' ? renderMaster(ctx)
       : ui.tab === 'impor' ? renderImpor(ctx)
       : ui.tab === 'susun' ? bilahSasaran(ctx) + renderSusun(ctx)
-      : ui.tab === 'ai' ? bilahSasaran(ctx) + renderAi(ctx)
       : ui.tab === 'terapkan' ? renderTerapkan(ctx)
       : renderSkemaTab(ctx);
     const gulirModal = document.getElementById('dlgSkemaIsi')?.scrollTop ?? 0;
@@ -218,6 +219,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
         <nav class="mx-auto flex max-w-[1600px] gap-1 overflow-x-auto px-4">${TAB.map((t) => `<button data-tab="${t.id === 'grid' ? tabHub : t.id}" class="whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${t.id === ui.tab || (t.id === 'grid' && diHub) ? 'border-[#2347b8] text-[#2347b8]' : 'border-transparent text-slate-500 hover:text-slate-800'}">${t.label}${t.id === 'inspektur' ? badge : ''}</button>`).join('')}</nav></header>
       <main class="mx-auto max-w-[1600px] px-4 py-4">${spandukSinkron()}${galat ? `<div class="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">${esc(galat)}</div>` : ''}${isi}</main>${renderPemilih(ctx)}${renderDlgKegiatan(ctx)}${renderDlgSkema(ctx)}${renderSinkron(ctx)}${renderCadangan()}${renderBawaan()}`;
     segarkanPemilih(ctx);
+    segarkanAi();
     const modalSkema = document.getElementById('dlgSkemaIsi');
     if (modalSkema) modalSkema.scrollTop = gulirModal;
     const modalSinkron = document.getElementById('snIsi');
@@ -256,7 +258,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
         return ctx.ganti(set === 'contoh' ? migrasiPola(proyekContoh()) : proyekSekolah(set));
       }
     }
-    void (klikBawaan(ctx, el) || klikCadangan(ctx, el) || klikSinkron(ctx, el) || klikPemilih(ctx, el) || klikHub(ctx, el) || klikDataset(ctx, el) || klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikAi(ctx, el) || klikTerapkan(ctx, el) || klikSkema(ctx, el));
+    void (klikBawaan(ctx, el) || klikCadangan(ctx, el) || klikSinkron(ctx, el) || klikPemilih(ctx, el) || klikHub(ctx, el) || klikDataset(ctx, el) || klikGrid(ctx, el) || klikInspektur(ctx, el) || klikBeban(ctx, el) || klikMaster(ctx, el) || klikImpor(ctx, el) || klikSusun(ctx, el) || klikTerapkan(ctx, el) || klikSkema(ctx, el));
   });
 
   akar.addEventListener('change', (e) => {
@@ -287,7 +289,7 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
   akar.addEventListener('input', (e) => {
     const el = e.target as HTMLInputElement;
     if (el.dataset.aksi === 'pmCari') ubahPemilih(ctx, el);
-    else void (masukanAi(el) || masukanTerapkan(el));
+    else void masukanTerapkan(el);
   });
 
   document.addEventListener('keydown', (e) => {
@@ -300,7 +302,6 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
       ui.dlg = null;
       return gambar();
     }
-    if (tombolAi(ctx, e)) return;
     if (/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
     const z = e.key.toLowerCase() === 'z';
     if ((e.ctrlKey || e.metaKey) && z && !e.shiftKey) {
@@ -377,5 +378,6 @@ export async function mulaiApp(akar: HTMLElement): Promise<void> {
   akar.addEventListener('dragend', bersihkan);
 
   gambar();
+  pasangAi(ctx);
   void muatDaftarDataset(ctx);
 }

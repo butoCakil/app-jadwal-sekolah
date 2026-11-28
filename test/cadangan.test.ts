@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { proyekSekolah } from '../src/model/sekolahData';
 import { proyekContoh } from '../src/model/contoh';
-import { bacaBerkasImpor, bacaCadangan, kumpulkanCadangan, serialCadangan, terapkanCadangan, type Gudang } from '../src/io/cadangan';
+import { bacaBerkasImpor, bacaCadangan, kumpulkanCadangan, ringkasCadangan, serialCadangan, terapkanCadangan, type Gudang } from '../src/io/cadangan';
 import { gudangPeramban } from '../src/io/gudangPeramban';
 import { bacaAi, hapusAi, hapusDataset, hapusDraf, hapusSinkron, semuaDatasetMentah, simpanDataset, simpanDraf, tulisAi, tulisSinkron, type DatasetTersimpan } from '../src/io/simpan';
 import { kunciBrankas } from '../src/ai/brankas';
@@ -10,6 +10,7 @@ import { bandingkan } from '../src/sinkron/banding';
 import { bangunBerkasAdmin } from '../src/sinkron/format';
 import { keJson } from '../src/io/simpan';
 import type { Proyek } from '../src/model/tipe';
+import { percakapanBaru, type Percakapan } from '../src/ai/percakapan';
 
 const tahun = proyekSekolah('tahun');
 const contoh = proyekContoh();
@@ -17,7 +18,7 @@ const contoh = proyekContoh();
 async function kosongkan(): Promise<void> {
   await hapusDraf();
   for (const d of await semuaDatasetMentah()) await hapusDataset(d.id);
-  for (const k of ['pengaturan', 'status', 'brankas']) await hapusAi(k);
+  for (const k of ['pengaturan', 'status', 'brankas', 'percakapan', 'pengaturanDiubah']) await hapusAi(k);
   await hapusSinkron();
 }
 
@@ -146,5 +147,44 @@ describe('paket cadangan', () => {
     const lama = bacaBerkasImpor(keJson(tahun));
     expect(lama.jenis === 'proyek' && lama.asal).toBe('proyek');
     expect(bacaBerkasImpor('{"format":"x"}').jenis).toBe('galat');
+  });
+});
+
+
+describe('cadangan: riwayat percakapan AI', () => {
+  const buat = (id: string, diubah: number, teks: string): Percakapan => ({ ...percakapanBaru(diubah), id, diubah, tampil: [{ id: 1, peran: 'admin', teks, galat: [] } as never] });
+
+  it('ikut dibawa, dan saat dipulihkan digabung dengan riwayat yang ada (yang terakhir diubah menang)', async () => {
+    await tulisAi('percakapan', { daftar: [buat('a', 100, 'versi lama a'), buat('b', 100, 'hanya di perangkat')], aktifId: 'b' });
+    await tulisAi('pengaturanDiubah', 555);
+    const paket = await kumpulkanCadangan(gudangPeramban, { sertakanBrankas: false });
+    expect(paket.ai.percakapan?.length).toBe(2);
+    expect(paket.ai.pengaturanDiubah).toBe(555);
+    const h = bacaCadangan(serialCadangan(paket));
+    expect(h.ok).toBe(true);
+    if (!h.ok) return;
+    expect(h.peringatan).toEqual([]);
+
+    // perangkat tujuan: a lebih baru, c hanya ada di sana
+    await tulisAi('percakapan', { daftar: [buat('a', 900, 'versi baru a'), buat('c', 100, 'hanya di tujuan')], aktifId: 'c' });
+    await terapkanCadangan(gudangPeramban, h.paket);
+    const hasil = (await bacaAi('percakapan')) as { daftar: Percakapan[]; aktifId: string };
+    const ids = hasil.daftar.map((c) => c.id).sort();
+    expect(ids).toEqual(['a', 'b', 'c']);
+    expect(hasil.daftar.find((c) => c.id === 'a')?.tampil[0]?.teks).toBe('versi baru a');
+    expect(hasil.aktifId).toBe('c');
+    expect(ringkasCadangan(h.paket).join('\n')).toContain('2 percakapan asisten AI');
+  });
+
+  it('percakapan rusak di cadangan dilewati dengan peringatan, bukan menggagalkan seluruh paket', async () => {
+    await tulisAi('percakapan', { daftar: [buat('a', 100, 'ok')], aktifId: 'a' });
+    const paket = await kumpulkanCadangan(gudangPeramban, { sertakanBrankas: false });
+    const mentah = JSON.parse(serialCadangan(paket));
+    mentah.ai.percakapan.push({ id: 5 }, 'sampah');
+    const h = bacaCadangan(JSON.stringify(mentah));
+    expect(h.ok).toBe(true);
+    if (!h.ok) return;
+    expect(h.paket.ai.percakapan?.length).toBe(1);
+    expect(h.peringatan.join(' ')).toContain('2 percakapan AI');
   });
 });

@@ -294,10 +294,30 @@ export interface TindakanSusun {
   lunak?: boolean;
 }
 
+export type JenisPerubahan = 'tambah' | 'ubah' | 'hapus' | 'geser';
+
 export interface BarisPerubahan {
   /** ringkas, mis. "XI TE 1 · PRE (ABC): 4 → 8 JP" */
   teks: string;
+  /** sifat perubahan, untuk penandaan di tinjauan */
+  jenis?: JenisPerubahan;
+  /** nomor urut instruksi asal (mulai 0), supaya tinjauan bisa dikelompokkan dan diterapkan sebagian */
+  instruksi?: number;
 }
+
+const JENIS_OP: Partial<Record<Instruksi['op'], JenisPerubahan>> = {
+  ubahJp: 'ubah',
+  hapusBeban: 'hapus',
+  tambahBeban: 'tambah',
+  ruangBeban: 'ubah',
+  guruTidakTersedia: 'tambah',
+  ruangTerlarang: 'tambah',
+  kunciRuang: 'tambah',
+  tambahKegiatan: 'tambah',
+  ubahKegiatan: 'ubah',
+  geserKegiatan: 'geser',
+  hapusKegiatan: 'hapus',
+};
 
 export interface HasilTerapkan {
   ok: boolean;
@@ -352,7 +372,7 @@ export function terapkanInstruksi(p: Proyek, ktx: KonteksInstruksi, daftar: Inst
     return !g;
   };
 
-  daftar.forEach((ins, idx) => {
+  const proses = (ins: Instruksi, idx: number): void => {
     const t = `Instruksi ${idx + 1} (${ins.op})`;
     switch (ins.op) {
       case 'ubahJp': {
@@ -494,6 +514,15 @@ export function terapkanInstruksi(p: Proyek, ktx: KonteksInstruksi, daftar: Inst
         if (ins.cara === 'induk' && !(g && warisan)) return void hasil.galat.push(`${t}: cara "induk" (mulai dari jadwal induk) hanya untuk kegiatan; pada jadwal induk pakai "nol" atau "lengkapi".`);
         hasil.susun = { ...(ins.cara ? { cara: ins.cara } : {}), ...(ins.detik ? { detik: ins.detik } : {}), ...(ins.lunak !== undefined ? { lunak: ins.lunak } : {}) };
         break;
+    }
+  };
+  daftar.forEach((ins, idx) => {
+    const awal = hasil.perubahan.length;
+    proses(ins, idx);
+    for (let i = awal; i < hasil.perubahan.length; i++) {
+      const b = hasil.perubahan[i] as BarisPerubahan;
+      b.instruksi = idx;
+      b.jenis ??= JENIS_OP[ins.op];
     }
   });
 

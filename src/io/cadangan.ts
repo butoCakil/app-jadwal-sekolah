@@ -7,6 +7,7 @@
 
 import type { BrankasTersimpan } from '../ai/brankas';
 import type { PengaturanAi, StatusRotasi } from '../ai/rotasi';
+import { gabungPercakapan, sahPercakapan, type Percakapan } from '../ai/percakapan';
 import { migrasiPola } from '../model/kalender';
 import type { Proyek } from '../model/tipe';
 import { validasiProyek } from '../model/validasi';
@@ -22,7 +23,7 @@ export interface PaketCadangan {
   dibuat: string;
   draf: Proyek | null;
   dataset: DatasetTersimpan[];
-  ai: { pengaturan?: PengaturanAi; status?: StatusRotasi };
+  ai: { pengaturan?: PengaturanAi; status?: StatusRotasi; pengaturanDiubah?: number; percakapan?: Percakapan[] };
   sinkron?: PenandaSinkron;
   /** terenkripsi PIN; hanya bila dipilih saat ekspor */
   brankas?: BrankasTersimpan;
@@ -45,6 +46,9 @@ export async function kumpulkanCadangan(g: Gudang, opsi: { drafSaatIni?: Proyek;
   const dataset = await g.semuaDataset();
   const pengaturan = (await g.bacaAi('pengaturan')) as PengaturanAi | undefined;
   const status = (await g.bacaAi('status')) as StatusRotasi | undefined;
+  const pengaturanDiubah = (await g.bacaAi('pengaturanDiubah')) as number | undefined;
+  const simpanPercakapan = (await g.bacaAi('percakapan')) as { daftar?: unknown } | undefined;
+  const percakapan = Array.isArray(simpanPercakapan?.daftar) ? (simpanPercakapan.daftar as Percakapan[]) : [];
   const sinkron = await g.bacaSinkron();
   const brankas = opsi.sertakanBrankas ? ((await g.bacaAi('brankas')) as BrankasTersimpan | undefined) : undefined;
   const draf = opsi.drafSaatIni ?? ((await g.bacaDraf()) as Proyek | undefined) ?? null;
@@ -54,7 +58,7 @@ export async function kumpulkanCadangan(g: Gudang, opsi: { drafSaatIni?: Proyek;
     dibuat: waktu.toISOString(),
     draf,
     dataset,
-    ai: { ...(pengaturan ? { pengaturan } : {}), ...(status ? { status } : {}) },
+    ai: { ...(pengaturan ? { pengaturan } : {}), ...(status ? { status } : {}), ...(typeof pengaturanDiubah === 'number' ? { pengaturanDiubah } : {}), ...(percakapan.length ? { percakapan } : {}) },
     ...(sinkron ? { sinkron } : {}),
     ...(brankas ? { brankas } : {}),
   };
@@ -107,6 +111,14 @@ export function bacaCadangan(teks: string): HasilBaca {
     if (adalahObjek(s) && adalahObjek(s.slot) && adalahObjek(s.tidakSah) && Array.isArray(s.galat)) ai.status = s as unknown as StatusRotasi;
     else peringatan.push('Catatan pemakaian AI di cadangan tidak sah dan dilewati.');
   }
+  if (typeof a.pengaturanDiubah === 'number' && Number.isFinite(a.pengaturanDiubah)) ai.pengaturanDiubah = a.pengaturanDiubah;
+  if (a.percakapan !== undefined) {
+    if (Array.isArray(a.percakapan)) {
+      const sah = a.percakapan.filter(sahPercakapan);
+      if (sah.length < a.percakapan.length) peringatan.push(`${a.percakapan.length - sah.length} percakapan AI di cadangan rusak dan dilewati.`);
+      if (sah.length) ai.percakapan = sah;
+    } else peringatan.push('Riwayat percakapan AI di cadangan tidak sah dan dilewati.');
+  }
   let sinkron: PenandaSinkron | undefined;
   if (x.sinkron !== undefined) {
     const s = x.sinkron;
@@ -133,6 +145,7 @@ export function ringkasCadangan(p: PaketCadangan): string[] {
     p.draf ? `Draf yang sedang dikerjakan: “${p.draf.nama}” (menggantikan draf di peramban ini)` : 'Tanpa draf',
     `${p.dataset.length} dataset tersimpan (yang ber-id sama ditimpa, yang lain di peramban ini tetap ada)`,
     p.ai.pengaturan || p.ai.status ? 'Pengaturan dan catatan pemakaian asisten AI (menggantikan yang ada)' : 'Tanpa pengaturan AI',
+    p.ai.percakapan ? `${p.ai.percakapan.filter((c) => c.dihapus === undefined).length} percakapan asisten AI (digabung dengan riwayat di peramban ini; yang terakhir diubah menang)` : 'Tanpa riwayat percakapan AI',
     p.sinkron ? 'Penanda sinkron GitHub' : 'Tanpa penanda sinkron',
     p.brankas ? 'Brankas terenkripsi (kunci Gemini dan token GitHub; menggantikan brankas di peramban ini, dibuka dengan PIN saat dibuat)' : 'Tanpa brankas',
   ];
@@ -144,6 +157,12 @@ export async function terapkanCadangan(g: Gudang, p: PaketCadangan): Promise<voi
   for (const d of p.dataset) await g.tulisDataset(d);
   if (p.ai.pengaturan) await g.tulisAi('pengaturan', p.ai.pengaturan);
   if (p.ai.status) await g.tulisAi('status', p.ai.status);
+  if (typeof p.ai.pengaturanDiubah === 'number') await g.tulisAi('pengaturanDiubah', p.ai.pengaturanDiubah);
+  if (p.ai.percakapan) {
+    const ada = (await g.bacaAi('percakapan')) as { daftar?: unknown; aktifId?: string } | undefined;
+    const lama = Array.isArray(ada?.daftar) ? (ada.daftar as unknown[]).filter(sahPercakapan) : [];
+    await g.tulisAi('percakapan', { daftar: gabungPercakapan(lama, p.ai.percakapan), ...(ada?.aktifId ? { aktifId: ada.aktifId } : {}) });
+  }
   if (p.sinkron) await g.tulisSinkron(p.sinkron);
   if (p.brankas) await g.tulisAi('brankas', p.brankas);
 }

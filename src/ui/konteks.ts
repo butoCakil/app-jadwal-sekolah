@@ -5,7 +5,7 @@ import type { Fokus, JadwalPekan } from '../model/simpul';
 import type { AturanPekan } from '../model/aturanKegiatan';
 
 export type SubMaster = 'guru' | 'mapel' | 'rombel' | 'ruang' | 'aturan' | 'data';
-export type Tab = 'langsung' | 'grid' | 'info' | 'kelas' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor' | 'susun' | 'ai' | 'terapkan';
+export type Tab = 'langsung' | 'grid' | 'info' | 'kelas' | 'inspektur' | 'beban' | 'master' | 'skema' | 'impor' | 'susun' | 'terapkan';
 /** Sub-tab halaman Periode & Jadwal. */
 export const TAB_HUB: Tab[] = ['info', 'kelas', 'beban', 'grid'];
 export type Tata = 'hari' | 'semua';
@@ -117,4 +117,6 @@ export interface Konteks {
   /** Mengganti seluruh draf dengan proyek lain (data bawaan, dataset tersimpan, semester baru). */
   ganti(baru: Proyek, pesan?: string): void;
   ke(tab: Tab): void;
+  /** Membatalkan perubahan terakhir (sama dengan tombol Undo). */
+  urungkan(): void;
 }

@@ -11,12 +11,16 @@ import { ambilPotret, bandingkanPotret, INSTRUKSI_SISTEM, ringkasData, type Potr
  * AI hanya mengusulkan; tidak ada yang berubah sebelum admin menerapkan.
  */
 
-export type StatusRencana = 'menunggu' | 'diterapkan' | 'ditolak';
+export type StatusRencana = 'menunggu' | 'diterapkan' | 'ditolak' | 'diurungkan';
 
 export interface Rencana {
   balasan: BalasanAi;
   hasil: HasilTerapkan;
   status: StatusRencana;
+  /** waktu admin menerapkan atau menolak (ms) */
+  diputuskan?: number;
+  /** nomor instruksi yang tidak diterapkan (admin memilih sebagian) */
+  dikecualikan?: number[];
 }
 
 export interface Giliran {
@@ -30,6 +34,8 @@ export interface Giliran {
   rencana?: Rencana;
   /** model dan kunci yang menjawab */
   sumber?: string;
+  /** waktu giliran dibuat (ms) */
+  waktu?: number;
 }
 
 export interface PemanggilAi {
@@ -59,9 +65,37 @@ export class SesiAi {
   ) {}
 
   private tambah(g: Omit<Giliran, 'id'>): Giliran {
-    const baru: Giliran = { ...g, id: ++this.urut };
+    const baru: Giliran = { ...g, id: ++this.urut, waktu: Date.now() };
     this.tampil.push(baru);
     return baru;
+  }
+
+  /** Isi sesi untuk disimpan sebagai bagian dari riwayat percakapan. */
+  ekspor(): { riwayat: PesanAi[]; tampil: Giliran[]; urut: number; catatan: string[] } {
+    return { riwayat: structuredClone(this.riwayat), tampil: structuredClone(this.tampil), urut: this.urut, catatan: [...this.catatan] };
+  }
+
+  /** Memulihkan sesi dari riwayat tersimpan. Potret data tidak ikut (AI selalu menerima data terbaru). */
+  pulihkan(d: { riwayat: PesanAi[]; tampil: Giliran[]; urut: number; catatan?: string[] }): void {
+    this.riwayat.length = 0;
+    this.riwayat.push(...structuredClone(d.riwayat));
+    this.tampil.length = 0;
+    this.tampil.push(...structuredClone(d.tampil));
+    this.urut = Math.max(d.urut, ...d.tampil.map((g) => g.id), 0);
+    this.catatan = [...(d.catatan ?? [])];
+    this.potret = null;
+  }
+
+  /**
+   * Bila pertukaran terakhir gagal (pesan admin lalu pemberitahuan sistem), membuangnya dan mengembalikan teks admin agar bisa
+   * dikirim ulang tanpa menggandakan pesan. Selain itu mengembalikan null dan tidak mengubah apa pun.
+   */
+  batalkanGagal(): string | null {
+    const a = this.tampil.at(-1);
+    const b = this.tampil.at(-2);
+    if (a?.peran !== 'sistem' || b?.peran !== 'admin') return null;
+    this.tampil.length -= 2;
+    return b.teks;
   }
 
   /** Mengosongkan percakapan (memori sesi dihapus). */
@@ -77,14 +111,29 @@ export class SesiAi {
     this.potret = ambilPotret(p, ktx);
   }
 
-  catatDiterapkan(g: Giliran, hasil: HasilTerapkan): void {
-    if (g.rencana) g.rencana.status = 'diterapkan';
+  catatDiterapkan(g: Giliran, hasil: HasilTerapkan, dikecualikan: number[] = []): void {
+    if (g.rencana) {
+      g.rencana.status = 'diterapkan';
+      g.rencana.diputuskan = Date.now();
+      if (dikecualikan.length) g.rencana.dikecualikan = dikecualikan;
+    }
     this.catatan.push(`[Catatan sistem] Admin MENERAPKAN usulan Anda. Perubahan: ${hasil.perubahan.map((x) => x.teks).join(' | ') || '(tidak ada perubahan data)'}${hasil.susun ? ' | Penyusunan jadwal dijalankan.' : ''}`);
   }
 
   catatDitolak(g: Giliran): void {
-    if (g.rencana) g.rencana.status = 'ditolak';
+    if (g.rencana) {
+      g.rencana.status = 'ditolak';
+      g.rencana.diputuskan = Date.now();
+    }
     this.catatan.push('[Catatan sistem] Admin MENOLAK usulan Anda sebelumnya; tidak ada yang diubah.');
+  }
+
+  catatDiurungkan(g: Giliran): void {
+    if (g.rencana) {
+      g.rencana.status = 'diurungkan';
+      g.rencana.diputuskan = Date.now();
+    }
+    this.catatan.push('[Catatan sistem] Admin MENGURUNGKAN perubahan dari usulan Anda sebelumnya; data kembali seperti sebelum diterapkan.');
   }
 
   catatHasilSusun(ringkas: string): void {

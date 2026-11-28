@@ -532,6 +532,26 @@ Kegiatan dirujuk lewat id (disukai) atau nama persis; nama yang hanya cocok seba
 
 **Batas yang disengaja.** Kegiatan yang baru dibuat belum bisa dipakai instruksi beban/kunci ruang pada usulan yang sama (terapkan dulu, lalu atur). Pola jam khusus kegiatan belum bisa dipilih lewat AI (atur dari tab Kalender).
 
+### 11.5u Asisten AI sebagai jendela mengambang dengan riwayat dan sinkron (28 Nov 2026, malam)
+
+Tab "Asisten AI" dihapus. Gantinya **balon bulat berlogo** di pojok kanan bawah semua halaman admin; ditekan, jendela percakapan mengambang muncul (desktop sekitar sepertiga lebar layar, bisa dilebarkan; ponsel hampir penuh dengan tepi, sudut bulat, dan bayangan agar tetap terlihat sebagai jendela). Jendela hidup di akar DOM sendiri (`#aiAkar`), jadi pindah tab, ganti periode, atau render ulang aplikasi tidak menutup atau mengosongkannya; buka/tutup dan lebar diingat (`localStorage aiJendela`). Tinggi di ponsel mengikuti `visualViewport` sehingga papan ketik tidak menutupi kolom pesan.
+
+**PIN tidak diminta berulang.** Pilihan "Ingat di perangkat" 0/1/7/30 hari (bawaan 7). Yang disimpan hanya kunci turunan PBKDF2 sebagai `CryptoKey` tidak-bisa-diekspor di IndexedDB (`ai/ingat`), terikat pada garam brankas dan kedaluwarsa tetap sejak PIN dimasukkan; bukan PIN, bukan isi brankas. Ganti PIN, hapus brankas, atau "Kunci sekarang" menghapusnya. Brankas terbuka otomatis saat aplikasi dimuat.
+
+**Riwayat percakapan.** Banyak percakapan, tiap percakapan punya sasaran sendiri (ikuti tampilan, atau tetap pada semester/kegiatan tertentu lewat pilihan di dalam jendela, jadi ganti periode di belakang tidak membuang konteks). Judul otomatis dari pesan pertama, bisa diganti nama, dicari, dihapus. Tersimpan di IndexedDB (`ai/percakapan`) dengan simpan tertunda 300 ms.
+
+**Sinkron ke GitHub** (`data/admin/ai.json`, termasuk di `paths-ignore` deploy): riwayat dan pengaturan model (bukan kunci API, bukan token). Digabung per percakapan dengan "terakhir diubah menang", penghapusan memakai batu nisan 90 hari, pengaturan digabung menurut cap waktu. PUT dijaga `sha` (409: baca ulang, gabung, ulang sampai 3 kali); berkas asing atau rusak tidak pernah ditimpa. Otomatis 45 detik setelah perubahan dan saat membuka brankas (bisa dimatikan), manual lewat tombol. **Repo publik: isi percakapan terbaca siapa pun; peringatan ditampilkan di Pengaturan.** Token GitHub tetap di brankas dan dipakai bersama tab Terapkan.
+
+**Kartu usulan.** Perubahan dikelompokkan per instruksi dengan penanda jenis (＋ tambah, ✎ ubah, ✕ hapus, ⇄ geser) dan nama operasi; tiap butir bisa dicabut centangnya sehingga yang diterapkan hanya sebagian ("Terapkan 1 dari 2"), divalidasi ulang pada subset itu. Peringatan menonjol, tombol Terapkan hijau dan Tolak selalu terlihat (bilah menempel di bawah), lencana status dengan jam (menunggu / diterapkan / ditolak / diurungkan). **Urungkan** muncul hanya selama data belum berubah sejak penerapan (dibandingkan dengan potret JSON); AI diberi catatan bahwa perubahan diurungkan. Pesan gagal diberi tombol "Coba lagi" tanpa menggandakan pesan.
+
+**Logo "Asisten Jadwal"**: kotak biru-tua dengan tiga batang jadwal (kuning, hijau, biru) dan percikan putih sebagai penanda AI; dipakai di balon, kepala jendela, avatar balasan, dan layar kosong. Layar kosong menampilkan contoh pertanyaan, perubahan kalender, dan perubahan jadwal sekali tekan.
+
+**Cadangan** (Ekspor/Impor paket) kini ikut membawa riwayat percakapan dan cap waktu pengaturan; saat dipulihkan digabung dengan riwayat yang ada, bukan menimpa.
+
+Teknis: `src/ui/ai.ts` (jendela, aksi), `aiKartu.ts` (kartu usulan, murni), `aiLogo.ts`, `src/ai/percakapan.ts` (model, gabung, berkas), `sinkronAi.ts`, `brankasSesi.ts`/`brankas.ts` (ingat di perangkat). Awalan aksi `ai*` tetap. Tes: `brankas-ingat`, `ai-percakapan`, `ai-kartu`, `ai-ui`, `cadangan`; diuji juga di peramban pada viewport 390×844 dan 1440×900 dengan Gemini dan GitHub palsu (buat brankas, kirim, terapkan sebagian, urungkan, sinkron, muat ulang tanpa PIN).
+
+**Belum:** daftar tunda tetap (denah ruang, keterangan publik per kegiatan, editor alasan tanpa KBM, ruang kunci TKA/UKK, preferensi berbobot, hosting/CNAME). Bubble belum bisa digeser posisinya.
+
 ### 11.6 Pertanyaan terbuka
 
 1. Mengapa XI AT 1, XI AT 2, XI DKV 3, XI TE 2, dan XI TE 3 tidak ada di PDF reguler (PKL?), dan apakah XI TE 1 yang ada di PDF sama dengan XI TE 1 yang berstatus PKL di jadwal-te?
