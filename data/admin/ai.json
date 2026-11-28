@@ -1,7 +1,7 @@
 {
  "format": "jadwal-smkn-bansari-ai",
  "versi": 1,
- "disimpan": "2026-11-28T10:33:13.718Z",
+ "disimpan": "2026-11-28T10:39:06.824Z",
  "pengaturan": {
   "nilai": {
    "model": "gemini-3.5-flash-lite",
@@ -23,10 +23,9 @@
    "id": "pmx09mga3dxo",
    "judul": "",
    "dibuat": 1795861591274,
-   "diubah": 1795861808298,
+   "diubah": 1795862289467,
    "sasaran": {
-    "mode": "tetap",
-    "semesterId": "genap"
+    "mode": "ikut"
    },
    "riwayat": [
     {
@@ -36,6 +35,22 @@
     {
      "peran": "model",
      "teks": "{\n  \"jawaban\": \"Memulai penyusunan jadwal untuk semester genap.\",\n  \"instruksi\": [\n    {\n      \"op\": \"susun\",\n      \"cara\": \"lengkapi\",\n      \"detik\": 20,\n      \"lunak\": true\n    }\n  ]\n}"
+    },
+    {
+     "peran": "user",
+     "teks": "[Catatan sistem] Admin MENERAPKAN usulan Anda. Perubahan: (tidak ada perubahan data) | Penyusunan jadwal dijalankan.\n\nKapan mulai asas"
+    },
+    {
+     "peran": "model",
+     "teks": "{\n  \"jawaban\": \"ASAS (Asesmen Sumatif Akhir Semester) untuk kelas X dan ASAJ (Asesmen Sumatif Akhir Jenjang) untuk kelas XII dijadwalkan mulai tanggal 30 November 2026 hingga 4 Desember 2026 (kegiatan k-asas).\",\n  \"instruksi\": [],\n  \"pertanyaan\": \"\",\n  \"tidakBisa\": []\n}"
+    },
+    {
+     "peran": "user",
+     "teks": "Kapan penerimaan raport"
+    },
+    {
+     "peran": "model",
+     "teks": "{\n  \"jawaban\": \"Laporan hasil belajar (penerimaan rapor) semester gasal dijadwalkan pada tanggal 18 Desember 2026 (agenda a24), sedangkan untuk semester genap dijadwalkan pada tanggal 18 Juni 2027 (agenda a55).\",\n  \"instruksi\": [],\n  \"pertanyaan\": \"\",\n  \"tidakBisa\": []\n}"
     }
    ],
    "tampil": [
@@ -56439,12 +56454,40 @@
      "sumber": "gemini-3.5-flash-lite · bennysurahman@gmail.com",
      "id": 2,
      "waktu": 1795861688406
+    },
+    {
+     "peran": "admin",
+     "teks": "Kapan mulai asas",
+     "galat": [],
+     "id": 3,
+     "waktu": 1795862238905
+    },
+    {
+     "peran": "ai",
+     "teks": "ASAS (Asesmen Sumatif Akhir Semester) untuk kelas X dan ASAJ (Asesmen Sumatif Akhir Jenjang) untuk kelas XII dijadwalkan mulai tanggal 30 November 2026 hingga 4 Desember 2026 (kegiatan k-asas).",
+     "galat": [],
+     "sumber": "gemini-3.5-flash-lite · bennysurahman@gmail.com",
+     "id": 4,
+     "waktu": 1795862240741
+    },
+    {
+     "peran": "admin",
+     "teks": "Kapan penerimaan raport",
+     "galat": [],
+     "id": 5,
+     "waktu": 1795862261392
+    },
+    {
+     "peran": "ai",
+     "teks": "Laporan hasil belajar (penerimaan rapor) semester gasal dijadwalkan pada tanggal 18 Desember 2026 (agenda a24), sedangkan untuk semester genap dijadwalkan pada tanggal 18 Juni 2027 (agenda a55).",
+     "galat": [],
+     "sumber": "gemini-3.5-flash-lite · bennysurahman@gmail.com",
+     "id": 6,
+     "waktu": 1795862262805
     }
    ],
-   "urut": 2,
-   "catatan": [
-    "[Catatan sistem] Admin MENERAPKAN usulan Anda. Perubahan: (tidak ada perubahan data) | Penyusunan jadwal dijalankan."
-   ]
+   "urut": 6,
+   "catatan": []
   }
  ]
 }
