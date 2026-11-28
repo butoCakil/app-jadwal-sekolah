@@ -226,6 +226,40 @@ describe('halaman publik', () => {
     expect(html).toContain('Skema 10');
   });
 
+  it('tab Kalender: grid bulan, rincian tanggal, dan daftar agenda dari data terbit', async () => {
+    const { gambarHalaman } = await import('../src/publik/halaman');
+    const h = gambarHalaman(t, { ...K, tab: 'kalender', tanggal: '2026-11-30', bulan: '2026-11' }, '2026-11-28');
+    // tab kelima ada dan aktif; kontrol per-entitas tidak tampil
+    expect(h).toContain('data-tab="kalender"');
+    expect(h).not.toContain('id="pilih"');
+    expect(h).toContain('November 2026');
+    // 30 sel tanggal + 7 nama hari; Sabtu/Minggu tidak memuat rentang panjang (hanya acara satu hari)
+    expect((h.match(/data-aksi="kalPilih"/g) ?? []).length).toBe(30);
+    // daftar agenda bulan itu memuat kegiatan pengubah jadwal dengan tombol ke jadwal dan agenda dengan sasaran
+    expect(h).toContain('TKA Gelombang 2');
+    expect(h).toContain('Mengubah jadwal');
+    expect(h).toContain('data-aksi="kalKeJadwal"');
+    expect(h).toContain('Upacara Hari Pahlawan');
+    expect(h).toContain('Semua kelas');
+    // rincian tanggal terpilih (30 Nov = ASAS, hari belajar)
+    expect(h).toContain('Senin, 30 November 2026');
+    expect(h).toContain('ASAS Kelas X dan ASAJ Kelas XII');
+    expect(h).toContain('data-aksi="kalLihatHari"');
+    // bulan lain: Natal berstatus libur, tanpa tombol Lihat jadwal
+    const des = gambarHalaman(t, { ...K, tab: 'kalender', tanggal: '2026-12-25', bulan: '2026-12' }, '2026-11-28');
+    expect(des).toContain('Natal');
+    expect(des).toContain('Libur');
+    expect(des).not.toContain('data-aksi="kalLihatHari"');
+    expect(des).toContain('bg-red-50');
+    // libur menurut kalender akademik pada hari kerja dalam semester (Maulid, 25 Agu) tampil sebagai libur, tanpa tombol jadwal
+    const agu = gambarHalaman(t, { ...K, tab: 'kalender', tanggal: '2026-08-25', bulan: '2026-08' }, '2026-11-28');
+    expect(agu).toContain('menurut kalender akademik');
+    expect(agu).not.toContain('data-aksi="kalLihatHari"');
+    // bulan tanpa data tidak membuat galat
+    const kosong = gambarHalaman(t, { ...K, tab: 'kalender', tanggal: '2030-01-01', bulan: '2030-01' }, '2026-11-28');
+    expect(kosong).toContain('Tidak ada agenda pada bulan ini.');
+  });
+
   it('panah pindah kelas/guru/ruang ada di tiap tab per-entitas', async () => {
     const { gambarHalaman } = await import('../src/publik/halaman');
     for (const tab of ['rombel', 'guru', 'ruang'] as const) {

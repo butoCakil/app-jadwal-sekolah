@@ -185,6 +185,11 @@ function hitungInfo(p: Proyek, tanggal: string, c: Cache): InfoHari {
   return { dasar: { ...dasar, skema: skema.nama, warna: skema.warna, kolom }, skema, jp, tdk: tidakAktifPada(p, g, sem), ket: { ...(sem?.keteranganTingkat ?? {}), ...(g?.keteranganTingkat ?? {}) }, ...(g ? { kegiatan: g } : {}) };
 }
 
+/** Keadaan umum satu tanggal (status, skema, kegiatan) yang tidak bergantung pada kelas/guru/ruang. */
+export function infoHariUmum(p: Proyek, tanggal: string): HariP {
+  return infoHariP(p, tanggal).dasar;
+}
+
 /** Jadwal satu hari untuk satu kelas/guru/ruang. */
 export function jadwalHariP(p: Proyek, tanggal: string, mode: ModeP, id: string): HariP {
   const c = cache(p);

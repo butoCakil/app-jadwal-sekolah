@@ -5,6 +5,7 @@ import { NAMA_HARI } from '../model/tipe';
 import { hariPekan } from '../model/kalender';
 import { keMenit } from '../model/skema';
 import { bacaTerbit, type Terbit } from '../terbit/format';
+import { gambarKalender } from './kalender';
 import { daftarEntitasP, jadwalHariP, jadwalPekanP, matriksP, type ElemenHari, type HariP, type ItemP, type ModeP } from './tampil';
 import { esc, isoLokal, seninPekan, tambahHari, warnaMapel } from '../ui/util';
 
@@ -18,7 +19,7 @@ const tglPendek = (iso: string): string => {
   return `${d} ${(BULAN[m - 1] ?? '').slice(0, 3)}`;
 };
 
-export type Tab = 'semua' | ModeP;
+export type Tab = 'semua' | 'kalender' | ModeP;
 export type Zoom = 'peta' | 'sedang' | 'besar';
 
 const NAMA_MODE: Record<ModeP, string> = { rombel: 'Kelas', guru: 'Guru', ruang: 'Ruang' };
@@ -35,6 +36,8 @@ export interface Keadaan {
   zoom: Zoom;
   /** hari yang ditampilkan pada tab Semua (0 = Senin); -1 = semua hari */
   hariSemua: number;
+  /** bulan yang ditampilkan di tab Kalender (YYYY-MM); kosong = bulan tanggal terpilih */
+  bulan?: string;
 }
 
 const WARNA_STATUS: Record<string, string> = {
@@ -65,7 +68,7 @@ function bacaPilihan(): Partial<Keadaan> {
     const simpan = JSON.parse(localStorage.getItem(KUNCI_SIMPAN) ?? '{}') as Partial<Keadaan>;
     const ambil = (kunci: string, lama: unknown): string | undefined => dariHash.get(kunci) ?? (typeof lama === 'string' ? lama : undefined);
     const m = ambil('m', simpan.tab);
-    if (m === 'semua' || m === 'rombel' || m === 'guru' || m === 'ruang') o.tab = m;
+    if (m === 'semua' || m === 'kalender' || m === 'rombel' || m === 'guru' || m === 'ruang') o.tab = m;
     const b = ambil('b', simpan.baris);
     if (b === 'rombel' || b === 'guru' || b === 'ruang') o.baris = b;
     const id = ambil('id', simpan.id);
@@ -76,6 +79,8 @@ function bacaPilihan(): Partial<Keadaan> {
     if (v === 'hari' || v === 'pekan') o.tata = v;
     const z = ambil('z', simpan.zoom);
     if (z === 'peta' || z === 'sedang' || z === 'besar') o.zoom = z;
+    const bl = dariHash.get('bl');
+    if (bl && /^\d{4}-\d{2}$/.test(bl)) o.bulan = bl;
     const d = dariHash.get('d');
     if (d !== null && /^-?\d$/.test(d)) o.hariSemua = Number(d);
   } catch {
@@ -87,7 +92,7 @@ function bacaPilihan(): Partial<Keadaan> {
 function simpanPilihan(k: Keadaan): void {
   try {
     localStorage.setItem(KUNCI_SIMPAN, JSON.stringify({ tab: k.tab, baris: k.baris, id: k.id, tata: k.tata, zoom: k.zoom }));
-    history.replaceState(null, '', `#/?${new URLSearchParams({ m: k.tab, b: k.baris, id: k.id, t: k.tanggal, v: k.tata, z: k.zoom, d: String(k.hariSemua) }).toString()}`);
+    history.replaceState(null, '', `#/?${new URLSearchParams({ m: k.tab, b: k.baris, id: k.id, t: k.tanggal, v: k.tata, z: k.zoom, d: String(k.hariSemua), ...(k.tab === 'kalender' ? { bl: k.bulan ?? k.tanggal.slice(0, 7) } : {}) }).toString()}`);
   } catch {
     /* abaikan */
   }
@@ -443,7 +448,8 @@ export function gambarHalaman(t: Terbit, k: Keadaan, hariIni: string, lebar = 39
   const p = t.proyek;
   const n = p.polaReguler.length;
   const semua = k.tab === 'semua';
-  const mode = (semua ? k.baris : k.tab) as ModeP;
+  const kalender = k.tab === 'kalender';
+  const mode = (semua || kalender ? k.baris : k.tab) as ModeP;
   const entitas = daftarEntitasP(p, mode);
   const grup = [...new Set(entitas.map((e) => e.grup))];
   const pilihan = grup
@@ -461,7 +467,7 @@ export function gambarHalaman(t: Terbit, k: Keadaan, hariIni: string, lebar = 39
     return `<button ${aksi} class="flex-1 rounded-xl px-1 py-1.5 text-center ${aktif ? 'bg-[#0d1e33] text-white' : 'bg-white text-slate-700 border border-slate-200'} ${tgl === hariIni && !aktif ? 'ring-2 ring-[#2347b8]/40' : ''}"><div class="text-[11px] font-semibold">${esc(NAMA_HARI[i]?.slice(0, 3) ?? '')}</div><div class="text-sm font-bold tabular-nums">${Number(tgl.slice(8))}</div></button>`;
   }).join('');
   const diperbarui = t.diterapkan ? new Date(t.diterapkan).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) : '';
-  const seg = (aksi: string, atr: string, aktif: boolean, label: string) => `<button data-aksi="${aksi}" ${atr} class="flex-1 whitespace-nowrap px-3 py-2 text-sm font-semibold ${aktif ? 'bg-[#0d1e33] text-white' : 'bg-white text-slate-700'}">${label}</button>`;
+  const seg = (aksi: string, atr: string, aktif: boolean, label: string) => `<button data-aksi="${aksi}" ${atr} class="flex-1 whitespace-nowrap px-2 py-2 text-sm font-semibold ${aktif ? 'bg-[#0d1e33] text-white' : 'bg-white text-slate-700'}">${label}</button>`;
   const segTab = (v: Tab, label: string) => seg('tab', `data-tab="${v}"`, k.tab === v, label);
   const segBaris = (m: ModeP) => seg('baris', `data-mode="${m}"`, k.baris === m, NAMA_MODE[m]);
   const segZoom = (z: Zoom, label: string) => seg('zoom', `data-zoom="${z}"`, k.zoom === z, label);
@@ -472,21 +478,24 @@ export function gambarHalaman(t: Terbit, k: Keadaan, hariIni: string, lebar = 39
         <label class="relative min-w-0 flex-1 cursor-pointer rounded-xl border border-slate-300 bg-white px-3 py-2 text-center text-sm font-semibold"><span class="block truncate">${esc(judulTgl)}</span><input id="tgl" type="date" value="${k.tanggal}" class="absolute inset-0 h-full w-full opacity-0" aria-label="Pilih tanggal"></label>
         ${panah('maju', '›', 'Berikutnya')}</div>`;
 
-  const kontrol = semua
-    ? `<div class="flex overflow-hidden rounded-xl border border-slate-300">${segTab('semua', 'Semua')}${segTab('rombel', 'Kelas')}${segTab('guru', 'Guru')}${segTab('ruang', 'Ruang')}</div>
+  const barisTab = `<div class="flex overflow-hidden rounded-xl border border-slate-300">${segTab('semua', 'Semua')}${segTab('rombel', 'Kelas')}${segTab('guru', 'Guru')}${segTab('ruang', 'Ruang')}${segTab('kalender', 'Kalender')}</div>`;
+  const kontrol = kalender
+    ? barisTab
+    : semua
+    ? `${barisTab}
        <div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-500">Baris:</span><div class="flex flex-1 overflow-hidden rounded-xl border border-slate-300">${segBaris('rombel')}${segBaris('guru')}${segBaris('ruang')}</div></div>
        ${tombolTgl}
        <div class="flex items-center gap-2"><button data-aksi="hariIni" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">Pekan ini</button>
          <div class="ml-auto flex overflow-hidden rounded-xl border border-slate-300">${segZoom('peta', 'Peta')}${segZoom('sedang', 'Sedang')}${segZoom('besar', 'Besar')}</div></div>
        <div class="flex gap-1.5"><button data-aksi="hariSemua" data-i="-1" class="rounded-xl px-2 py-1.5 text-xs font-semibold ${k.hariSemua < 0 ? 'bg-[#0d1e33] text-white' : 'border border-slate-200 bg-white text-slate-700'}">Semua<br>hari</button>${chipHari(true)}</div>`
-    : `<div class="flex overflow-hidden rounded-xl border border-slate-300">${segTab('semua', 'Semua')}${segTab('rombel', 'Kelas')}${segTab('guru', 'Guru')}${segTab('ruang', 'Ruang')}</div>
+    : `${barisTab}
        <div class="flex items-center gap-2">${panah('sebelumnya', '‹', `${NAMA_MODE[mode]} sebelumnya`)}<select id="pilih" class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base font-medium" aria-label="Pilih ${NAMA_MODE[mode]}">${pilihan}</select>${panah('berikutnya', '›', `${NAMA_MODE[mode]} berikutnya`)}</div>
        ${tombolTgl}
        <div class="flex items-center gap-2"><button data-aksi="hariIni" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium">Hari ini</button>
          <div class="ml-auto flex overflow-hidden rounded-xl border border-slate-300">${segTata('hari', 'Per hari')}${segTata('pekan', 'Per pekan')}</div></div>
        ${k.tata === 'hari' ? `<div class="flex gap-1.5">${chipHari(false)}</div>` : ''}`;
 
-  const isi = semua ? tabelSemua(p, k, hariIni, lebar) : k.tata === 'hari' ? tampilanHari(p, k, hariIni) : tabelPekan(p, k, hariIni);
+  const isi = kalender ? gambarKalender(p, k.bulan ?? k.tanggal.slice(0, 7), k.tanggal, hariIni) : semua ? tabelSemua(p, k, hariIni, lebar) : k.tata === 'hari' ? tampilanHari(p, k, hariIni) : tabelPekan(p, k, hariIni);
   const lebarMaks = semua ? 'max-w-5xl' : 'max-w-3xl';
   return `<header class="border-b border-slate-200 bg-white">
       <div class="mx-auto flex ${lebarMaks} items-center gap-3 px-4 py-3">
@@ -530,12 +539,13 @@ export async function mulaiPublik(akar: HTMLElement, ambil: typeof fetch = fetch
     tata: pilih.tata ?? 'hari',
     zoom: pilih.zoom ?? 'sedang',
     hariSemua: pilih.hariSemua !== undefined && pilih.hariSemua < n ? pilih.hariSemua : -1,
+    ...(pilih.bulan ? { bulan: pilih.bulan } : {}),
   };
-  const modeAktif = (): ModeP => (k.tab === 'semua' ? k.baris : k.tab);
+  const modeAktif = (): ModeP => (k.tab === 'semua' || k.tab === 'kalender' ? k.baris : k.tab);
   const rapikan = () => {
     const daftar = daftarEntitasP(p, modeAktif());
     if (!daftar.some((e) => e.id === k.id)) k.id = daftar[0]?.id ?? '';
-    if (k.tab !== 'semua' && k.tata === 'hari' && hariPekan(k.tanggal) >= n) k.tanggal = hariKerjaTerdekat(k.tanggal, n);
+    if (k.tab !== 'semua' && k.tab !== 'kalender' && k.tata === 'hari' && hariPekan(k.tanggal) >= n) k.tanggal = hariKerjaTerdekat(k.tanggal, n);
   };
   const gambar = () => {
     rapikan();
@@ -559,7 +569,7 @@ export async function mulaiPublik(akar: HTMLElement, ambil: typeof fetch = fetch
     k.id = (daftar[(i + arah + daftar.length) % daftar.length] as { id: string }).id;
   };
   const langkah = (arah: 1 | -1) => {
-    k.tanggal = k.tab !== 'semua' && k.tata === 'hari' ? langkahHari(k.tanggal, arah, n) : tambahHari(k.tanggal, 7 * arah);
+    k.tanggal = k.tab !== 'semua' && k.tab !== 'kalender' && k.tata === 'hari' ? langkahHari(k.tanggal, arah, n) : tambahHari(k.tanggal, 7 * arah);
   };
 
   akar.addEventListener('click', (e) => {
@@ -578,8 +588,28 @@ export async function mulaiPublik(akar: HTMLElement, ambil: typeof fetch = fetch
         return;
       case 'tab':
         k.tab = d.tab as Tab;
-        if (k.tab !== 'semua') k.id = '';
+        if (k.tab !== 'semua' && k.tab !== 'kalender') k.id = '';
+        if (k.tab === 'kalender') k.bulan = k.tanggal.slice(0, 7);
         break;
+      case 'kalPilih': k.tanggal = d.tgl as string; break;
+      case 'kalBulan':
+        k.bulan = d.bulan as string;
+        k.tanggal = d.tgl ?? `${d.bulan}-01`;
+        break;
+      case 'kalKeJadwal':
+        k.tab = 'semua';
+        k.hariSemua = -1;
+        k.tanggal = hariKerjaTerdekat(d.tgl as string, n);
+        gambar();
+        window.scrollTo(0, 0);
+        return;
+      case 'kalLihatHari':
+        k.tab = 'semua';
+        k.tanggal = d.tgl as string;
+        k.hariSemua = hariPekan(k.tanggal);
+        gambar();
+        window.scrollTo(0, 0);
+        return;
       case 'baris': k.baris = d.mode as ModeP; break;
       case 'zoom': k.zoom = d.zoom as Zoom; break;
       case 'tata': k.tata = d.tata as 'hari' | 'pekan'; break;
