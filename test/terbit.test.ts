@@ -450,9 +450,10 @@ describe('halaman publik', () => {
     expect(kepala).not.toContain('>P1<');
     expect(kepala).toContain('>1</th>'); // pembiasaan = jam 1 pada skema 11
     expect(kepala).toContain('aria-label="istirahat"');
-    // keputusan Benny (28 Nov): tanpa garis putus-putus; kolom istirahat (hijau) dan P1 (abu-abu) cukup sebagai blok warna
+    // keputusan Benny (28 Nov): tanpa garis putus-putus; kolom istirahat (kuning seperti grid admin) dan P1 (abu-abu) cukup sebagai blok warna
     expect(h).not.toContain('border-dashed" style="left:');
-    expect(h).toContain('bg-emerald-50');
+    expect(h).toContain('bg-amber-100');
+    expect(kepala).toContain('bg-amber-100 text-amber-800');
     // batas antar hari: garis padat di awal tiap hari + sisi kanan terakhir (tampilan 1 hari = 2 garis)
     expect((h.match(/border-l-2 border-solid" style="left:/g) ?? []).length).toBe(2);
     // kotak P1 di baris tetap memakai kode

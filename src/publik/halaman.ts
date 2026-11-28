@@ -138,7 +138,7 @@ function elemenHtml(mode: ModeP, e: ElemenHari, sekarang: number | null, atr: st
   }
   const teks = e.jenis === 'nonKbm' ? `<b>${esc(e.kode)}</b> · ${esc(e.nama)}` : esc(e.nama);
   return `<div class="flex items-center gap-3"><div class="w-[4.2rem] shrink-0 text-right text-[11px] tabular-nums text-slate-400">${esc(e.mulai)}</div>
-    <div class="flex-1 rounded-full px-3 py-1 text-center text-xs ${e.jenis === 'istirahat' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-600'} ${sedang ? 'ring-2 ring-[#2347b8]/50' : ''}">${teks} · ${esc(e.mulai)}–${esc(e.selesai)}</div></div>`;
+    <div class="flex-1 rounded-full px-3 py-1 text-center text-xs ${e.jenis === 'istirahat' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'} ${sedang ? 'ring-2 ring-[#2347b8]/50' : ''}">${teks} · ${esc(e.mulai)}–${esc(e.selesai)}</div></div>`;
 }
 
 function banner(h: HariP): string {
@@ -226,7 +226,7 @@ export function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
           }
         } else if (e.jenis === 'istirahat') {
           const r = idx('ist', e.setelah);
-          if (r >= 0) sel.set(r, `<td colspan="2" class="border border-white bg-emerald-100 text-center align-middle text-[9px] text-emerald-800" title="${esc(`${e.nama} ${e.mulai}–${e.selesai}`)}">Istirahat</td>`);
+          if (r >= 0) sel.set(r, `<td colspan="2" class="border border-white bg-amber-100 text-center align-middle text-[9px] text-amber-800" title="${esc(`${e.nama} ${e.mulai}–${e.selesai}`)}">Istirahat</td>`);
         } else {
           const r1 = idx('jam', e.a);
           const r2 = idx('jam', e.b);
@@ -268,7 +268,7 @@ export function tabelPekan(p: Proyek, k: Keadaan, hariIni: string): string {
 // ------------------------------------------------------------------ tab Semua: matriks semua kelas/guru/ruang
 
 /** Cangkir kecil penanda kolom istirahat pada kepala tabel. */
-const IKON_ISTIRAHAT = '<svg viewBox="0 0 12 12" width="8" height="8" class="mx-auto text-emerald-700" aria-label="istirahat"><title>Istirahat</title><path d="M1.5 4h6v3a3 3 0 0 1-6 0zM7.5 5h1a1.3 1.3 0 0 1 0 2.6h-1M3 .8v1.5M5 .8v1.5" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const IKON_ISTIRAHAT = '<svg viewBox="0 0 12 12" width="8" height="8" class="mx-auto text-amber-800" aria-label="istirahat"><title>Istirahat</title><path d="M1.5 4h6v3a3 3 0 0 1-6 0zM7.5 5h1a1.3 1.3 0 0 1 0 2.6h-1M3 .8v1.5M5 .8v1.5" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 const JUDUL_BARIS: Record<ModeP, string> = {
   rombel: 'kode mapel, kode guru, kode ruang',
@@ -324,7 +324,7 @@ export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number
   const m = matriksP(p, k.tanggal, mode);
   const tampil = m.hari.map((_, i) => i).filter((i) => k.hariSemua < 0 || i === k.hariSemua);
   const lebarLabel = mode === 'rombel' ? 50 : 40;
-  const bobot = (h: HariP) => (h.status === 'normal' ? h.kolom.reduce((a, c) => a + (c.tipe === 'istirahat' ? 0.3 : 1), 0) : 1.5);
+  const bobot = (h: HariP) => (h.status === 'normal' ? h.kolom.reduce((a, c) => a + (c.tipe === 'istirahat' ? 0.4 : 1), 0) : 1.5);
   const jumlahBobot = tampil.reduce((a, i) => a + bobot(m.hari[i] as HariP), 0);
   const pas = (Math.min(lebar, 768) - 32 - lebarLabel) / Math.max(1, jumlahBobot);
   const dasar = mode === 'rombel' ? 28 : 30;
@@ -334,7 +334,7 @@ export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number
   // tiap kotak memuat 3 baris kode (mapel / guru / ruang), jadi huruf dibatasi oleh tinggi kotak
   const huruf = Math.min(w >= 40 ? 11 : w >= 30 ? 10 : w >= 22 ? 9 : 8, Math.floor((tinggi - 3) / 3));
   const bacaTeks = w >= 15 && tinggi >= 20;
-  const lebarIst = Math.max(2, w * 0.3);
+  const lebarIst = Math.max(k.zoom === 'peta' ? 4 : 8, w * 0.4);
 
   // kolom per hari
   const grupHari = tampil.map((i) => {
@@ -355,7 +355,7 @@ export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number
 
   const kepala1 = grupHari.map((g) => `<th colspan="${g.jumlah}" class="sticky top-0 z-20 border-r border-white px-0.5 text-center text-white ${g.h.tanggal === hariIni ? 'outline outline-2 -outline-offset-2 outline-amber-300' : ''}" style="height:20px;background:${esc(g.h.warna ?? '#64748b')}"><span class="text-[10px] font-bold">${esc(g.h.hari.slice(0, 3))} ${Number(g.h.tanggal.slice(8))}</span>${g.h.status === 'normal' && w * g.jumlah > 90 ? `<span class="ml-1 text-[9px] opacity-80">${esc(skemaPendek(g.h.skema))}</span>` : ''}</th>`).join('');
   const kepala2 = grupHari.flatMap((g) => (g.h.status === 'normal'
-    ? g.h.kolom.map((c) => `<th class="sticky z-20 border-r border-slate-200 bg-slate-100 p-0 text-center text-[8px] font-semibold text-slate-500" style="top:20px;height:15px">${c.tipe === 'istirahat' ? (lebarIst >= 6 ? IKON_ISTIRAHAT : '') : w >= 9 ? esc(c.label) : ''}</th>`)
+    ? g.h.kolom.map((c) => `<th class="sticky z-20 border-r border-slate-200 p-0 text-center text-[8px] font-semibold ${c.tipe === 'istirahat' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'}" style="top:20px;height:15px">${c.tipe === 'istirahat' ? (lebarIst >= 6 ? IKON_ISTIRAHAT : '') : w >= 9 ? esc(c.label) : ''}</th>`)
     : [`<th class="sticky z-20 border-r border-slate-200 bg-slate-100 p-0 text-center text-[8px] text-slate-500" style="top:20px;height:15px" title="${esc(g.h.keterangan)}">${w >= 15 ? (g.h.status === 'libur' ? 'libur' : '–') : ''}</th>`])).join('');
 
   let grupLalu = '';
@@ -371,7 +371,7 @@ export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number
       }
       if (h.status !== 'normal') return `<td class="border-b border-r border-slate-200 bg-slate-100" style="height:${tinggi}px"></td>`;
       return h.elemen.map((e) => {
-        if (e.jenis === 'istirahat') return `<td class="border-b border-r border-slate-200 bg-emerald-50" style="height:${tinggi}px"></td>`;
+        if (e.jenis === 'istirahat') return `<td class="border-b border-r border-white bg-amber-100" style="height:${tinggi}px"></td>`;
         if (e.jenis === 'nonKbm') return `<td class="border-b border-r border-slate-200 bg-slate-200 text-center text-slate-600" style="height:${tinggi}px;font-size:${huruf - 1}px" title="${esc(e.nama)}">${bacaTeks ? esc(e.kode) : ''}</td>`;
         if (e.jenis === 'kosong') return `<td colspan="${e.jp}" class="border-b border-r border-slate-200 bg-white" style="height:${tinggi}px"></td>`;
         const x = e.item[0] as ItemP;
@@ -392,7 +392,7 @@ export function tabelSemua(p: Proyek, k: Keadaan, hariIni: string, lebar: number
   const legenda = legendaKode(m, tampil, mode);
   return `${info}<div id="matriks" class="overflow-auto rounded-xl border border-slate-200 bg-white" style="max-height:72vh"><div class="relative" style="width:${total.toFixed(0)}px"><table class="border-separate border-spacing-0" style="table-layout:fixed;width:${total.toFixed(0)}px"><colgroup>${cols}</colgroup>
     <thead><tr><th rowspan="2" class="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500" style="height:35px">${NAMA_MODE[mode]}</th>${kepala1}</tr><tr>${kepala2}</tr></thead><tbody>${isi}</tbody></table>${hurufBatas}</div></div>
-    <p class="mt-2 text-[11px] leading-relaxed text-slate-500">${ket} Jam berurutan dengan guru dan mapel yang sama digabung; kolom sempit hijau = istirahat. Sentuh kotak untuk detail, geser untuk melihat hari lain, atau pilih satu hari / tombol Peta untuk ringkasan.${kode ? ` ${kode}.` : ''}</p>${legenda}
+    <p class="mt-2 text-[11px] leading-relaxed text-slate-500">${ket} Jam berurutan dengan guru dan mapel yang sama digabung; kolom kuning = istirahat. Sentuh kotak untuk detail, geser untuk melihat hari lain, atau pilih satu hari / tombol Peta untuk ringkasan.${kode ? ` ${kode}.` : ''}</p>${legenda}
     ${m.baris.length === 0 ? '<p class="mt-2 text-sm text-slate-500">Tidak ada data pada pekan ini.</p>' : ''}`;
 }
 
